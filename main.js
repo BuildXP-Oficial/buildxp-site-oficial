@@ -125,12 +125,157 @@ function initScroll() {
   });
 }
 
+/* ── FEEDBACK (Public wall) ─────────────────────────────────*/
+function initFeedback() {
+  const app = document.getElementById('feedback-app');
+  if (!app) return;
+
+  const LS_KEY = 'buildxp_feedback_v1';
+  const banned = [
+    'idiota','burro','bosta','merda','fdp','foda-se','foda se','caralho',
+    'porra','desgraça','desgraca','otario','otária','otaria','imbecil',
+    'racista','nazista','lixo','vagabundo','vagabunda'
+  ];
+
+  const form = document.getElementById('fb-form');
+  const nameEl = document.getElementById('fb-name');
+  const kindEl = document.getElementById('fb-kind');
+  const msgEl = document.getElementById('fb-msg');
+  const statusEl = document.getElementById('fb-status');
+  const listEl = document.getElementById('fb-list');
+  const emptyEl = document.getElementById('fb-empty');
+  const searchEl = document.getElementById('fb-search');
+  const clearBtn = document.getElementById('fb-clear');
+  const resetBtn = document.getElementById('fb-reset');
+
+  const norm = (s) =>
+    String(s ?? '')
+      .trim()
+      .replace(/\s+/g, ' ')
+      .toLowerCase();
+
+  const containsBanned = (text) => {
+    const t = norm(text);
+    return banned.find(w => t.includes(w)) ?? null;
+  };
+
+  const load = () => {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const save = (items) => localStorage.setItem(LS_KEY, JSON.stringify(items));
+
+  const fmtDate = (iso) => {
+    try {
+      const d = new Date(iso);
+      return d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    } catch {
+      return '';
+    }
+  };
+
+  function setStatus(text, type) {
+    statusEl.textContent = text || '';
+    statusEl.classList.toggle('ok', type === 'ok');
+    statusEl.classList.toggle('bad', type === 'bad');
+  }
+
+  function render() {
+    const q = norm(searchEl.value);
+    const items = load();
+    const filtered = !q
+      ? items
+      : items.filter(it =>
+          norm(it.name).includes(q) ||
+          norm(it.kind).includes(q) ||
+          norm(it.msg).includes(q)
+        );
+
+    listEl.innerHTML = '';
+    emptyEl.style.display = (filtered.length === 0) ? '' : 'none';
+
+    filtered
+      .slice()
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+      .forEach(it => {
+        const div = document.createElement('div');
+        div.className = 'fb-item';
+        div.innerHTML = `
+          <div class="fb-item-top">
+            <span class="fb-kind">${it.kind}</span>
+            <span class="fb-meta">${it.name ? it.name + ' · ' : ''}${fmtDate(it.createdAt)}</span>
+          </div>
+          <div class="fb-msg"></div>
+        `;
+        div.querySelector('.fb-msg').textContent = it.msg;
+        listEl.appendChild(div);
+      });
+  }
+
+  clearBtn?.addEventListener('click', () => {
+    nameEl.value = '';
+    msgEl.value = '';
+    kindEl.value = 'Sugestão';
+    setStatus('', '');
+  });
+
+  resetBtn?.addEventListener('click', () => {
+    localStorage.removeItem(LS_KEY);
+    render();
+    setStatus('Feedbacks locais apagados.', 'ok');
+  });
+
+  searchEl?.addEventListener('input', () => render());
+
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    setStatus('', '');
+
+    const name = String(nameEl.value || '').trim().slice(0, 40);
+    const kind = String(kindEl.value || 'Sugestão').trim().slice(0, 20);
+    const msg = String(msgEl.value || '').trim();
+
+    if (msg.length < 6) {
+      setStatus('Escreva uma mensagem um pouco maior (mínimo 6 caracteres).', 'bad');
+      return;
+    }
+
+    const badWord = containsBanned(msg + ' ' + name);
+    if (badWord) {
+      setStatus(`Não foi possível publicar. Palavra não permitida detectada.`, 'bad');
+      return;
+    }
+
+    const items = load();
+    items.push({
+      id: crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2),
+      name,
+      kind,
+      msg: msg.slice(0, 400),
+      createdAt: new Date().toISOString(),
+    });
+    save(items);
+
+    msgEl.value = '';
+    setStatus('Publicado no mural (salvo neste navegador).', 'ok');
+    render();
+  });
+
+  render();
+}
+
 /* ── TRAINING TERMINAL (replaces quiz) ──────────────────────*/
 const TRAIN_TOPICS = ['Git', 'Docker', 'NPM', '.NET'];
 const TRAIN_LEVELS = [
   { id: 'beginner', label: 'INICIANTE' },
   { id: 'advanced', label: 'AVANÇADO' },
-  { id: 'mixed', label: 'MISTO' },
+  { id: 'mixed', label: 'ARENA' },
 ];
 
 const TRAIN_BANK = {
@@ -207,9 +352,11 @@ function initTrainingTerminal() {
   const state = {
     topic: 'Git',
     levelMode: 'beginner',
+    introStep: 'topic', // 'topic' | 'level'
     runLevel: 1,
     questionIdx: 0,
     totalXp: 0,
+    goalXp: 80,
     asked: [],
     currentSet: [],
   };
@@ -240,6 +387,7 @@ function initTrainingTerminal() {
   }
 
   function renderIntro() {
+    const isTopicStep = state.introStep === 'topic';
     mount.innerHTML = `
       <div class="term-intro">
         <div class="term-title">TERMINAL TRAINING</div>
@@ -248,44 +396,69 @@ function initTrainingTerminal() {
           Pontuação: <span class="term-good">+20 XP</span> certo · <span class="term-warn">+10 XP</span> parcial · <span class="term-bad">+0 XP</span> errado
         </div>
 
-        <div class="term-pick" id="pick-topic"></div>
-        <div class="term-pick" id="pick-level"></div>
-
-        <div class="term-actions">
-          <button class="term-btn primary" type="button" id="term-start">▶ INICIAR</button>
-        </div>
+        ${isTopicStep ? `
+          <div class="term-dim" style="text-align:center;margin-bottom:0.75rem;font-family:var(--f-mono);font-size:0.72rem;letter-spacing:2px;">
+            1/2 · ESCOLHA O TEMA
+          </div>
+          <div class="term-pick" id="pick-topic"></div>
+        ` : `
+          <div class="term-dim" style="text-align:center;margin-bottom:0.75rem;font-family:var(--f-mono);font-size:0.72rem;letter-spacing:2px;">
+            2/2 · ESCOLHA O NÍVEL
+          </div>
+          <div class="term-pick" style="justify-content:center;margin-bottom:0.8rem;">
+            <span class="term-chip active" style="cursor:default;">${state.topic}</span>
+          </div>
+          <div class="term-pick" id="pick-level"></div>
+          <div class="term-actions">
+            <button class="term-btn primary" type="button" id="term-start">▶ INICIAR</button>
+            <button class="term-btn ghost" type="button" id="term-back">← TROCAR TEMA</button>
+          </div>
+        `}
       </div>
     `;
 
-    const topicWrap = mount.querySelector('#pick-topic');
-    const levelWrap = mount.querySelector('#pick-level');
-    TRAIN_TOPICS.forEach(t => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'term-chip' + (state.topic === t ? ' active' : '');
-      b.textContent = t;
-      b.addEventListener('click', () => {
-        state.topic = t;
-        // update accent on the fly (CSS uses --accent)
-        const root = document.documentElement;
-        const map = { Git: 'var(--blue)', Docker: 'var(--docker)', NPM: 'var(--blue-2)', '.NET': 'var(--dotnet)' };
-        root.style.setProperty('--accent', map[t] ?? 'var(--blue)');
-        root.style.setProperty('--accent-glow', 'var(--blue-glow)');
+    const setAccentForTopic = (t) => {
+      const root = document.documentElement;
+      const map = { Git: 'var(--blue)', Docker: 'var(--docker)', NPM: 'var(--blue-2)', '.NET': 'var(--dotnet)' };
+      root.style.setProperty('--accent', map[t] ?? 'var(--blue)');
+      root.style.setProperty('--accent-glow', 'var(--blue-glow)');
+    };
+
+    if (isTopicStep) {
+      const topicWrap = mount.querySelector('#pick-topic');
+      TRAIN_TOPICS.forEach(t => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'term-chip' + (state.topic === t ? ' active' : '');
+        b.textContent = t;
+        b.addEventListener('click', () => {
+          state.topic = t;
+          setAccentForTopic(t);
+          state.introStep = 'level';
+          renderIntro();
+        });
+        topicWrap.appendChild(b);
+      });
+    } else {
+      const levelWrap = mount.querySelector('#pick-level');
+      TRAIN_LEVELS.forEach(l => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'term-chip' + (state.levelMode === l.id ? ' active' : '');
+        b.textContent = l.label;
+        b.addEventListener('click', () => {
+          state.levelMode = l.id;
+          renderIntro();
+        });
+        levelWrap.appendChild(b);
+      });
+
+      mount.querySelector('#term-start').addEventListener('click', () => startRun(true));
+      mount.querySelector('#term-back').addEventListener('click', () => {
+        state.introStep = 'topic';
         renderIntro();
       });
-      topicWrap.appendChild(b);
-    });
-
-    TRAIN_LEVELS.forEach(l => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'term-chip' + (state.levelMode === l.id ? ' active' : '');
-      b.textContent = l.label;
-      b.addEventListener('click', () => { state.levelMode = l.id; renderIntro(); });
-      levelWrap.appendChild(b);
-    });
-
-    mount.querySelector('#term-start').addEventListener('click', () => startRun(true));
+    }
   }
 
   function renderTerminalShell() {
@@ -300,7 +473,8 @@ function initTrainingTerminal() {
             <span class="term-badge">${state.levelMode.toUpperCase()}</span>
           </div>
           <div class="term-meta term-xp">
-            XP: <strong id="term-xp">${state.totalXp}</strong>
+            <span class="term-xp-wrap" id="term-xp-wrap">XP: <strong id="term-xp">${state.totalXp}</strong></span>
+            <span class="term-goal">OBJ: <strong id="term-goal">${state.goalXp}</strong></span>
           </div>
         </div>
         <div class="term-screen" id="term-screen" aria-live="polite"></div>
@@ -327,29 +501,91 @@ function initTrainingTerminal() {
     screen.scrollTop = screen.scrollHeight;
   }
 
-  function xpPop(xp) {
-    const screen = mount.querySelector('#term-screen');
-    if (!screen) return;
-    const div = document.createElement('div');
-    div.className = 'term-line term-xp-pop';
-    div.textContent = `+${xp} XP`;
-    screen.appendChild(div);
-    screen.scrollTop = screen.scrollHeight;
-  }
-
-  function updateXp() {
+  function updateXpInstant() {
     const xpEl = mount.querySelector('#term-xp');
     if (xpEl) xpEl.textContent = String(state.totalXp);
+  }
+
+  function animateXpGain(delta) {
+    if (!delta) return;
+    const xpEl = mount.querySelector('#term-xp');
+    const wrap = mount.querySelector('#term-xp-wrap');
+    if (!xpEl || !wrap) {
+      state.totalXp += delta;
+      updateXpInstant();
+      return;
+    }
+
+    const start = state.totalXp;
+    const end = start + delta;
+    state.totalXp = end;
+
+    // fly +XP from terminal area into the counter
+    const screen = mount.querySelector('#term-screen');
+    const wrapRect = wrap.getBoundingClientRect();
+    const startRect = screen?.getBoundingClientRect?.();
+    const fromX = (startRect?.left ?? wrapRect.left) + (startRect?.width ?? 0) * 0.55;
+    const fromY = (startRect?.top ?? wrapRect.top) + (startRect?.height ?? 0) * 0.62;
+    const toX = wrapRect.left + wrapRect.width - 10;
+    const toY = wrapRect.top + 6;
+
+    const fly = document.createElement('span');
+    fly.className = 'xp-fly';
+    fly.textContent = `+${delta}`;
+    fly.style.left = `${fromX}px`;
+    fly.style.top = `${fromY}px`;
+    document.body.appendChild(fly);
+
+    if (fly.animate) {
+      fly.animate(
+        [
+          { transform: 'translate3d(0, 0, 0) scale(1)', opacity: 0.0 },
+          { transform: 'translate3d(0, -6px, 0) scale(1.08)', opacity: 1.0, offset: 0.2 },
+          { transform: `translate3d(${toX - fromX}px, ${toY - fromY}px, 0) scale(0.85)`, opacity: 0.0 }
+        ],
+        { duration: 760, easing: 'cubic-bezier(0.18, 0.8, 0.2, 1)' }
+      ).onfinish = () => fly.remove();
+    } else {
+      // fallback: float near counter
+      fly.remove();
+      const floatEl = document.createElement('span');
+      floatEl.className = 'term-xp-float';
+      floatEl.textContent = `+${delta}`;
+      wrap.appendChild(floatEl);
+      setTimeout(() => floatEl.remove(), 800);
+    }
+
+    // animate the number counting up
+    const t0 = performance.now();
+    const dur = 520;
+    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+    function frame(now) {
+      const p = Math.min(1, (now - t0) / dur);
+      const eased = easeOutCubic(p);
+      const val = Math.round(start + (end - start) * eased);
+      xpEl.textContent = String(val);
+      if (p < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    // bump effect
+    xpEl.classList.remove('xp-bump');
+    // eslint-disable-next-line no-unused-expressions
+    xpEl.offsetHeight;
+    xpEl.classList.add('xp-bump');
   }
 
   function startRun(resetLevel) {
     if (resetLevel) state.runLevel = 1;
     state.questionIdx = 0;
     state.totalXp = 0;
+    state.goalXp = 80;
     state.currentSet = pickQuestions(state.topic, state.levelMode, state.runLevel);
     renderTerminalShell();
 
     line(`BuildXP Terminal Training — ${state.topic}`, 'term-dim');
+    line(`Objetivo: ${state.goalXp} XP.`, 'term-dim');
     line(`Regras: 5 desafios. +20 certo, +10 parcial, +0 errado.`, 'term-dim');
     line(`Dica: ignore os <arquivo> e foque na estrutura do comando.`, 'term-dim');
     line('', '');
@@ -377,13 +613,16 @@ function initTrainingTerminal() {
 
     if (accepted.includes(user)) return { result: 'correct', xp: 20 };
 
-    // partial: user contains at least 2 required tokens OR matches command prefix
+    // partial: match enough required tokens (ignoring placeholders like <arquivo>)
     const ut = new Set(tokenize(user));
-    const must = (q.must ?? []).map(norm);
+    const must = (q.must ?? [])
+      .map(norm)
+      .filter(t => t && !t.startsWith('<') && !t.endsWith('>'));
     const mustHits = must.filter(t => ut.has(t)).length;
+    const needed = Math.max(2, Math.ceil(must.length * 0.6));
     const looksLike = accepted.some(a => a.split(' ')[0] && user.startsWith(a.split(' ')[0]));
 
-    if (mustHits >= Math.min(2, must.length) || (looksLike && user.length >= 3)) {
+    if ((must.length > 0 && mustHits >= Math.min(needed, must.length)) || (looksLike && user.length >= 3)) {
       return { result: 'partial', xp: 10 };
     }
     return { result: 'wrong', xp: 0 };
@@ -404,11 +643,7 @@ function initTrainingTerminal() {
     else if (g.result === 'partial') line('◐ Parcialmente correto.', 'term-warn');
     else line('✖ Incorreto.', 'term-bad');
 
-    if (g.xp > 0) {
-      xpPop(g.xp);
-      state.totalXp += g.xp;
-      updateXp();
-    }
+    if (g.xp > 0) animateXpGain(g.xp);
 
     line(`Resposta esperada: ${q.accept[0]}`, 'term-dim');
     line('', '');
@@ -423,6 +658,7 @@ function initTrainingTerminal() {
   function finishRun() {
     line('—'.repeat(32), 'term-dim');
     line(`Fim do treino. XP total: ${state.totalXp}`, 'term-good');
+    line(state.totalXp >= state.goalXp ? 'Meta batida. Boa!' : `Meta não batida (obj: ${state.goalXp} XP).`, state.totalXp >= state.goalXp ? 'term-good' : 'term-warn');
     line('Quer continuar? Suba o nível e faça mais 5.', 'term-dim');
     line('', '');
 
@@ -464,5 +700,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initSearch();
   initMenu();
   initScroll();
+  initFeedback();
   initTrainingTerminal();
 });
