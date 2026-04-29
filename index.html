@@ -11,7 +11,9 @@
 
 <!-- ═══════════════════════════════ NAVBAR ══════════════════ -->
 <nav class="navbar">
-  <a href="index.html" class="nav-logo">BUILD<em>XP</em></a>
+  <a href="index.html" class="nav-logo" aria-label="BuildXP — Início">
+    <img class="nav-logo-img" src="imagens/buildlogo.png" alt="BuildXP" />
+  </a>
   <button class="hamburger" id="hamburger" aria-label="Menu">☰</button>
   <ul class="nav-links" id="nav-links">
     <li><a href="#cards">Cards</a></li>
@@ -24,12 +26,18 @@
 <section class="hero">
   <div class="hero-blob hero-blob-1"></div>
   <div class="hero-blob hero-blob-2"></div>
+  <!-- Floating orbs (blue) -->
+  <div class="hero-orb orb-tr-1" aria-hidden="true"></div>
+  <div class="hero-orb orb-tr-2" aria-hidden="true"></div>
+  <div class="hero-orb orb-tr-3" aria-hidden="true"></div>
+  <div class="hero-orb orb-bl-1" aria-hidden="true"></div>
+  <div class="hero-orb orb-bl-2" aria-hidden="true"></div>
+  <div class="hero-orb orb-bl-3" aria-hidden="true"></div>
 
   <div class="hero-eyebrow">// DEV KNOWLEDGE BASE v1.0</div>
 
   <h1 class="hero-title">
-    <span class="t1">BUILD</span>
-    <span class="t2">XP</span>
+    <img class="hero-logo" src="imagens/buildlogoret.png" alt="BuildXP" />
   </h1>
 
   <p class="hero-sub">BUILD SKILLS. GAIN XP. SHIP CODE.</p>
@@ -145,8 +153,8 @@
 <!-- ═══════════════════════════════ QUIZ ════════════════════ -->
 <section id="quiz" class="section-wrap">
   <div class="container">
-    <div class="section-label">// KNOWLEDGE CHECK</div>
-    <h2 class="section-title">TESTE SEU NÍVEL</h2>
+    <div class="section-label">// TERMINAL TRAINING</div>
+    <h2 class="section-title">TREINE NO TERMINAL</h2>
     <div class="quiz-wrap">
       <div id="quiz"></div>
     </div>

@@ -9,7 +9,9 @@
 </head>
 <body>
 <nav class="navbar">
-  <a href="index.html" class="nav-logo">BUILD<em>XP</em></a>
+  <a href="index.html" class="nav-logo" aria-label="BuildXP — Início">
+    <img class="nav-logo-img" src="imagens/buildlogo.png" alt="BuildXP" />
+  </a>
   <button class="hamburger" id="hamburger">☰</button>
   <ul class="nav-links" id="nav-links">
     <li><a href="index.html#cards">Cards</a></li>
@@ -42,7 +44,9 @@
 
   <!-- BEGINNER -->
   <div class="tab-pane active" id="beginner">
-    <div class="steps">
+    <div class="steps-slider" data-steps-slider>
+      <button class="steps-nav" type="button" aria-label="Anterior" data-slide-prev>‹</button>
+      <div class="steps steps-track">
 
       <div class="step">
         <div class="step-num">01</div>
@@ -192,6 +196,8 @@ build/
         </div>
       </div>
 
+      </div>
+      <button class="steps-nav" type="button" aria-label="Próximo" data-slide-next>›</button>
     </div>
   </div>
 
