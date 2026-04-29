@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Git & GitHub — BuildXP</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>:root { --accent: var(--git); --accent-glow: var(--git-glow); }</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="index.html" class="nav-logo">BUILD<em>XP</em></a>
+  <button class="hamburger" id="hamburger">☰</button>
+  <ul class="nav-links" id="nav-links">
+    <li><a href="index.html#cards">Cards</a></li>
+    <li><a href="index.html#quiz">Quiz</a></li>
+    <li><a href="index.html#contact">Contato</a></li>
+  </ul>
+</nav>
+
+<div class="page-container">
+  <a href="index.html" class="back-link">← VOLTAR AOS CARDS</a>
+
+  <div class="page-hero">
+    <div class="page-hero-glow"></div>
+    <div class="page-icon">🌿</div>
+    <div>
+      <div class="page-class">VERSION CONTROL</div>
+      <div class="page-title">Git &amp; GitHub</div>
+      <div class="page-meta">
+        <span class="lvl-badge">LVL 8 · ESSENTIAL</span>
+        <div class="xp-mini"><div class="xp-mini-fill" style="width:80%"></div></div>
+        <span style="font-family:var(--f-mono);font-size:0.65rem;color:var(--text-muted)">2400 XP</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="beginner">▶ INICIANTE</button>
+    <button class="tab-btn" data-tab="ref">⌘ REFERÊNCIA RÁPIDA</button>
+  </div>
+
+  <!-- BEGINNER -->
+  <div class="tab-pane active" id="beginner">
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">01</div>
+        <div>
+          <div class="step-title">O que é Git?</div>
+          <div class="step-desc">Git é um sistema de controle de versão — rastreia todas as mudanças no seu código ao longo do tempo. Pensa nele como um histórico infinito com "save points" que você cria. GitHub é a plataforma online onde você hospeda esse histórico e colabora com outras pessoas.</div>
+          <div class="callout callout-tip">💡 Git ≠ GitHub. Git roda na sua máquina. GitHub é onde você guarda e compartilha.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">02</div>
+        <div>
+          <div class="step-title">Instalar o Git</div>
+          <div class="step-desc">Baixe e instale o Git de acordo com seu sistema operacional.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code># Windows → https://git-scm.com/download/win
+# macOS
+brew install git
+
+# Linux (Debian/Ubuntu)
+sudo apt install git
+
+# Verificar instalação
+git --version</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">03</div>
+        <div>
+          <div class="step-title">Configurar sua identidade</div>
+          <div class="step-desc">Antes de qualquer coisa, diga ao Git quem você é. Esses dados aparecem em cada commit seu.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code>git config --global user.name "Seu Nome"
+git config --global user.email "seu@email.com"</code>
+          </div>
+          <div class="callout callout-info">ℹ️ Use o mesmo e-mail da sua conta GitHub para os commits aparecerem no seu perfil.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">04</div>
+        <div>
+          <div class="step-title">Inicializar seu primeiro repositório</div>
+          <div class="step-desc">Entre na pasta do seu projeto e inicialize o Git.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code>cd meu-projeto
+git init</code>
+          </div>
+          <div class="callout callout-tip">💡 Isso cria uma pasta oculta <code style="font-family:var(--f-mono);font-size:0.8rem">.git</code> — ela contém todo o histórico. Nunca a delete.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">05</div>
+        <div>
+          <div class="step-title">Seu primeiro commit — o ciclo básico</div>
+          <div class="step-desc">O fluxo do Git tem 3 estágios: <strong>Working Directory → Stage → Commit</strong>. Você escreve (working), seleciona o que vai salvar (stage), e salva definitivamente (commit).</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code>git status          # ver estado atual
+git add .           # stage de tudo
+git commit -m "feat: meu primeiro commit"</code>
+          </div>
+          <div class="callout callout-warn">⚠️ Mensagens de commit importam. Use verbos no imperativo: feat, fix, update, remove, docs.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">06</div>
+        <div>
+          <div class="step-title">Conectar ao GitHub e enviar</div>
+          <div class="step-desc">Crie um repositório no GitHub (botão "New Repository"), depois conecte e envie.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code>git remote add origin https://github.com/usuario/repo.git
+git push -u origin main</code>
+          </div>
+          <div class="callout callout-info">ℹ️ O <code style="font-family:var(--f-mono);font-size:0.8rem">-u</code> define o upstream — nos próximos pushes basta <code style="font-family:var(--f-mono);font-size:0.8rem">git push</code>.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">07</div>
+        <div>
+          <div class="step-title">Branches — trabalhando em paralelo</div>
+          <div class="step-desc">Branches permitem desenvolver features sem afetar o código principal. É a base do trabalho em equipe.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code>git checkout -b minha-feature   # criar e entrar na branch
+git branch                        # listar branches
+git checkout main                 # voltar pra main
+git merge minha-feature           # juntar à main</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">08</div>
+        <div>
+          <div class="step-title">Puxar atualizações do remoto</div>
+          <div class="step-desc">Quando outras pessoas commitem, você precisa atualizar sua cópia local.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code>git pull     # puxar e mergear
+git fetch    # só verificar sem aplicar</code>
+          </div>
+          <div class="callout callout-tip">💡 Faça <code style="font-family:var(--f-mono);font-size:0.8rem">git pull</code> sempre antes de começar a trabalhar para evitar conflitos.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- REFERENCE -->
+  <div class="tab-pane" id="ref">
+    <div class="ref-search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="ref-search" id="ref-search" type="text" placeholder="Buscar comando... ex: branch, push, merge" />
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">SETUP & CONFIG</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">git --version</span><span class="cmd-desc">Ver versão do Git instalada</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git config --global user.name "Nome"</span><span class="cmd-desc">Definir nome do usuário</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git config --global user.email "email"</span><span class="cmd-desc">Definir e-mail do usuário</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git config --list</span><span class="cmd-desc">Listar todas as configurações</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">REPOSITÓRIO</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">git init</span><span class="cmd-desc">Inicializar repositório na pasta atual</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git clone &lt;url&gt;</span><span class="cmd-desc">Clonar repositório remoto</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git remote -v</span><span class="cmd-desc">Listar repositórios remotos</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git remote add origin &lt;url&gt;</span><span class="cmd-desc">Conectar ao repositório remoto</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">STAGE & COMMIT</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">git status</span><span class="cmd-desc">Ver estado dos arquivos</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git add .</span><span class="cmd-desc">Stage de todos os arquivos modificados</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git add &lt;arquivo&gt;</span><span class="cmd-desc">Stage de arquivo específico</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git commit -m "msg"</span><span class="cmd-desc">Commitar com mensagem</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git commit --amend</span><span class="cmd-desc">Editar o último commit</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git log --oneline</span><span class="cmd-desc">Histórico resumido de commits</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git diff</span><span class="cmd-desc">Ver mudanças não staged</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">BRANCHES</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">git branch</span><span class="cmd-desc">Listar branches locais</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git checkout -b &lt;nome&gt;</span><span class="cmd-desc">Criar e entrar na branch</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git switch &lt;nome&gt;</span><span class="cmd-desc">Trocar de branch (Git moderno)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git merge &lt;branch&gt;</span><span class="cmd-desc">Mergear branch na atual</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git rebase &lt;branch&gt;</span><span class="cmd-desc">Rebasear commits</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git branch -d &lt;nome&gt;</span><span class="cmd-desc">Deletar branch local</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">PUSH & PULL</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">git push</span><span class="cmd-desc">Enviar commits ao remoto</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git push -u origin &lt;branch&gt;</span><span class="cmd-desc">Push inicial com upstream</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git pull</span><span class="cmd-desc">Puxar e mergear mudanças</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git fetch</span><span class="cmd-desc">Puxar sem mergear</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git push origin --delete &lt;branch&gt;</span><span class="cmd-desc">Deletar branch remota</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">DESFAZER & EMERGÊNCIA</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">git restore &lt;arquivo&gt;</span><span class="cmd-desc">Descartar mudanças não commitadas</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git restore --staged &lt;arquivo&gt;</span><span class="cmd-desc">Remover do stage</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git reset --soft HEAD~1</span><span class="cmd-desc">Desfazer último commit (mantém mudanças)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git reset --hard HEAD~1</span><span class="cmd-desc">Desfazer e APAGAR mudanças ⚠️</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git stash</span><span class="cmd-desc">Salvar mudanças temporariamente</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git stash pop</span><span class="cmd-desc">Restaurar do stash</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git revert &lt;hash&gt;</span><span class="cmd-desc">Reverter commit sem apagar histórico</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<footer><span>BUILD</span>XP — De dev pra dev.</footer>
+<script src="main.js"></script>
+</body>
+</html>

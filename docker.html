@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Docker — BuildXP</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>:root { --accent: var(--docker); --accent-glow: var(--docker-glow); }</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="index.html" class="nav-logo">BUILD<em>XP</em></a>
+  <button class="hamburger" id="hamburger">☰</button>
+  <ul class="nav-links" id="nav-links">
+    <li><a href="index.html#cards">Cards</a></li>
+    <li><a href="index.html#quiz">Quiz</a></li>
+    <li><a href="index.html#contact">Contato</a></li>
+  </ul>
+</nav>
+
+<div class="page-container">
+  <a href="index.html" class="back-link">← VOLTAR AOS CARDS</a>
+
+  <div class="page-hero">
+    <div class="page-hero-glow"></div>
+    <div class="page-icon">🐳</div>
+    <div>
+      <div class="page-class">CONTAINERIZATION</div>
+      <div class="page-title">Docker</div>
+      <div class="page-meta">
+        <span class="lvl-badge">LVL 6 · ADVANCED</span>
+        <div class="xp-mini"><div class="xp-mini-fill" style="width:60%"></div></div>
+        <span style="font-family:var(--f-mono);font-size:0.65rem;color:var(--text-muted)">1800 XP</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="beginner">▶ INICIANTE</button>
+    <button class="tab-btn" data-tab="ref">⌘ REFERÊNCIA RÁPIDA</button>
+  </div>
+
+  <!-- BEGINNER -->
+  <div class="tab-pane active" id="beginner">
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">01</div>
+        <div>
+          <div class="step-title">O que é Docker?</div>
+          <div class="step-desc">Docker empacota sua aplicação e todas as suas dependências dentro de um container — um ambiente isolado e portável. Não importa se o servidor é Linux, Windows ou Mac: o container roda igual em qualquer lugar.</div>
+          <div class="callout callout-tip">💡 Pense num container como uma "caixa" com tudo que sua app precisa para rodar, incluindo o sistema operacional mínimo.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">02</div>
+        <div>
+          <div class="step-title">Instalar o Docker</div>
+          <div class="step-desc">Baixe o Docker Desktop — ele inclui tudo que você precisa: engine, CLI e interface gráfica.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code># Windows / macOS → https://www.docker.com/products/docker-desktop
+
+# Linux (Ubuntu)
+sudo apt update
+sudo apt install docker.io
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Verificar instalação
+docker --version</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">03</div>
+        <div>
+          <div class="step-title">Imagens vs Containers</div>
+          <div class="step-desc">
+            Uma <strong>imagem</strong> é o modelo/template — como uma classe em POO. Um <strong>container</strong> é uma instância rodando dessa imagem. Você pode ter vários containers rodando da mesma imagem.
+          </div>
+          <div class="callout callout-info">ℹ️ Imagem = receita. Container = o prato pronto.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code># Baixar uma imagem do Docker Hub
+docker pull nginx
+
+# Listar imagens baixadas
+docker images</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">04</div>
+        <div>
+          <div class="step-title">Rodar seu primeiro container</div>
+          <div class="step-desc">O comando <code style="font-family:var(--f-mono);color:var(--docker);font-size:0.8rem">docker run</code> baixa a imagem (se necessário) e inicia o container.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code># Hello World do Docker
+docker run hello-world
+
+# Rodar nginx em background na porta 8080
+docker run -d -p 8080:80 --name meu-nginx nginx
+
+# Acessar: http://localhost:8080</code>
+          </div>
+          <div class="callout callout-tip">💡 <code style="font-family:var(--f-mono);font-size:0.8rem">-d</code> = detached (background) | <code style="font-family:var(--f-mono);font-size:0.8rem">-p host:container</code> = mapeamento de porta</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">05</div>
+        <div>
+          <div class="step-title">Criar seu próprio Dockerfile</div>
+          <div class="step-desc">O Dockerfile é o "script de receita" que define como sua imagem é construída.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code># Dockerfile — exemplo Node.js
+FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 3000
+CMD ["node", "index.js"]</code>
+          </div>
+          <div class="cmd-block" style="margin-top:0.5rem">
+            <button class="copy-btn">copy</button>
+            <code># Buildar a imagem
+docker build -t minha-app .
+
+# Rodar a imagem buildada
+docker run -d -p 3000:3000 minha-app</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">06</div>
+        <div>
+          <div class="step-title">Gerenciar containers</div>
+          <div class="step-desc">Comandos do dia a dia para controlar seus containers em execução.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code>docker ps               # containers rodando
+docker ps -a            # todos os containers
+docker stop meu-nginx   # parar container
+docker start meu-nginx  # iniciar container parado
+docker rm meu-nginx     # remover container
+docker logs meu-nginx   # ver logs</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">07</div>
+        <div>
+          <div class="step-title">Docker Compose — múltiplos containers</div>
+          <div class="step-desc">O Compose permite orquestrar vários containers com um único arquivo. Perfeito para app + banco de dados + cache juntos.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code># docker-compose.yml
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: senha123
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:</code>
+          </div>
+          <div class="cmd-block" style="margin-top:0.5rem">
+            <button class="copy-btn">copy</button>
+            <code>docker compose up -d    # subir tudo em background
+docker compose down     # parar e remover tudo</code>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- REFERENCE -->
+  <div class="tab-pane" id="ref">
+    <div class="ref-search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="ref-search" id="ref-search" type="text" placeholder="Buscar comando... ex: run, volume, compose" />
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">IMAGENS</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">docker pull &lt;imagem&gt;</span><span class="cmd-desc">Baixar imagem do Docker Hub</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker images</span><span class="cmd-desc">Listar imagens locais</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker build -t &lt;nome&gt; .</span><span class="cmd-desc">Buildar imagem do Dockerfile atual</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker rmi &lt;imagem&gt;</span><span class="cmd-desc">Remover imagem local</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker image prune</span><span class="cmd-desc">Remover imagens sem uso</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">CONTAINERS</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">docker run &lt;imagem&gt;</span><span class="cmd-desc">Criar e iniciar container</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker run -d -p 8080:80 &lt;imagem&gt;</span><span class="cmd-desc">Rodar em background com porta mapeada</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker run -it &lt;imagem&gt; bash</span><span class="cmd-desc">Entrar no container interativamente</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker ps</span><span class="cmd-desc">Listar containers rodando</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker ps -a</span><span class="cmd-desc">Listar todos os containers</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker stop &lt;container&gt;</span><span class="cmd-desc">Parar container</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker start &lt;container&gt;</span><span class="cmd-desc">Iniciar container parado</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker restart &lt;container&gt;</span><span class="cmd-desc">Reiniciar container</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker rm &lt;container&gt;</span><span class="cmd-desc">Remover container</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker logs &lt;container&gt;</span><span class="cmd-desc">Ver logs do container</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker exec -it &lt;container&gt; bash</span><span class="cmd-desc">Abrir terminal no container rodando</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker inspect &lt;container&gt;</span><span class="cmd-desc">Ver detalhes do container</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">VOLUMES & REDES</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">docker volume create &lt;nome&gt;</span><span class="cmd-desc">Criar volume persistente</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker volume ls</span><span class="cmd-desc">Listar volumes</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker run -v &lt;vol&gt;:/data &lt;img&gt;</span><span class="cmd-desc">Montar volume no container</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker network ls</span><span class="cmd-desc">Listar redes</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker network create &lt;nome&gt;</span><span class="cmd-desc">Criar rede customizada</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">DOCKER COMPOSE</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">docker compose up</span><span class="cmd-desc">Subir todos os serviços</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker compose up -d</span><span class="cmd-desc">Subir em background</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker compose down</span><span class="cmd-desc">Parar e remover containers</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker compose logs</span><span class="cmd-desc">Ver logs de todos os serviços</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker compose build</span><span class="cmd-desc">Rebuildar imagens do compose</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker compose ps</span><span class="cmd-desc">Ver status dos serviços</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">LIMPEZA</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">docker system prune</span><span class="cmd-desc">Remover tudo que não está em uso</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker container prune</span><span class="cmd-desc">Remover containers parados</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker image prune -a</span><span class="cmd-desc">Remover todas as imagens sem uso</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<footer><span>BUILD</span>XP — De dev pra dev.</footer>
+<script src="main.js"></script>
+</body>
+</html>
