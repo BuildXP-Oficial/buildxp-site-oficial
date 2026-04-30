@@ -20,10 +20,39 @@ function doCopy(btn, text, label) {
   });
 }
 
+function getCmdBlockCopyText(block) {
+  const linesRoot = block.querySelector('.cmd-lines');
+  if (!linesRoot) {
+    const code = block.querySelector('code');
+    return code ? code.innerText : '';
+  }
+  const rows = [];
+  linesRoot.querySelectorAll('.cmd-line').forEach((line) => {
+    if (line.classList.contains('cmd-line-full')) {
+      rows.push(line.textContent.trimEnd());
+      return;
+    }
+    if (line.classList.contains('cmd-line-single')) {
+      const main = line.querySelector('.cmd-part');
+      if (main) rows.push(main.textContent.trimEnd());
+      return;
+    }
+    const main = line.querySelector('.cmd-part');
+    const note = line.querySelector('.cmd-note');
+    const m = main ? main.textContent.trimEnd() : '';
+    const n = note ? note.textContent.trim() : '';
+    if (m && n) rows.push(`${m} ${n}`);
+    else if (m) rows.push(m);
+    else if (n) rows.push(n);
+  });
+  return rows.join('\n');
+}
+
 function initCopy() {
   document.querySelectorAll('.copy-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const code = btn.closest('.cmd-block').querySelector('code').innerText;
+      const block = btn.closest('.cmd-block');
+      const code = getCmdBlockCopyText(block);
       doCopy(btn, code, 'copy');
     });
   });
@@ -44,6 +73,69 @@ function initStepsSlider() {
     if (!track || !prev || !next) return;
 
     const stepEls = () => [...track.querySelectorAll('.step')];
+
+    function getIndexMount() {
+      const pane = root.closest('.tab-pane') || root.parentElement;
+      return pane?.querySelector?.('[data-steps-index]') ?? null;
+    }
+
+    function scrollToStep(el) {
+      if (!el) return;
+      track.scrollTo({ left: el.offsetLeft, behavior: 'smooth' });
+    }
+
+    function buildIndex() {
+      const mount = getIndexMount();
+      if (!mount) return;
+      if (mount.dataset.built === '1') return;
+      mount.dataset.built = '1';
+
+      const items = stepEls()
+        .map((el) => {
+          const numRaw = el.querySelector('.step-num')?.textContent?.trim() ?? '';
+          const title = el.querySelector('.step-title')?.textContent?.trim() ?? '';
+          const n = Number.parseInt(numRaw, 10);
+          if (!Number.isFinite(n) || !title) return null; // ignore "PAUSA", "FIM", etc.
+          return { el, num: String(n).padStart(2, '0'), title };
+        })
+        .filter(Boolean);
+
+      if (!items.length) return;
+
+      mount.innerHTML = `
+        <div class="steps-index-title">Índice do card</div>
+        <div class="steps-index-list" role="list"></div>
+      `;
+
+      const list = mount.querySelector('.steps-index-list');
+      items.forEach((it) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'steps-index-item';
+        btn.setAttribute('role', 'listitem');
+        btn.textContent = `${it.num} — ${it.title}`;
+        btn.addEventListener('click', () => scrollToStep(it.el));
+        list.appendChild(btn);
+      });
+
+      const setActive = () => {
+        const center = track.scrollLeft + track.clientWidth * 0.5;
+        let bestIdx = 0;
+        let bestDist = Infinity;
+        items.forEach((it, idx) => {
+          const mid = it.el.offsetLeft + it.el.clientWidth * 0.5;
+          const d = Math.abs(mid - center);
+          if (d < bestDist) { bestDist = d; bestIdx = idx; }
+        });
+        [...list.querySelectorAll('.steps-index-item')].forEach((b, i) => {
+          b.classList.toggle('active', i === bestIdx);
+        });
+      };
+
+      track.addEventListener('scroll', () => setActive(), { passive: true });
+      window.addEventListener('resize', () => setActive());
+      setActive();
+    }
 
     function updateButtons() {
       const maxScroll = Math.max(0, track.scrollWidth - track.clientWidth - 1);
@@ -70,6 +162,7 @@ function initStepsSlider() {
     window.addEventListener('resize', () => updateButtons());
 
     updateButtons();
+    buildIndex();
   });
 }
 
