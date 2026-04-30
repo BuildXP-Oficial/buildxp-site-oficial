@@ -92,7 +92,7 @@ body::before {
 }
 .nav-logo em { color: var(--text-dim); font-style: normal; }
 .nav-logo-img {
-  height: calc(1.35rem + 80px);
+  height: calc(1.35rem + 45px);
   width: auto;
   display: block;
   filter: drop-shadow(0 0 18px rgba(77,181,255,0.18));
@@ -171,14 +171,14 @@ body::before {
 
 /* Cluster near logo (two triangles around center) */
 /* Triangle 1 — upper/right of logo */
-.xp-tr-1 { top: calc(50% - 175px); left: calc(50% + 170px); animation-duration: 11s; }
-.xp-tr-2 { top: calc(50% - 220px); left: calc(50% + 120px); font-size: 22px; opacity: 0.82; animation-duration: 13s; animation-delay: -2s; color: rgba(45, 125, 255, 0.356); }
-.xp-tr-3 { top: calc(50% - 250px); left: calc(50% + 120px); font-size: 16px; opacity: 0.68; animation-duration: 9.5s; animation-delay: -4s; color: rgba(125,205,255,0.92); }
+.xp-tr-1 { top: calc(50% - 245px); left: calc(50% + 170px); animation-duration: 11s; }
+.xp-tr-2 { top: calc(50% - 280px); left: calc(50% + 80px); font-size: 22px; opacity: 0.82; animation-duration: 13s; animation-delay: -2s; color: rgba(45, 125, 255, 0.356); }
+.xp-tr-3 { top: calc(50% - 240px); left: calc(50% + 120px); font-size: 16px; opacity: 0.68; animation-duration: 9.5s; animation-delay: -4s; color: rgba(125,205,255,0.92); }
 
 /* Triangle 2 — lower/left of logo */
-.xp-bl-1 { top: calc(50% + 20px); left: calc(50% - 170px); animation-duration: 12s; animation-delay: -3s; }
-.xp-bl-2 { top: calc(50% + 45px); left: calc(50% - 80px); font-size: 21px; opacity: 0.82; animation-duration: 14s; color: rgba(45, 125, 255, 0.37); }
-.xp-bl-3 { top: calc(50% + 50px);  left: calc(50% - 120px); font-size: 15px; opacity: 0.66; animation-duration: 10s; animation-delay: -5s; color: rgba(125,205,255,0.92); }
+.xp-bl-1 { top: calc(50% + 12px); left: calc(50% - 170px); animation-duration: 12s; animation-delay: -3s; }
+.xp-bl-2 { top: calc(50% + 30px); left: calc(50% - 80px); font-size: 21px; opacity: 0.82; animation-duration: 14s; color: rgba(45, 125, 255, 0.37); }
+.xp-bl-3 { top: calc(50% + 5px);  left: calc(50% - 120px); font-size: 15px; opacity: 0.66; animation-duration: 10s; animation-delay: -5s; color: rgba(125,205,255,0.92); }
 
 .hero-eyebrow {
   font-family: var(--f-mono); font-size:0.72rem;
@@ -194,7 +194,7 @@ body::before {
 }
 .hero-logo {
   display: block;
-  height: calc(clamp(5rem, 14vw, 11rem) + 100px);
+  height: calc(clamp(5rem, 14vw, 11rem) + 200px);
   width: auto;
   margin: 0 auto;
   filter: drop-shadow(0 0 36px rgba(77,181,255,0.22));
@@ -724,7 +724,7 @@ footer span { color:var(--accent); }
   display: block;
   filter: drop-shadow(0 0 22px rgba(77,181,255,0.18));
 }
-.page-icon img.icon-git { height: calc(3.5rem + 5px); }
+.page-icon img.icon-git { height: calc(3.5rem + 25px); }
 .page-class {
   font-family:var(--f-mono); font-size:0.65rem;
   color:var(--accent, var(--git)); letter-spacing:3px;
