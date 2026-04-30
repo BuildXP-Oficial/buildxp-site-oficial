@@ -95,19 +95,127 @@ function initTabs() {
 function initSearch() {
   const search = document.getElementById('ref-search');
   if (!search) return;
-  search.addEventListener('input', () => {
-    const q = search.value.toLowerCase();
-    document.querySelectorAll('.cmd-item').forEach(item => {
-      const cmd  = item.querySelector('.cmd-text')?.textContent.toLowerCase() ?? '';
-      const desc = item.querySelector('.cmd-desc')?.textContent.toLowerCase() ?? '';
-      item.style.display = (cmd.includes(q) || desc.includes(q)) ? '' : 'none';
+
+  const norm = (s) =>
+    String(s ?? '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+
+  const STOP = new Set([
+    'a','o','as','os','um','uma','uns','umas',
+    'de','do','da','dos','das','no','na','nos','nas','em','por','pra','para','pro','com','sem',
+    'e','ou','que','como','qual','quais','quando','onde','porque','pq','se','ao','aos',
+    'eu','voce','voces','vc','me','minha','meu','minhas','meus','seu','sua','seus','suas',
+    'faco','faz','fazer','quero','preciso','posso','pode','queria','seria','tipo','sobre',
+    'isso','isto','aquilo','aqui','ai','la','já','ja','tambem','tb','muito','mais','menos'
+  ]);
+
+  // Lightweight keyword expansion to better match natural language queries.
+  // Keep this intentionally small: it should help, not overwhelm results.
+  const SYN = {
+    // generic
+    salvar: ['save','salvar','guardar','gravar','persistir','registrar'],
+    apagar: ['apagar','remover','delete','deletar','excluir'],
+    listar: ['listar','lista','ver','mostrar','exibir','ls'],
+    iniciar: ['iniciar','inicializar','criar','novo','new','init'],
+    configurar: ['configurar','config','set','definir'],
+
+    // git-ish
+    branch: ['branch','branches','ramo'],
+    commit: ['commit','commitar','salvar','registrar'],
+    push: ['push','enviar','subir','publicar'],
+    pull: ['pull','puxar','baixar','atualizar'],
+    merge: ['merge','juntar','unir'],
+    rebase: ['rebase'],
+    stash: ['stash','guardar','salvar'],
+    remoto: ['remote','remoto','origin','upstream'],
+    tag: ['tag','marcar','versao','versão'],
+
+    // docker-ish
+    container: ['container','containers'],
+    imagem: ['imagem','image','images'],
+    build: ['build','buildar','compilar'],
+    logs: ['logs','log'],
+    compose: ['compose','docker-compose','dockercompose'],
+
+    // npm-ish
+    instalar: ['install','instalar','i','add'],
+    atualizar: ['update','upgrade','atualizar'],
+    remover: ['uninstall','remove','rm','remover'],
+    script: ['run','script','scripts'],
+
+    // dotnet-ish
+    projeto: ['projeto','project','sln','solution','solucao','solução'],
+    teste: ['test','teste','testes'],
+    publicar: ['publish','publicar','deploy'],
+  };
+
+  const expandToken = (t) => {
+    const out = new Set([t]);
+    const direct = SYN[t];
+    if (direct) direct.forEach(x => out.add(x));
+
+    // Special intents (multi-word-ish) derived from a single token
+    if (t === 'salvar') {
+      ['commit','push','stash'].forEach(x => out.add(x));
+    }
+    if (t === 'branch') {
+      ['checkout','switch'].forEach(x => out.add(x));
+    }
+    return [...out];
+  };
+
+  const tokenize = (q) => {
+    const base = norm(q)
+      .replace(/[^a-z0-9+_.#\s-]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!base) return [];
+    const parts = base.split(' ').filter(Boolean);
+    const tokens = parts
+      .filter(w => w.length >= 2 && !STOP.has(w))
+      .flatMap(expandToken);
+    return [...new Set(tokens)];
+  };
+
+  const items = [...document.querySelectorAll('.cmd-item')].map(el => {
+    const cmdRaw = el.querySelector('.cmd-text')?.textContent ?? '';
+    const descRaw = el.querySelector('.cmd-desc')?.textContent ?? '';
+    return {
+      el,
+      cmd: norm(cmdRaw),
+      desc: norm(descRaw),
+    };
+  });
+
+  const scoreItem = (it, tokens) => {
+    if (!tokens.length) return 1;
+    let score = 0;
+    for (const t of tokens) {
+      if (!t) continue;
+      if (it.cmd.includes(t)) score += 6;
+      if (it.desc.includes(t)) score += 3;
+    }
+    return score;
+  };
+
+  const apply = () => {
+    const tokens = tokenize(search.value);
+    items.forEach(it => {
+      const s = scoreItem(it, tokens);
+      it.el.style.display = s > 0 ? '' : 'none';
     });
     // Hide empty section titles
     document.querySelectorAll('.ref-section').forEach(sec => {
       const visible = [...sec.querySelectorAll('.cmd-item')].some(i => i.style.display !== 'none');
       sec.style.display = visible ? '' : 'none';
     });
-  });
+  };
+
+  search.addEventListener('input', apply);
+  apply();
 }
 
 /* ── MOBILE MENU ────────────────────────────────────────────*/
