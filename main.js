@@ -246,8 +246,7 @@ function initFeedback() {
   const banned = [
     'idiota','burro','bosta','merda','fdp','foda-se','foda se','caralho',
     'porra','desgraça','desgraca','otario','otária','otaria','imbecil',
-    'racista','nazista','lixo','vagabundo','vagabunda'
-  ];
+    'racista','nazista','lixo','vagabundo','vagabunda', 'puta', 'puto', 'horrível', 'merda', 'fdp', 'foda-se', 'foda se', 'caralho', 'porra', 'desgraça', 'desgraca', 'otario', 'otária', 'otaria', 'imbecil'  ];
 
   const form = document.getElementById('fb-form');
   const nameEl = document.getElementById('fb-name');
@@ -490,7 +489,7 @@ function initTrainingTerminal() {
         <div class="term-title">TERMINAL TRAINING</div>
         <div class="term-sub">
           Responda como se estivesse no terminal: eu faço a pergunta, você digita o comando.<br>
-          Pontuação: <span class="term-good">+20 XP</span> certo · <span class="term-warn">+10 XP</span> parcial · <span class="term-bad">+0 XP</span> errado
+          Pontuação: <span class="term-good">+50 XP</span> certo · <span class="term-warn">+25 XP</span> parcialmente correto · <span class="term-bad">-1 XP</span> errado
         </div>
 
         ${isTopicStep ? `
