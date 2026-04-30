@@ -62,6 +62,10 @@ function initStepsSlider() {
     prev.addEventListener('click', () => scrollByOne(-1));
     next.addEventListener('click', () => scrollByOne(1));
 
+    root.querySelectorAll('[data-steps-restart]').forEach(btn => {
+      btn.addEventListener('click', () => track.scrollTo({ left: 0, behavior: 'smooth' }));
+    });
+
     track.addEventListener('scroll', () => updateButtons(), { passive: true });
     window.addEventListener('resize', () => updateButtons());
 
@@ -145,8 +149,6 @@ function initFeedback() {
   const listEl = document.getElementById('fb-list');
   const emptyEl = document.getElementById('fb-empty');
   const searchEl = document.getElementById('fb-search');
-  const clearBtn = document.getElementById('fb-clear');
-  const resetBtn = document.getElementById('fb-reset');
 
   const norm = (s) =>
     String(s ?? '')
@@ -218,19 +220,6 @@ function initFeedback() {
       });
   }
 
-  clearBtn?.addEventListener('click', () => {
-    nameEl.value = '';
-    msgEl.value = '';
-    kindEl.value = 'Sugestão';
-    setStatus('', '');
-  });
-
-  resetBtn?.addEventListener('click', () => {
-    localStorage.removeItem(LS_KEY);
-    render();
-    setStatus('Feedbacks locais apagados.', 'ok');
-  });
-
   searchEl?.addEventListener('input', () => render());
 
   form?.addEventListener('submit', (e) => {
@@ -238,7 +227,7 @@ function initFeedback() {
     setStatus('', '');
 
     const name = String(nameEl.value || '').trim().slice(0, 40);
-    const kind = String(kindEl.value || 'Sugestão').trim().slice(0, 20);
+    const kind = String(kindEl.value || 'Sugestão de ajuste').trim().slice(0, 40);
     const msg = String(msgEl.value || '').trim();
 
     if (msg.length < 6) {
@@ -263,14 +252,14 @@ function initFeedback() {
     save(items);
 
     msgEl.value = '';
-    setStatus('Publicado no mural (salvo neste navegador).', 'ok');
+    setStatus('Publicado no mural! Obrigado por contribuir.', 'ok');
     render();
   });
 
   render();
 }
 
-/* ── TRAINING TERMINAL (replaces quiz) ──────────────────────*/
+/* ── TRAINING TERMINAL ──────────────────────────────────────*/
 const TRAIN_TOPICS = ['Git', 'Docker', 'NPM', '.NET'];
 const TRAIN_LEVELS = [
   { id: 'beginner', label: 'INICIANTE' },
@@ -346,7 +335,7 @@ const TRAIN_BANK = {
 };
 
 function initTrainingTerminal() {
-  const mount = document.getElementById('quiz');
+  const mount = document.getElementById('terminal');
   if (!mount) return;
 
   const state = {

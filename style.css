@@ -79,7 +79,8 @@ body::before {
   position: fixed; top:0; left:0; right:0; z-index:100;
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 2rem; height: 62px;
-  background: rgba(7,7,15,0.88);
+  /* Slightly darker navy than --bg */
+  background: rgba(3, 10, 23, 0.94);
   backdrop-filter: blur(22px);
   border-bottom: 1px solid var(--border);
 }
@@ -371,16 +372,16 @@ body::before {
 .btn-secondary:hover { background:rgba(255,255,255,0.04); }
 
 /* ============================================================
-   TRAINING TERMINAL (replaces quiz)
+   TRAINING TERMINAL
    ============================================================ */
-.quiz-wrap { max-width:680px; margin:0 auto; }
+.terminal-wrap { max-width:680px; margin:0 auto; }
 
-#quiz {
+#terminal {
   background:var(--surface); border:1px solid var(--border);
   border-radius:var(--radius); padding:2.5rem; position:relative;
   overflow:hidden;
 }
-#quiz::before {
+#terminal::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -566,7 +567,7 @@ body::before {
 .term-send:hover { filter: brightness(1.08); box-shadow: var(--accent-glow); }
 
 @media (max-width: 768px) {
-  #quiz { padding: 1.25rem; }
+  #terminal { padding: 1.25rem; }
   .term-screen { height: 360px; }
   .term-inputbar { gap: 0.5rem; }
   .term-send { padding: 0.7rem 0.85rem; }
@@ -649,6 +650,11 @@ footer span { color:var(--accent); }
   font-family: var(--f-mono);
   font-size: 0.86rem;
   transition: var(--ease);
+}
+.fb-input option,
+.fb-input optgroup {
+  color: #061229; /* navy text for opened dropdown */
+  background: #f2f6ff;
 }
 .fb-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(77,181,255,0.10); }
 .fb-textarea { resize: vertical; min-height: 130px; }
