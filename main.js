@@ -75,13 +75,43 @@ function initStepsSlider() {
     const stepEls = () => [...track.querySelectorAll('.step')];
 
     function getIndexMount() {
-      const pane = root.closest('.tab-pane') || root.parentElement;
-      return pane?.querySelector?.('[data-steps-index]') ?? null;
+      return root.querySelector('[data-steps-index]') ?? null;
     }
 
     function scrollToStep(el) {
       if (!el) return;
       track.scrollTo({ left: el.offsetLeft, behavior: 'smooth' });
+    }
+
+    /** Altura do trilho = slide mais central (evita espaço vazio até o índice em slides curtos) */
+    let trackHeightRaf = null;
+    function syncTrackHeight() {
+      const items = stepEls();
+      if (!items.length) return;
+      if (track.clientWidth <= 0) return;
+      const center = track.scrollLeft + track.clientWidth * 0.5;
+      let bestEl = items[0];
+      let bestDist = Infinity;
+      items.forEach((el) => {
+        const mid = el.offsetLeft + el.clientWidth * 0.5;
+        const d = Math.abs(mid - center);
+        if (d < bestDist) {
+          bestDist = d;
+          bestEl = el;
+        }
+      });
+      const padBottom = parseFloat(getComputedStyle(track).paddingBottom) || 0;
+      const h = Math.max(0, Math.ceil(bestEl.offsetHeight + padBottom));
+      track.style.minHeight = '0';
+      track.style.height = `${h}px`;
+    }
+
+    function scheduleSyncTrackHeight() {
+      if (trackHeightRaf !== null) cancelAnimationFrame(trackHeightRaf);
+      trackHeightRaf = requestAnimationFrame(() => {
+        syncTrackHeight();
+        trackHeightRaf = null;
+      });
     }
 
     function buildIndex() {
@@ -132,9 +162,16 @@ function initStepsSlider() {
         });
       };
 
-      track.addEventListener('scroll', () => setActive(), { passive: true });
-      window.addEventListener('resize', () => setActive());
+      track.addEventListener('scroll', () => {
+        setActive();
+        scheduleSyncTrackHeight();
+      }, { passive: true });
+      window.addEventListener('resize', () => {
+        setActive();
+        scheduleSyncTrackHeight();
+      });
       setActive();
+      scheduleSyncTrackHeight();
     }
 
     function updateButtons() {
@@ -163,6 +200,15 @@ function initStepsSlider() {
 
     updateButtons();
     buildIndex();
+    scheduleSyncTrackHeight();
+    window.addEventListener('load', () => scheduleSyncTrackHeight(), { once: true });
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const ro = new ResizeObserver(() => scheduleSyncTrackHeight());
+      ro.observe(track);
+    }
+
+    track.addEventListener('scrollend', () => scheduleSyncTrackHeight(), { passive: true });
   });
 }
 
@@ -175,6 +221,9 @@ function initTabs() {
   function activateTab(id) {
     tabs.forEach(t  => t.classList.toggle('active', t.dataset.tab === id));
     panes.forEach(p => p.classList.toggle('active', p.id === id));
+    if (id === 'beginner') {
+      requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+    }
   }
 
   tabs.forEach(tab => tab.addEventListener('click', () => activateTab(tab.dataset.tab)));
