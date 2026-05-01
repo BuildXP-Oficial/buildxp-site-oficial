@@ -62,10 +62,10 @@
         <div class="step-num">02</div>
         <div>
           <div class="step-title">Onde rodar os comandos (antes de começar)</div>
-          <div class="step-desc">Quando um slide mostrar um bloco de comandos, você vai usar um <strong>terminal</strong>. Terminal é a “telinha de comandos” onde você cola e executa linhas como <code style="font-family:var(--f-mono);font-size:0.8rem">git status</code>.</div>
-          <div class="step-desc"><strong>Opção mais fácil (recomendada): Terminal do VS Code / Cursor</strong><br>1) Abra a pasta do projeto: <strong>Arquivo → Abrir pasta…</strong><br>2) Abra o terminal: <strong>Terminal → Novo terminal</strong> (atalho comum: <strong>Ctrl+`</strong>)<br>3) Cole o comando e aperte <strong>Enter</strong></div>
+          <div class="step-desc">Quando um slide mostrar um bloco de comandos, você vai usar um <strong>terminal</strong>. Terminal é a “telinha de comandos” onde você cola e executa linhas como <code>git status</code>.</div>
+          <div class="step-desc"><strong>Opção mais fácil (recomendada): Terminal do VS Code</strong><br>1) Abra a pasta do projeto: <strong>Arquivo → Abrir pasta…</strong><br>2) Abra o terminal: <strong>Terminal → Novo terminal</strong> (atalho comum: <strong>Ctrl+`</strong>)<br>3) Cole o comando (um por vez) e aperte <strong>Enter</strong></div>
           <div class="step-desc"><strong>Outras opções (também funciona):</strong><br>- Windows: PowerShell ou Prompt de Comando (CMD)<br>- macOS: Terminal<br>- Linux: Terminal</div>
-          <div class="step-desc"><strong>Importante:</strong> antes de rodar comandos do Git, esteja na pasta do projeto. Exemplo no Windows: <code style="font-family:var(--f-mono);font-size:0.8rem">cd C:\caminho\do\seu\projeto</code></div>
+          <div class="step-desc"><strong>Importante:</strong> antes de rodar comandos do Git, esteja na pasta do projeto. Exemplo no Windows: <code>cd C:\caminho\do\seu\projeto</code></div>
           <div class="callout callout-tip">💡 Regra de ouro: comandos do Git vão no terminal — de preferência o terminal do VS Code com a pasta do projeto aberta.</div>
         </div>
       </div>
@@ -75,9 +75,9 @@
         <div>
           <div class="step-title">Instalar o Git (e conferir se funcionou)</div>
           <div class="step-desc"><strong>Windows (mais comum para iniciantes):</strong> baixe o instalador em <a href="https://git-scm.com/download/win" target="_blank" rel="noopener">git-scm.com/download/win</a>, execute e avance com <strong>Next</strong> até finalizar. Isso instala o Git <strong>e</strong> um terminal chamado <strong>Git Bash</strong> (útil no dia a dia).</div>
-          <div class="step-desc"><strong>macOS:</strong> você pode instalar pelo instalador no site do Git <strong>ou</strong>, se já usa Homebrew, usar <code style="font-family:var(--f-mono);font-size:0.8rem">brew install git</code>.</div>
-          <div class="step-desc"><strong>Linux (Debian/Ubuntu):</strong> normalmente instala pelo gerenciador de pacotes com <code style="font-family:var(--f-mono);font-size:0.8rem">sudo apt install git</code>.</div>
-          <div class="step-desc"><strong>Depois de instalar:</strong> abra um terminal (de preferência o do VS Code/Cursor, como no slide anterior) e rode <code style="font-family:var(--f-mono);font-size:0.8rem">git --version</code>. Se aparecer um número de versão, está ok.</div>
+          <div class="step-desc"><strong>macOS:</strong> você pode instalar pelo instalador no site do Git <strong>ou</strong>, se já usa Homebrew, usar <code>brew install git</code>.</div>
+          <div class="step-desc"><strong>Linux (Debian/Ubuntu):</strong> normalmente instala pelo gerenciador de pacotes com <code>sudo apt install git</code>.</div>
+          <div class="step-desc"><strong>Depois de instalar:</strong> abra um terminal (de preferência o do VS Code, como no slide anterior) e rode <code>git --version</code>. Se aparecer um número de versão, está ok.</div>
           <div class="cmd-block">
             <button class="copy-btn">copy</button>
             <div class="cmd-lines" aria-label="Comandos de instalação e verificação">
@@ -102,8 +102,8 @@
         <div>
           <div class="step-title">Configurando o Git: gerando sua identidade</div>
           <div class="step-desc">Em todo <strong>commit</strong>, o Git registra <strong>quem fez a mudança</strong>: um nome e um e-mail. Por isso você diz ao Git “quem você é” antes de trabalhar com repositórios.</div>
-          <div class="step-desc">Com <code style="font-family:var(--f-mono);font-size:0.8rem">--global</code>, essas informações ficam salvas na sua máquina e valem para <strong>todos os projetos</strong> (não só para uma pasta).</div>
-          <div class="step-desc"><strong>Onde rodar:</strong> qualquer terminal que já esteja funcionando com Git — por exemplo <strong>Git Bash</strong>, <strong>PowerShell</strong> ou o terminal do <strong>VS Code/Cursor</strong>. Para <code style="font-family:var(--f-mono);font-size:0.8rem">--global</code>, você <strong>não precisa</strong> estar dentro da pasta de um projeto.</div>
+          <div class="step-desc">Com <code>--global</code>, essas informações ficam salvas na sua máquina e valem para <strong>todos os projetos</strong> (não só para uma pasta).</div>
+          <div class="step-desc"><strong>Onde rodar:</strong> qualquer terminal que já esteja funcionando com Git — por exemplo <strong>Git Bash</strong>, <strong>PowerShell</strong> ou o terminal do <strong>VS Code</strong>. Para <code>--global</code>, você <strong>não precisa</strong> estar dentro da pasta de um projeto.</div>
           <div class="step-desc">Cole os comandos abaixo e troque o texto entre aspas pelo seu nome e pelo seu e-mail.</div>
           <div class="cmd-block">
             <button class="copy-btn">copy</button>
@@ -119,13 +119,13 @@ git config --global user.email "seu@email.com"</code>
         <div>
           <div class="step-title">Primeiro repositório na sua máquina (git init)</div>
           <div class="step-desc">Um <strong>repositório Git</strong> é uma pasta de projeto em que o Git passa a guardar o <strong>histórico</strong>. Por baixo dos panos aparece uma pasta oculta chamada <strong>.git</strong> (é lá que fica esse histórico).</div>
-          <div class="step-desc">Use <code style="font-family:var(--f-mono);font-size:0.8rem">git init</code> quando você <strong>já tem uma pasta com arquivos</strong> e quer começar a versionar <strong>do zero</strong> nela (ainda não existe histórico Git ali).</div>
-          <div class="step-desc"><strong>Antes dos comandos:</strong> entre na pasta do projeto no terminal (como no Slide 02). No exemplo abaixo, <code style="font-family:var(--f-mono);font-size:0.8rem">meu-projeto</code> é só um nome fictício — troque pelo nome da sua pasta.</div>
-          <div class="step-desc">(<strong>Obs.:</strong> neste guia, o que vier depois de <code style="font-family:var(--f-mono);font-size:0.8rem">#</code> em cada linha é só <strong>comentário</strong> explicando a utilidade daquele comando — não é obrigatório copiar essa parte.)</div>
+          <div class="step-desc">Use <code>git init</code> quando você <strong>já tem uma pasta com arquivos</strong> e quer começar a versionar <strong>do zero</strong> nela (ainda não existe histórico Git ali).</div>
+          <div class="step-desc"><strong>Antes dos comandos:</strong> entre na pasta do projeto no terminal (como no Slide 02). No exemplo abaixo, <code>meu-projeto</code> é só um nome fictício — troque pelo nome da sua pasta.</div>
+          <div class="step-desc">(<strong>Obs.:</strong> neste guia, o que vier depois de <code>#</code> em cada linha é só <strong>comentário</strong> explicando a utilidade daquele comando — não copie essa parte.)</div>
           <div class="cmd-block">
             <button class="copy-btn">copy</button>
             <div class="cmd-lines" aria-label="Comandos git init">
-              <div class="cmd-line"><span class="cmd-part">cd meu-projeto</span><span class="cmd-note"># entra na pasta do projeto (troque pelo nome da sua pasta)</span></div>
+              <div class="cmd-line"><span class="cmd-part">cd meu-projeto</span><span class="cmd-note"># entra na pasta do projeto</span></div>
               <div class="cmd-line"><span class="cmd-part">git init</span><span class="cmd-note"># começa o Git nessa pasta</span></div>
             </div>
           </div>
@@ -145,17 +145,16 @@ git config --global user.email "seu@email.com"</code>
         <div class="step-num">06</div>
         <div>
           <div class="step-title">Salvar mudanças no histórico (status → add → commit)</div>
-          <div class="step-desc">Depois do <code style="font-family:var(--f-mono);font-size:0.8rem">git init</code>, o dia a dia é um ciclo: <strong>ver o que mudou</strong> → <strong>marcar o que vai entrar no próximo salvamento</strong> → <strong>registrar esse salvamento no histórico</strong> com uma mensagem.</div>
-          <div class="step-desc">Em termos simples: você edita arquivos na pasta (<strong>trabalho</strong>); o <code style="font-family:var(--f-mono);font-size:0.8rem">git add</code> define o que será incluído no próximo commit (<strong>stage</strong>); o <code style="font-family:var(--f-mono);font-size:0.8rem">git commit</code> cria um <strong>registro</strong> no histórico (<strong>commit</strong>) com autor, data e mensagem.</div>
+          <div class="step-desc">Depois do <code>git init</code>, o dia a dia é um ciclo: <strong>ver o que mudou</strong> → <strong>marcar o que vai entrar no próximo salvamento</strong> → <strong>registrar esse salvamento no histórico</strong> com uma mensagem.</div>
+          <div class="step-desc">Em termos simples: você edita arquivos na pasta (<strong>trabalho</strong>); o <code>git add</code> define o que será incluído no próximo commit (<strong>stage</strong>); o <code>git commit</code> cria um <strong>registro</strong> no histórico (<strong>commit</strong>) com autor, data e mensagem.</div>
           <div class="step-desc">Rode os comandos <strong>na pasta do repositório</strong>, no terminal do VS Code/Cursor (como no Slide 02).</div>
-          <div class="step-desc">(<strong>Obs.:</strong> neste guia, o que vier depois de <code style="font-family:var(--f-mono);font-size:0.8rem">#</code> em cada linha é só <strong>comentário</strong> explicando a utilidade daquele comando — não é obrigatório copiar essa parte.)</div>
-          <div class="step-desc">No primeiro commit, uma mensagem simples como “Primeiro commit” já vale. Em times, é comum usar prefixos como <code style="font-family:var(--f-mono);font-size:0.8rem">feat:</code>, <code style="font-family:var(--f-mono);font-size:0.8rem">fix:</code> ou <code style="font-family:var(--f-mono);font-size:0.8rem">docs:</code> na mensagem.</div>
+          <div class="step-desc">No primeiro commit, uma mensagem simples como “Primeiro commit” já vale. Em times, é comum usar prefixos como <code>feat:</code>, <code>fix:</code> ou <code>docs:</code> na mensagem. Vamos entender mais sobre isso nos próximos slides.</div>
           <div class="cmd-block">
             <button class="copy-btn">copy</button>
             <div class="cmd-lines" aria-label="Comandos status, add e commit">
               <div class="cmd-line"><span class="cmd-part">git status</span><span class="cmd-note"># mostra o que mudou e o que já está preparado para commit</span></div>
-              <div class="cmd-line"><span class="cmd-part">git add .</span><span class="cmd-note"># prepara todas as mudanças da pasta para o próximo commit</span></div>
-              <div class="cmd-line"><span class="cmd-part">git commit -m "Primeiro commit"</span><span class="cmd-note"># registra no histórico com uma mensagem curta</span></div>
+              <div class="cmd-line"><span class="cmd-part">git add .</span><span class="cmd-note"># prepara todas as mudanças para o próximo commit</span></div>
+              <div class="cmd-line"><span class="cmd-part">git commit -m "Primeiro commit"</span><span class="cmd-note"># registra no histórico</span></div>
             </div>
           </div>
           <div class="callout callout-tip">💡 A mensagem do commit é o “rótulo” da mudança: quanto mais clara, mais fácil de entender depois.</div>
@@ -167,9 +166,9 @@ git config --global user.email "seu@email.com"</code>
         <div>
           <div class="step-title">Criando seu repositório no GitHub (no site)</div>
           <div class="step-desc">1) Acesse o GitHub e clique em <strong>New repository</strong> (às vezes aparece como <strong>Repositories → New</strong>).</div>
-          <div class="step-desc">2) Escolha um <strong>Repository name</strong> simples (ex.: <code style="font-family:var(--f-mono);font-size:0.8rem">meu-projeto</code>) e defina se será <strong>Public</strong> ou <strong>Private</strong>.</div>
+          <div class="step-desc">2) Escolha um <strong>Repository name</strong> simples (ex.: <code>meu-projeto</code>) e defina se será <strong>Public</strong> ou <strong>Private</strong>.</div>
           <div class="step-desc">3) Se você <strong>já tem o projeto no computador</strong> e vai enviar pela primeira vez, evite criar arquivos automáticos agora: <strong>não</strong> marque “Add a README”, nem adicione <strong>.gitignore</strong> ou licença neste momento (isso reduz dor de cabeça no primeiro push).</div>
-          <div class="step-desc">4) Clique em <strong>Create repository</strong>. Na página do repositório, use o botão verde <strong>Code</strong> e copie a <strong>URL HTTPS</strong> (algo como <code style="font-family:var(--f-mono);font-size:0.8rem">https://github.com/USUARIO/REPO.git</code>) — você vai colar no terminal no próximo slide.</div>
+          <div class="step-desc">4) Clique em <strong>Create repository</strong>. Na página do repositório, use o botão verde <strong>Code</strong> e copie a <strong>URL HTTPS</strong> (algo como <code>https://github.com/USUARIO/REPO.git</code>) — você vai colar no terminal no próximo slide.</div>
           <div class="callout callout-tip">💡 Primeiro você cria o repositório no GitHub. No próximo slide, você conecta sua pasta local a ele e envia seu primeiro push.</div>
         </div>
       </div>
@@ -179,16 +178,16 @@ git config --global user.email "seu@email.com"</code>
         <div>
           <div class="step-title">Conectar seu projeto ao GitHub (remote + primeiro push)</div>
           <div class="step-desc"><strong>Objetivo:</strong> ligar o repositório da sua máquina ao repositório que você criou no GitHub e enviar seus commits de lá pra cá (primeiro push). Para isso, já ajuda ter pelo menos <strong>um commit local</strong> feito (como no Slide 06).</div>
-          <div class="step-desc">No terminal, esteja na <strong>pasta do projeto</strong> (VS Code/Cursor aberto na pasta certa, como no Slide 02). Use a <strong>mesma URL HTTPS</strong> que você copiou no Slide 07 (troque <strong>USUARIO</strong> e <strong>REPO</strong> ou cole a URL inteira).</div>
-          <div class="step-desc">O comando <code style="font-family:var(--f-mono);font-size:0.8rem">git remote add origin ...</code> cria o apelido <strong>origin</strong>: um atalho para o endereço do GitHub.</div>
-          <div class="step-desc">O <code style="font-family:var(--f-mono);font-size:0.8rem">git push -u origin main</code> envia a branch <strong>main</strong>. Se a sua branch principal tiver outro nome (ex.: <code style="font-family:var(--f-mono);font-size:0.8rem">master</code>), troque no comando.</div>
-          <div class="step-desc">(<strong>Obs.:</strong> neste guia, o que vier depois de <code style="font-family:var(--f-mono);font-size:0.8rem">#</code> em cada linha é só <strong>comentário</strong> — não é obrigatório copiar essa parte.)</div>
+          <div class="step-desc">No terminal, esteja na <strong>pasta do projeto</strong> (VS Code aberto na pasta certa, como no Slide 02). Use a <strong>mesma URL HTTPS</strong> que você copiou no Slide 07 (troque <strong>USUARIO</strong> e <strong>REPO</strong> ou cole a URL inteira).</div>
+          <div class="step-desc">O comando <code>git remote add origin ...</code> cria o apelido <strong>origin</strong>: um atalho para o endereço do GitHub.</div>
+          <div class="step-desc">O <code>git push -u origin main</code> envia a branch <strong>main</strong>. Se a sua branch principal tiver outro nome (ex.: <code>master</code>), troque no comando.</div>
+          <div class="step-desc">(<strong>Obs.:</strong> Rode um comando por vez. Copie e cole o comando no terminal e aperte Enter.)</div>
           <div class="cmd-block">
             <button class="copy-btn">copy</button>
             <div class="cmd-lines" aria-label="Remote e primeiro push">
-              <div class="cmd-line"><span class="cmd-part">git remote add origin https://github.com/USUARIO/REPO.git</span><span class="cmd-note"># liga seu Git local ao repositório no GitHub (troque pela sua URL)</span></div>
-              <div class="cmd-line"><span class="cmd-part">git remote -v</span><span class="cmd-note"># conferência: lista o remote (origin) e a URL configurada</span></div>
-              <div class="cmd-line"><span class="cmd-part">git push -u origin main</span><span class="cmd-note"># primeiro envio; -u grava o destino padrão para os próximos git push</span></div>
+              <div class="cmd-line"><span class="cmd-part">git remote add origin https://github.com/USUARIO/REPO.git</span><span class="cmd-note"></span></div>
+              <div class="cmd-line"><span class="cmd-part">git remote -v</span><span class="cmd-note"> # Confirma se o remote foi adicionado corretamente</span></div>
+              <div class="cmd-line"><span class="cmd-part">git push -u origin main</span><span class="cmd-note"># primeiro envio</span></div>
             </div>
           </div>
           <div class="callout callout-tip">💡 Depois do primeiro push com -u, nos próximos envios normalmente basta usar git push (sem repetir origin main).</div>
@@ -198,30 +197,11 @@ git config --global user.email "seu@email.com"</code>
       <div class="step">
         <div class="step-num">09</div>
         <div>
-          <div class="step-title">Criando repositório no GitHub pelo terminal (GitHub CLI)</div>
-          <div class="step-desc">O comando <code style="font-family:var(--f-mono);font-size:0.8rem">git</code> sozinho <strong>não cria</strong> repositório no site do GitHub. Para fazer isso pelo terminal, o caminho mais simples para iniciantes é o <strong>GitHub CLI</strong> (<code style="font-family:var(--f-mono);font-size:0.8rem">gh</code>), que conversa com o GitHub depois do login.</div>
-          <div class="step-desc">Instale o programa em <a href="https://cli.github.com/" target="_blank" rel="noopener">cli.github.com</a> (Windows, macOS e Linux). Depois use os comandos na <strong>pasta do projeto</strong>, já com <code style="font-family:var(--f-mono);font-size:0.8rem">git init</code> e pelo menos <strong>um commit</strong> (Slides 05 e 06).</div>
-          <div class="step-desc"><code style="font-family:var(--f-mono);font-size:0.8rem">gh auth login</code> roda uma vez: é um fluxo interativo (HTTPS, abrir navegador ou token). Troque <strong>meu-repo</strong> pelo nome que quiser no GitHub.</div>
-          <div class="step-desc">Se você <strong>já criou o repo vazio no site</strong> (Slide 07), não precisa deste slide para criar de novo — use o Slide 08 (<code style="font-family:var(--f-mono);font-size:0.8rem">git remote add</code> + <code style="font-family:var(--f-mono);font-size:0.8rem">git push</code>).</div>
-          <div class="step-desc">(<strong>Obs.:</strong> neste guia, o que vier depois de <code style="font-family:var(--f-mono);font-size:0.8rem">#</code> em cada linha é só <strong>comentário</strong> — não é obrigatório copiar essa parte.)</div>
-          <div class="cmd-block">
-            <button class="copy-btn">copy</button>
-            <div class="cmd-lines" aria-label="GitHub CLI — criar repo e enviar">
-              <div class="cmd-line cmd-line-single"><span class="cmd-part">gh auth login</span></div>
-              <div class="cmd-line cmd-line-single"><span class="cmd-part">gh repo create meu-repo --public --source=. --remote=origin --push</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num">10</div>
-        <div>
           <div class="step-title">Branches: trabalhar sem bagunçar a main</div>
           <div class="step-desc">Uma <strong>branch</strong> é uma linha de desenvolvimento paralela. Você pode trabalhar em uma feature/correção sem mexer direto na <strong>main</strong> até estar pronto para juntar.</div>
-          <div class="step-desc"><code style="font-family:var(--f-mono);font-size:0.8rem">git branch nome</code> só <strong>cria</strong> a branch; você <strong>continua</strong> na branch atual. Já <code style="font-family:var(--f-mono);font-size:0.8rem">git checkout -b nome</code> <strong>cria e entra</strong> na branch (no Git mais novo existe também <code style="font-family:var(--f-mono);font-size:0.8rem">git switch -c nome</code>).</div>
+          <div class="step-desc"><code>git branch nome</code> só <strong>cria</strong> a branch; você <strong>continua</strong> na branch atual. Já <code>git checkout -b nome</code> <strong>cria e entra</strong> na branch (no Git mais novo existe também <code>git switch -c nome</code>).</div>
           <div class="step-desc">Fluxo típico: criar a branch → fazer commits nela → voltar pra main → integrar (muitas vezes via Pull Request no GitHub).</div>
-          <div class="step-desc">(<strong>Obs.:</strong> o que vier depois de <code style="font-family:var(--f-mono);font-size:0.8rem">#</code> é só comentário — não é obrigatório copiar essa parte.)</div>
+          <div class="step-desc">(<strong>Obs.:</strong> o que vier depois de <code>#</code> é só comentário — não é obrigatório copiar essa parte.)</div>
           <div class="cmd-block">
             <button class="copy-btn">copy</button>
             <div class="cmd-lines" aria-label="Comandos de branches">
@@ -244,12 +224,12 @@ git config --global user.email "seu@email.com"</code>
       </div>
 
       <div class="step">
-        <div class="step-num">11</div>
+        <div class="step-num">10</div>
         <div>
           <div class="step-title">Atualize seu projeto antes de começar (pull / fetch)</div>
           <div class="step-desc">Antes de criar uma branch nova ou continuar uma tarefa, é bom garantir que você está com a versão mais recente do GitHub.</div>
-          <div class="step-desc"><code style="font-family:var(--f-mono);font-size:0.8rem">git pull</code> baixa e já tenta integrar as mudanças na sua branch atual. <code style="font-family:var(--f-mono);font-size:0.8rem">git fetch</code> só baixa as informações; você olha com calma antes de aplicar.</div>
-          <div class="step-desc">(<strong>Obs.:</strong> o que vier depois de <code style="font-family:var(--f-mono);font-size:0.8rem">#</code> é só comentário — não é obrigatório copiar essa parte.)</div>
+          <div class="step-desc"><code>git pull</code> baixa e já tenta integrar as mudanças na sua branch atual. <code>git fetch</code> só baixa as informações; você olha com calma antes de aplicar.</div>
+          <div class="step-desc">(<strong>Obs.:</strong> o que vier depois de <code>#</code> é só comentário — não é obrigatório copiar essa parte.)</div>
           <div class="cmd-block">
             <button class="copy-btn">copy</button>
             <div class="cmd-lines" aria-label="Comandos pull e fetch">
@@ -263,12 +243,12 @@ git config --global user.email "seu@email.com"</code>
       </div>
 
       <div class="step">
-        <div class="step-num">12</div>
+        <div class="step-num">11</div>
         <div>
           <div class="step-title">Depois de desenvolver: push da sua branch e abrir um Pull Request (PR)</div>
           <div class="step-desc">Quando você termina uma parte da tarefa na sua <strong>branch</strong>, você envia pro GitHub e abre um <strong>PR</strong> para revisar e juntar na <strong>main</strong>.</div>
           <div class="step-desc"><strong>PR (Pull Request)</strong> é a “solicitação para juntar” sua branch na branch principal, com descrição do que mudou e como testar.</div>
-          <div class="step-desc">(<strong>Obs.:</strong> o que vier depois de <code style="font-family:var(--f-mono);font-size:0.8rem">#</code> é só comentário — não é obrigatório copiar essa parte.)</div>
+          <div class="step-desc">(<strong>Obs.:</strong> o que vier depois de <code>#</code> é só comentário — não é obrigatório copiar essa parte.)</div>
           <div class="cmd-block">
             <button class="copy-btn">copy</button>
             <div class="cmd-lines" aria-label="Push da branch e PR">
@@ -282,13 +262,13 @@ git config --global user.email "seu@email.com"</code>
       </div>
 
       <div class="step">
-        <div class="step-num">13</div>
+        <div class="step-num">12</div>
         <div>
           <div class="step-title">Deu conflito? O que é e como resolver:</div>
           <div class="step-desc">Conflito acontece quando duas mudanças mexem nas <strong>mesmas linhas</strong> e o Git não consegue juntar sozinho.</div>
-          <div class="step-desc">Você vai ver marcações no arquivo (ex.: <code style="font-family:var(--f-mono);font-size:0.8rem">&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code style="font-family:var(--f-mono);font-size:0.8rem">=======</code>, <code style="font-family:var(--f-mono);font-size:0.8rem">&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>).</div>
-          <div class="step-desc">Como resolver: abra o arquivo no editor, escolha o resultado final, apague os marcadores, salve e depois marque como resolvido com <code style="font-family:var(--f-mono);font-size:0.8rem">git add</code>. Por fim, finalize com um commit.</div>
-          <div class="step-desc">(<strong>Obs.:</strong> o que vier depois de <code style="font-family:var(--f-mono);font-size:0.8rem">#</code> é só comentário — não é obrigatório copiar essa parte.)</div>
+          <div class="step-desc">Você vai ver marcações no arquivo (ex.: <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code>, <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>).</div>
+          <div class="step-desc">Como resolver: abra o arquivo no editor, escolha o resultado final, apague os marcadores, salve e depois marque como resolvido com <code>git add</code>. Por fim, finalize com um commit.</div>
+          <div class="step-desc">(<strong>Obs.:</strong> o que vier depois de <code>#</code> é só comentário — não é obrigatório copiar essa parte.)</div>
           <div class="cmd-block">
             <button class="copy-btn">copy</button>
             <div class="cmd-lines" aria-label="Resolver conflitos">
@@ -302,7 +282,7 @@ git config --global user.email "seu@email.com"</code>
       </div>
 
       <div class="step">
-        <div class="step-num">14</div>
+        <div class="step-num">13</div>
         <div>
           <div class="step-title">Como fazer o merge no GitHub (pelo Pull Request)</div>
           <div class="step-desc">Depois que sua branch foi enviada e o <strong>PR</strong> está aberto, o <strong>merge</strong> é o passo de <strong>juntar</strong> essa branch na <strong>main</strong>.</div>
@@ -314,12 +294,12 @@ git config --global user.email "seu@email.com"</code>
       </div>
 
       <div class="step">
-        <div class="step-num">15</div>
+        <div class="step-num">14</div>
         <div>
           <div class="step-title">.gitignore: o que é e o que colocar nele</div>
-          <div class="step-desc"><code style="font-family:var(--f-mono);font-size:0.8rem">.gitignore</code> é um arquivo que diz ao Git quais arquivos/pastas ele deve <strong>ignorar</strong> (não entrar em commit).</div>
+          <div class="step-desc"><code>.gitignore</code> é um arquivo que diz ao Git quais arquivos/pastas ele deve <strong>ignorar</strong> (não entrar em commit).</div>
           <div class="step-desc">Ele serve para não versionar coisas geradas automaticamente, arquivos locais da sua máquina e <strong>segredos</strong> (como senhas e tokens).</div>
-          <div class="step-desc">(<strong>Obs.:</strong> o que vier depois de <code style="font-family:var(--f-mono);font-size:0.8rem">#</code> é só comentário — não é obrigatório copiar essa parte.)</div>
+          <div class="step-desc">(<strong>Obs.:</strong> o que vier depois de <code>#</code> é só comentário — não é obrigatório copiar essa parte.)</div>
           <div class="cmd-block">
             <button class="copy-btn">copy</button>
             <div class="cmd-lines" aria-label="Exemplo de .gitignore">
@@ -337,23 +317,23 @@ git config --global user.email "seu@email.com"</code>
         <div class="step-num">PAUSA</div>
         <div>
           <div class="step-desc">Se você chegou até aqui, já tá voando. Daqui a pouco isso vira reflexo.</div>
-          <div class="callout callout-tip">💡 O segredo é o ciclo: editar → add → commit → push → PR. Repete e pronto.</div>
+          <div class="callout callout-tip">💡 O segredo é o ciclo: pull da main → editar → add → commit → push → PR. Repete e pronto.</div>
         </div>
       </div>
 
       <div class="step">
-        <div class="step-num">16</div>
+        <div class="step-num">15</div>
         <div>
           <div class="step-title">Comandos úteis do dia a dia (diff e log)</div>
           <div class="step-desc">Antes de commitar ou abrir PR, vale conferir <strong>o que mudou</strong> e o <strong>histórico recente</strong>.</div>
-          <div class="step-desc"><code style="font-family:var(--f-mono);font-size:0.8rem">git diff</code> mostra mudanças ainda não “preparadas”; <code style="font-family:var(--f-mono);font-size:0.8rem">git diff --staged</code> mostra o que já está no stage. <code style="font-family:var(--f-mono);font-size:0.8rem">git log --oneline -5</code> mostra os últimos 5 commits de forma compacta.</div>
-          <div class="step-desc">(<strong>Obs.:</strong> o que vier depois de <code style="font-family:var(--f-mono);font-size:0.8rem">#</code> é só comentário — não é obrigatório copiar essa parte.)</div>
+          <div class="step-desc"><code>git diff</code> mostra mudanças ainda não “preparadas”; <code>git diff --staged</code> mostra o que já está no stage. <code>git log --oneline -5</code> mostra os últimos 5 commits de forma compacta.</div>
+          <div class="step-desc">(<strong>Obs.:</strong> o que vier depois de <code>#</code> é só comentário — não é obrigatório copiar essa parte.)</div>
           <div class="cmd-block">
             <button class="copy-btn">copy</button>
             <div class="cmd-lines" aria-label="Diff e log">
               <div class="cmd-line"><span class="cmd-part">git diff</span><span class="cmd-note"># mudanças ainda não staged</span></div>
               <div class="cmd-line"><span class="cmd-part">git diff --staged</span><span class="cmd-note"># mudanças já no stage</span></div>
-              <div class="cmd-line"><span class="cmd-part">git log --oneline -5</span><span class="cmd-note"># últimos 5 commits</span></div>
+              <div class="cmd-line"><span class="cmd-part">git log --oneline -5</span><span class="cmd-note"># últimos 5 commits (você pode mudar o número de commits)</span></div>
             </div>
           </div>
           <div class="callout callout-tip">💡 Use git diff antes de commitar para evitar surpresa no que vai entrar no histórico.</div>
@@ -364,7 +344,7 @@ git config --global user.email "seu@email.com"</code>
         <div class="step-num">FIM</div>
         <div>
           <div class="step-title">Você conseguiu!!</div>
-          <div class="step-desc">Espero que tenha aprendido algo até aqui. Não se esqueça que temos disponível todos os comandos mais usados para copiar e colar conforme sua necessidade. Basta acessar o nosso Cheat Codes, mais conhecido como &quot;Referência rápida&quot;.</div>
+          <div class="step-desc">Espero que tenha aprendido algo até aqui. Não se esqueça que temos disponível todos os comandos mais usados para copiar e colar conforme sua necessidade. Basta acessar o nosso Cheat Codes, mais conhecido como &quot;Referência rápida&quot;. Além disso, logo abaixo você encontrará o índice do treinamento para você navegar por ele.</div>
           <div class="term-actions">
             <button class="term-btn ghost" type="button" data-steps-restart>← VOLTAR AO INÍCIO</button>
             <a class="term-btn primary" href="index.html#terminal">INICIAR TREINAMENTO</a>
@@ -374,9 +354,8 @@ git config --global user.email "seu@email.com"</code>
 
       </div>
       <button class="steps-nav" type="button" aria-label="Próximo" data-slide-next>›</button>
+      <div class="steps-index" data-steps-index aria-label="Índice clicável dos slides"></div>
     </div>
-
-    <div class="steps-index" data-steps-index aria-label="Índice clicável dos slides"></div>
   </div>
 
   <!-- REFERENCE -->
@@ -393,6 +372,7 @@ git config --global user.email "seu@email.com"</code>
         <div class="cmd-item"><span class="cmd-text">git config --global user.name "Nome"</span><span class="cmd-desc">Definir nome do usuário</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git config --global user.email "email"</span><span class="cmd-desc">Definir e-mail do usuário</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git config --list</span><span class="cmd-desc">Listar todas as configurações</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git config --global init.defaultBranch main</span><span class="cmd-desc">Novos repos nascem com branch main</span><button class="cmd-copy">copy</button></div>
       </div>
     </div>
 
@@ -401,8 +381,22 @@ git config --global user.email "seu@email.com"</code>
       <div class="cmd-grid">
         <div class="cmd-item"><span class="cmd-text">git init</span><span class="cmd-desc">Inicializar repositório na pasta atual</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git clone &lt;url&gt;</span><span class="cmd-desc">Clonar repositório remoto</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git clone --depth 1 &lt;url&gt;</span><span class="cmd-desc">Clone raso (só último commit, mais rápido)</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git remote -v</span><span class="cmd-desc">Listar repositórios remotos</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git remote add origin &lt;url&gt;</span><span class="cmd-desc">Conectar ao repositório remoto</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git remote set-url origin &lt;url&gt;</span><span class="cmd-desc">Trocar URL do origin (HTTPS/SSH)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git fetch origin</span><span class="cmd-desc">Baixar refs/commits sem integrar</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git fetch --prune origin</span><span class="cmd-desc">Fetch + remover refs de branches apagadas no remoto</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">GITHUB CLI (gh)</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">gh auth login</span><span class="cmd-desc">Login interativo no GitHub</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">gh repo create &lt;nome&gt; --public --source=. --remote=origin --push</span><span class="cmd-desc">Criar repo no GitHub e dar push da pasta atual</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">gh pr create</span><span class="cmd-desc">Abrir PR pelo terminal (fluxo interativo)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">gh pr checkout &lt;número&gt;</span><span class="cmd-desc">Checkout da branch do PR localmente</span><button class="cmd-copy">copy</button></div>
       </div>
     </div>
 
@@ -413,9 +407,15 @@ git config --global user.email "seu@email.com"</code>
         <div class="cmd-item"><span class="cmd-text">git add .</span><span class="cmd-desc">Stage de todos os arquivos modificados</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git add &lt;arquivo&gt;</span><span class="cmd-desc">Stage de arquivo específico</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git commit -m "msg"</span><span class="cmd-desc">Commitar com mensagem</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git commit -am "msg"</span><span class="cmd-desc">Stage + commit só em arquivos já rastreados</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git commit --amend</span><span class="cmd-desc">Editar o último commit</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git commit --amend --no-edit</span><span class="cmd-desc">Incluir mudanças no último commit (mesma msg)</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git log --oneline</span><span class="cmd-desc">Histórico resumido de commits</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git log --graph --oneline --all -15</span><span class="cmd-desc">Árvore de branches + últimos commits</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git show &lt;hash&gt;</span><span class="cmd-desc">Ver patch e metadados de um commit</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git diff</span><span class="cmd-desc">Ver mudanças não staged</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git diff --staged</span><span class="cmd-desc">Diff do que está no stage (antes do commit)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git blame &lt;arquivo&gt;</span><span class="cmd-desc">Quem mudou cada linha (e em qual commit)</span><button class="cmd-copy">copy</button></div>
       </div>
     </div>
 
@@ -424,10 +424,16 @@ git config --global user.email "seu@email.com"</code>
       <div class="cmd-grid">
         <div class="cmd-item"><span class="cmd-text">git branch</span><span class="cmd-desc">Listar branches locais</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git checkout -b &lt;nome&gt;</span><span class="cmd-desc">Criar e entrar na branch</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git switch -c &lt;nome&gt;</span><span class="cmd-desc">Criar e entrar (equivalente moderno ao checkout -b)</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git switch &lt;nome&gt;</span><span class="cmd-desc">Trocar de branch (Git moderno)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git branch -a</span><span class="cmd-desc">Listar branches locais + remotas</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git merge &lt;branch&gt;</span><span class="cmd-desc">Mergear branch na atual</span><button class="cmd-copy">copy</button></div>
-        <div class="cmd-item"><span class="cmd-text">git rebase &lt;branch&gt;</span><span class="cmd-desc">Rebasear commits</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git merge --no-ff &lt;branch&gt;</span><span class="cmd-desc">Merge sempre com commit de merge (histórico explícito)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git rebase &lt;branch&gt;</span><span class="cmd-desc">Reaplicar commits da branch atual em cima da base</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git rebase -i HEAD~3</span><span class="cmd-desc">Rebase interativo dos últimos 3 commits (squash/reorder)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git cherry-pick &lt;hash&gt;</span><span class="cmd-desc">Trazer um commit específico para a branch atual</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git branch -d &lt;nome&gt;</span><span class="cmd-desc">Deletar branch local</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git branch -D &lt;nome&gt;</span><span class="cmd-desc">Forçar delete de branch local não mergeada</span><button class="cmd-copy">copy</button></div>
       </div>
     </div>
 
@@ -437,8 +443,19 @@ git config --global user.email "seu@email.com"</code>
         <div class="cmd-item"><span class="cmd-text">git push</span><span class="cmd-desc">Enviar commits ao remoto</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git push -u origin &lt;branch&gt;</span><span class="cmd-desc">Push inicial com upstream</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git pull</span><span class="cmd-desc">Puxar e mergear mudanças</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git pull --rebase</span><span class="cmd-desc">Puxar reaplicando seus commits em cima do remoto</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git fetch</span><span class="cmd-desc">Puxar sem mergear</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git push origin --delete &lt;branch&gt;</span><span class="cmd-desc">Deletar branch remota</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">TAGS & SUBMÓDULOS</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">git tag -a v1.0 -m "release"</span><span class="cmd-desc">Tag anotada (releases/versionamento)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git push origin v1.0</span><span class="cmd-desc">Enviar uma tag ao remoto</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git push origin --tags</span><span class="cmd-desc">Enviar todas as tags locais</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git submodule update --init --recursive</span><span class="cmd-desc">Baixar/atualizar submódulos após clone</span><button class="cmd-copy">copy</button></div>
       </div>
     </div>
 
@@ -450,8 +467,23 @@ git config --global user.email "seu@email.com"</code>
         <div class="cmd-item"><span class="cmd-text">git reset --soft HEAD~1</span><span class="cmd-desc">Desfazer último commit (mantém mudanças)</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git reset --hard HEAD~1</span><span class="cmd-desc">Desfazer e APAGAR mudanças ⚠️</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git stash</span><span class="cmd-desc">Salvar mudanças temporariamente</span><button class="cmd-copy">copy</button></div>
-        <div class="cmd-item"><span class="cmd-text">git stash pop</span><span class="cmd-desc">Restaurar do stash</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git stash push -u -m "wip"</span><span class="cmd-desc">Stash incluindo arquivos novos não rastreados</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git stash list</span><span class="cmd-desc">Listar entradas do stash</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git stash apply stash@{0}</span><span class="cmd-desc">Aplicar stash sem remover da pilha</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git stash pop</span><span class="cmd-desc">Restaurar do stash e remover o topo</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">git revert &lt;hash&gt;</span><span class="cmd-desc">Reverter commit sem apagar histórico</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git reflog</span><span class="cmd-desc">Histórico de onde HEAD esteve (recuperar commits)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git clean -fd</span><span class="cmd-desc">Apagar arquivos não rastreados ⚠️ irreversível</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">DEBUG & INVESTIGAÇÃO</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">git bisect start</span><span class="cmd-desc">Iniciar busca binária do commit que quebrou algo</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git bisect bad</span><span class="cmd-desc">Marcar commit atual como ruim</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git bisect good &lt;hash&gt;</span><span class="cmd-desc">Marcar um commit conhecido como bom</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git bisect reset</span><span class="cmd-desc">Sair do bisect e voltar ao estado anterior</span><button class="cmd-copy">copy</button></div>
       </div>
     </div>
   </div>
