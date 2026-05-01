@@ -148,7 +148,7 @@ git config --global user.email "seu@email.com"</code>
           <div class="step-desc">Depois do <code>git init</code>, o dia a dia é um ciclo: <strong>ver o que mudou</strong> → <strong>marcar o que vai entrar no próximo salvamento</strong> → <strong>registrar esse salvamento no histórico</strong> com uma mensagem.</div>
           <div class="step-desc">Em termos simples: você edita arquivos na pasta (<strong>trabalho</strong>); o <code>git add</code> define o que será incluído no próximo commit (<strong>stage</strong>); o <code>git commit</code> cria um <strong>registro</strong> no histórico (<strong>commit</strong>) com autor, data e mensagem.</div>
           <div class="step-desc">Rode os comandos <strong>na pasta do repositório</strong>, no terminal do VS Code/Cursor (como no Slide 02).</div>
-          <div class="step-desc">No primeiro commit, uma mensagem simples como “Primeiro commit” já vale. Em times, é comum usar prefixos como <code>feat:</code>, <code>fix:</code> ou <code>docs:</code> na mensagem. Vamos entender mais sobre isso nos próximos slides.</div>
+          <div class="step-desc">No primeiro commit, uma mensagem simples como “Primeiro commit” já vale. Em times, é comum usar prefixos como <code>feat:</code>, <code>fix:</code> ou <code>docs:</code> na mensagem — no <strong>Slide 07</strong> você vê o significado de cada um e exemplos para copiar.</div>
           <div class="cmd-block">
             <button class="copy-btn">copy</button>
             <div class="cmd-lines" aria-label="Comandos status, add e commit">
@@ -164,6 +164,34 @@ git config --global user.email "seu@email.com"</code>
       <div class="step">
         <div class="step-num">07</div>
         <div>
+          <div class="step-title">Nomenclatura das mensagens de commit (feat, fix, docs…)</div>
+          <div class="step-desc">No <strong>Slide 06</strong> apareceram prefixos como <code>feat:</code>, <code>fix:</code> e <code>docs:</code>. Eles fazem parte de convenções muito usadas (a mais conhecida é <strong>Conventional Commits</strong>): um jeito padronizado de escrever a mensagem para o histórico ficar legível e ferramentas conseguirem montar changelogs ou releases com menos trabalho manual.</div>
+          <div class="step-desc"><strong>Formato típico:</strong> <code>tipo: descrição curta</code>. Em geral a descrição vem no imperativo ou como “o que o commit faz” (<em>adiciona</em>, <em>corrige</em>, <em>atualiza</em>…), sem ponto final no final da primeira linha.</div>
+          <div class="step-desc"><strong>Prefixos que você mais vai ver:</strong><br>
+          • <code>feat:</code> — nova funcionalidade para quem usa o sistema<br>
+          • <code>fix:</code> — correção de bug ou comportamento incorreto<br>
+          • <code>docs:</code> — só documentação (guias, comentários de documentação)<br>
+          • <code>style:</code> — formatação, espaços, aspas (sem mudar lógica)<br>
+          • <code>refactor:</code> — reorganização interna do código sem mudar o que o usuário percebe<br>
+          • <code>test:</code> — incluir ou ajustar testes automatizados<br>
+          • <code>chore:</code> — manutenção “de bastidor” (dependências, scripts de build, configs que não são feature nem fix)<br>
+          • <code>perf:</code> — melhoria de desempenho</div>
+          <div class="step-desc"><strong>Opcional — escopo entre parênteses:</strong> quando ajuda a localizar o pedaço do projeto: <code>feat(auth): login com OAuth</code>, <code>fix(api): erro 500 na listagem</code>.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <div class="cmd-lines" aria-label="Exemplos de commit com prefixo">
+              <div class="cmd-line cmd-line-single"><span class="cmd-part">git commit -m "feat: adiciona filtro por data no relatório"</span></div>
+              <div class="cmd-line cmd-line-single"><span class="cmd-part">git commit -m "fix: impede erro quando a lista está vazia"</span></div>
+              <div class="cmd-line cmd-line-single"><span class="cmd-part">git commit -m "docs: atualiza guia de instalação"</span></div>
+            </div>
+          </div>
+          <div class="callout callout-tip">💡 Projeto pessoal pode usar mensagem livre; em time ou open source, esse padrão reduz “cadê o commit que corrigiu X?” e padroniza revisões.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">08</div>
+        <div>
           <div class="step-title">Criando seu repositório no GitHub (no site)</div>
           <div class="step-desc">1) Acesse o GitHub e clique em <strong>New repository</strong> (às vezes aparece como <strong>Repositories → New</strong>).</div>
           <div class="step-desc">2) Escolha um <strong>Repository name</strong> simples (ex.: <code>meu-projeto</code>) e defina se será <strong>Public</strong> ou <strong>Private</strong>.</div>
@@ -174,11 +202,11 @@ git config --global user.email "seu@email.com"</code>
       </div>
 
       <div class="step">
-        <div class="step-num">08</div>
+        <div class="step-num">09</div>
         <div>
           <div class="step-title">Conectar seu projeto ao GitHub (remote + primeiro push)</div>
           <div class="step-desc"><strong>Objetivo:</strong> ligar o repositório da sua máquina ao repositório que você criou no GitHub e enviar seus commits de lá pra cá (primeiro push). Para isso, já ajuda ter pelo menos <strong>um commit local</strong> feito (como no Slide 06).</div>
-          <div class="step-desc">No terminal, esteja na <strong>pasta do projeto</strong> (VS Code aberto na pasta certa, como no Slide 02). Use a <strong>mesma URL HTTPS</strong> que você copiou no Slide 07 (troque <strong>USUARIO</strong> e <strong>REPO</strong> ou cole a URL inteira).</div>
+          <div class="step-desc">No terminal, esteja na <strong>pasta do projeto</strong> (VS Code aberto na pasta certa, como no Slide 02). Use a <strong>mesma URL HTTPS</strong> que você copiou no Slide 08 (troque <strong>USUARIO</strong> e <strong>REPO</strong> ou cole a URL inteira).</div>
           <div class="step-desc">O comando <code>git remote add origin ...</code> cria o apelido <strong>origin</strong>: um atalho para o endereço do GitHub.</div>
           <div class="step-desc">O <code>git push -u origin main</code> envia a branch <strong>main</strong>. Se a sua branch principal tiver outro nome (ex.: <code>master</code>), troque no comando.</div>
           <div class="step-desc">(<strong>Obs.:</strong> Rode um comando por vez. Copie e cole o comando no terminal e aperte Enter.)</div>
@@ -195,7 +223,7 @@ git config --global user.email "seu@email.com"</code>
       </div>
 
       <div class="step">
-        <div class="step-num">09</div>
+        <div class="step-num">10</div>
         <div>
           <div class="step-title">Branches: trabalhar sem bagunçar a main</div>
           <div class="step-desc">Uma <strong>branch</strong> é uma linha de desenvolvimento paralela. Você pode trabalhar em uma feature/correção sem mexer direto na <strong>main</strong> até estar pronto para juntar.</div>
@@ -224,7 +252,7 @@ git config --global user.email "seu@email.com"</code>
       </div>
 
       <div class="step">
-        <div class="step-num">10</div>
+        <div class="step-num">11</div>
         <div>
           <div class="step-title">Atualize seu projeto antes de começar (pull / fetch)</div>
           <div class="step-desc">Antes de criar uma branch nova ou continuar uma tarefa, é bom garantir que você está com a versão mais recente do GitHub.</div>
@@ -243,7 +271,7 @@ git config --global user.email "seu@email.com"</code>
       </div>
 
       <div class="step">
-        <div class="step-num">11</div>
+        <div class="step-num">12</div>
         <div>
           <div class="step-title">Depois de desenvolver: push da sua branch e abrir um Pull Request (PR)</div>
           <div class="step-desc">Quando você termina uma parte da tarefa na sua <strong>branch</strong>, você envia pro GitHub e abre um <strong>PR</strong> para revisar e juntar na <strong>main</strong>.</div>
@@ -262,7 +290,7 @@ git config --global user.email "seu@email.com"</code>
       </div>
 
       <div class="step">
-        <div class="step-num">12</div>
+        <div class="step-num">13</div>
         <div>
           <div class="step-title">Deu conflito? O que é e como resolver:</div>
           <div class="step-desc">Conflito acontece quando duas mudanças mexem nas <strong>mesmas linhas</strong> e o Git não consegue juntar sozinho.</div>
@@ -282,7 +310,7 @@ git config --global user.email "seu@email.com"</code>
       </div>
 
       <div class="step">
-        <div class="step-num">13</div>
+        <div class="step-num">14</div>
         <div>
           <div class="step-title">Como fazer o merge no GitHub (pelo Pull Request)</div>
           <div class="step-desc">Depois que sua branch foi enviada e o <strong>PR</strong> está aberto, o <strong>merge</strong> é o passo de <strong>juntar</strong> essa branch na <strong>main</strong>.</div>
@@ -294,7 +322,7 @@ git config --global user.email "seu@email.com"</code>
       </div>
 
       <div class="step">
-        <div class="step-num">14</div>
+        <div class="step-num">15</div>
         <div>
           <div class="step-title">.gitignore: o que é e o que colocar nele</div>
           <div class="step-desc"><code>.gitignore</code> é um arquivo que diz ao Git quais arquivos/pastas ele deve <strong>ignorar</strong> (não entrar em commit).</div>
@@ -322,7 +350,7 @@ git config --global user.email "seu@email.com"</code>
       </div>
 
       <div class="step">
-        <div class="step-num">15</div>
+        <div class="step-num">16</div>
         <div>
           <div class="step-title">Comandos úteis do dia a dia (diff e log)</div>
           <div class="step-desc">Antes de commitar ou abrir PR, vale conferir <strong>o que mudou</strong> e o <strong>histórico recente</strong>.</div>
