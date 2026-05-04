@@ -17,8 +17,9 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
     public DbSet<ConteudoSlide> ConteudosSlide { get; set; }
     public DbSet<ReferenciaRapida> ReferenciasRapidas { get; set; }
     public DbSet<RecuperacaoSenha> RecuperacoesSenha { get; set; }
+    public DbSet<Colaborador> Colaboradores { get; set; }
 
-protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // configura o tamanho máximo dos campos de texto no banco
 

@@ -9,12 +9,12 @@ public class SkillCard // Classe do Modelo de SkillCard
     public string Raridade { get; set; } = string.Empty; // Raridade da SkillCard ex: ESSENTIAL
     public string CorBorda { get; set; } = "#39d353"; // Cor da Borda da SkillCard ex: #000000
     public string Descricao { get; set; } = string.Empty; // Descrição da SkillCard
-    public int Posicao { get; set; } = 0; // Posição na página
+    public int Ordem { get; set; } = 0; // Posição na página
     public bool Ativo { get; set; } = true; // Se a SkillCard está ativo 
-    public int XPAtual { get; set; } = 0; // XP Calculado automaticamente
-    public int XPMaximo { get; set; } = 0; // XP Máximo da SkillCard
+    public int XpAtual { get; set; } = 0; // XP Calculado automaticamente
+    public int XpMaximo { get; set; } = 0; // XP Máximo da SkillCard
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow; // Data de Criação da SkillCard - gerada automaticamente 
-    public DateTime? AtualizadoEm { get; set; } // Só preenchido quando a SkillCard é atualizada 
+    public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow; // Só preenchido quando a SkillCard é atualizada 
 
     public List<Slide> Slides { get; set; } = []; // Um card tem vários slides 
     public List<ReferenciaRapida> Referencias { get; set; } = []; // Um card tem várias referências rápidas

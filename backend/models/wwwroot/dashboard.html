@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — BuildXP</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    :root {
+      --accent: #4db5ff;
+      --accent-glow: 0 0 28px rgba(77, 181, 255, 0.45);
+    }
+  </style>
+  <script>
+    window.BUILDXP_DASH_TEST_USER = 'GislaneSenaa';
+    window.BUILDXP_DASH_TEST_EMAIL = 'gislane@buildxp.local';
+    window.BUILDXP_DASH_TEST_PASSWORD = '20010109Gi@';
+    window.BUILDXP_ADMIN_DEV_PIN = '20010109Gi@';
+    window.BUILDXP_API_BASE = '';
+  </script>
+  <script>
+    window.BUILDXP_API_PATHS = Object.assign(
+      {
+        login: '/api/admin/login',
+        forgotRequest: '/api/auth/forgot-password',
+        resetPassword: '/api/auth/reset-password',
+        inviteCollaborator: '/api/Colaborador/convidar',
+      },
+      window.BUILDXP_API_PATHS || {},
+    );
+  </script>
+</head>
+<body class="dash-body">
+
+<nav class="navbar navbar--dash" aria-label="Admin">
+  <a href="index.html" class="nav-logo" aria-label="BuildXP — Início">
+    <img class="nav-logo-img" src="imagens/logo2buildxpret.png" alt="BuildXP" />
+  </a>
+</nav>
+
+<section id="dash-login" class="dash-login-wrap" aria-labelledby="dash-login-title">
+  <div class="fb-card dash-login-card">
+    <div class="ref-section-title" id="dash-login-title">ACESSO ADMIN</div>
+    <form id="dash-login-form" class="fb-form" autocomplete="off">
+      <label class="fb-label">
+        Usuário
+        <input class="fb-input" id="dash-login-username" type="text" required maxlength="80" autocomplete="username" />
+      </label>
+      <label class="fb-label">
+        Senha
+        <input class="fb-input" id="dash-login-password" type="password" required autocomplete="current-password" />
+      </label>
+      <div class="dash-login-row">
+        <button type="button" class="term-btn ghost dash-linkish" id="dash-open-forgot">Esqueci a senha / Criar senha</button>
+      </div>
+      <div class="dash-login-actions">
+        <button type="submit" class="term-btn primary">ENTRAR</button>
+        <a href="index.html" class="term-btn ghost dash-login-cancel">VOLTAR AO SITE</a>
+      </div>
+      <div id="dash-login-status" class="fb-status" aria-live="polite"></div>
+    </form>
+  </div>
+</section>
+
+<div id="dash-forgot-modal" class="dash-modal" hidden role="dialog" aria-modal="true" aria-labelledby="dash-forgot-title">
+  <div class="dash-modal-backdrop" id="dash-forgot-backdrop" tabindex="-1"></div>
+  <div class="dash-modal-card fb-card">
+    <div class="dash-modal-head">
+      <div class="ref-section-title" id="dash-forgot-title">Esqueci a senha / Criar senha</div>
+      <button type="button" class="dash-modal-close" id="dash-forgot-close" aria-label="Fechar">×</button>
+    </div>
+    <form id="dash-forgot-step1" class="fb-form">
+      <label class="fb-label">
+        E-mail
+        <input class="fb-input" id="dash-forgot-email" type="email" required maxlength="120" autocomplete="email" />
+      </label>
+      <div class="dash-login-actions">
+        <button type="submit" class="term-btn primary" id="dash-forgot-send">Enviar código</button>
+        <button type="button" class="term-btn ghost" id="dash-forgot-cancel">Cancelar</button>
+      </div>
+      <div id="dash-forgot-step1-status" class="fb-status" aria-live="polite"></div>
+    </form>
+    <form id="dash-forgot-step2" class="fb-form" hidden>
+      <label class="fb-label">
+        Código recebido no e-mail
+        <input class="fb-input" id="dash-forgot-code" type="text" maxlength="12" autocomplete="one-time-code" />
+      </label>
+      <label class="fb-label">
+        Nova senha
+        <input class="fb-input" id="dash-forgot-newpw" type="password" autocomplete="new-password" />
+      </label>
+      <label class="fb-label">
+        Confirmar nova senha
+        <input class="fb-input" id="dash-forgot-newpw2" type="password" autocomplete="new-password" />
+      </label>
+      <div class="dash-login-actions">
+        <button type="submit" class="term-btn primary" id="dash-forgot-save">Redefinir senha</button>
+        <button type="button" class="term-btn ghost" id="dash-forgot-back">Voltar</button>
+      </div>
+      <div id="dash-forgot-step2-status" class="fb-status" aria-live="polite"></div>
+    </form>
+  </div>
+</div>
+
+<div id="dash-shell" class="dash-shell" hidden>
+  <main id="dash-app" class="page-container dash-page">
+    <header class="dash-topbar fb-card">
+      <div>
+        <div class="page-class" style="margin-bottom:0.25rem;">PAINEL</div>
+        <div class="dash-topbar-title">Dashboard</div>
+      </div>
+      <div class="dash-topbar-actions">
+        <button type="button" class="term-btn danger outline" id="dash-logout">SAIR</button>
+      </div>
+    </header>
+
+    <div class="dash-view dash-view--active" data-dash-view="home">
+      <div class="dash-home-grid">
+        <button type="button" class="fb-card dash-app-card" id="dash-open-feedback">
+          <span class="dash-app-card-kicker">MODERAÇÃO</span>
+          <span class="dash-app-card-title">FEEDBACK</span>
+          <span class="dash-app-card-desc">Recebidos e histórico (aprovados / reprovados).</span>
+        </button>
+        <button type="button" class="fb-card dash-app-card" id="dash-open-cards-hub">
+          <span class="dash-app-card-kicker">SITE</span>
+          <span class="dash-app-card-title">CARDS · SKILLS</span>
+          <span class="dash-app-card-desc">Ordem no index, edição e criação de cards.</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="dash-view" data-dash-view="feedback" hidden>
+      <div class="dash-view-head">
+        <button type="button" class="term-btn ghost dash-back-btn" data-dash-back="home">← VOLTAR</button>
+        <button type="button" class="term-btn ghost" id="dash-fb-refresh">↻ ATUALIZAR</button>
+      </div>
+      <div class="fb-card dash-panel-inner">
+        <div class="ref-section-title" style="margin-bottom:0.75rem;">FEEDBACK</div>
+        <div class="dash-subtabs" role="tablist">
+          <button type="button" class="dash-subtab active" data-dash-fb-scope="pending">RECEBIDOS</button>
+          <button type="button" class="dash-subtab" data-dash-fb-scope="history">APROVADOS / REPROVADOS</button>
+        </div>
+        <label class="fb-label">
+          Moderador (registro ao decidir)
+          <input class="fb-input" id="dash-moderator" type="text" maxlength="80" placeholder="nome ou equipe" />
+        </label>
+        <div id="dash-fb-status" class="fb-status" aria-live="polite"></div>
+        <div id="dash-fb-list" class="dash-queue"></div>
+        <div id="dash-fb-empty" class="fb-empty" hidden></div>
+      </div>
+    </div>
+
+    <div class="dash-view" data-dash-view="cards-hub" hidden>
+      <div class="dash-view-head">
+        <button type="button" class="term-btn ghost dash-back-btn" data-dash-back="home">← VOLTAR</button>
+      </div>
+      <div class="dash-home-grid">
+        <button type="button" class="fb-card dash-app-card" id="dash-open-cards-edit">
+          <span class="dash-app-card-kicker">INDEX</span>
+          <span class="dash-app-card-title">EDITAR CARDS</span>
+          <span class="dash-app-card-desc">Lista dos cards do site, ordem na home e edição via API.</span>
+        </button>
+        <button type="button" class="fb-card dash-app-card" id="dash-open-cards-create">
+          <span class="dash-app-card-kicker">NOVO</span>
+          <span class="dash-app-card-title">CRIAR CARD</span>
+          <span class="dash-app-card-desc">Assistente: metadados, slides e conclusão obrigatória.</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="dash-view" data-dash-view="cards-edit" hidden>
+      <div class="dash-view-head">
+        <button type="button" class="term-btn ghost dash-back-btn" data-dash-back="cards-hub">← VOLTAR</button>
+        <button type="button" class="term-btn ghost" id="dash-cards-refresh">↻ API</button>
+      </div>
+      <div class="fb-card dash-panel-inner">
+        <div class="ref-section-title">CARDS NO INDEX</div>
+        <p class="dash-muted">A ordem abaixo é a mesma da seção de cards em <code>index.html</code> (salva no navegador).</p>
+        <ul id="dash-index-order-list" class="dash-index-order-list"></ul>
+      </div>
+
+      <div class="fb-card dash-panel-inner" style="margin-top:1rem;">
+        <div class="dash-panel-head">
+          <div class="ref-section-title" style="margin:0;">EDIÇÃO (API)</div>
+        </div>
+        <div id="dash-cards-status" class="fb-status"></div>
+        <p class="dash-muted" style="margin:0 0 0.75rem;"><strong>FORM + SLIDES</strong> abre um ecrã próprio: primeiro o card (API), depois cada slide de conteúdo do treino (git, docker, npm, dotnet).</p>
+        <div id="dash-cards-grid" class="dash-cards-grid"></div>
+        <div id="dash-cards-empty" class="fb-empty" hidden></div>
+      </div>
+    </div>
+
+    <div class="dash-view" data-dash-view="card-editor" hidden>
+      <div class="dash-view-head dash-card-editor-head">
+        <button type="button" class="term-btn ghost dash-back-btn" data-dash-back="cards-edit">← CARDS</button>
+        <div class="dash-card-editor-head-center">
+          <div class="ref-section-title" id="dash-card-editor-screen-title">Editar</div>
+          <span id="dash-card-editor-screen-sub" class="dash-muted" style="display:block;margin:0.2rem 0 0;font-size:0.82rem;"></span>
+        </div>
+        <div class="dash-card-editor-head-actions">
+          <button type="button" class="term-btn primary" id="dash-slides-save">SALVAR SLIDES</button>
+        </div>
+      </div>
+
+      <div id="dash-card-editor-theme-host" class="fb-card dash-panel-inner dash-card-editor-shell">
+        <div class="dash-card-editor-stepbar">
+          <button type="button" class="term-btn ghost" id="dash-card-editor-prev">‹ ANTERIOR</button>
+          <div class="dash-card-editor-step-label mono" id="dash-card-editor-step-label">1 / 1 · Card</div>
+          <button type="button" class="term-btn ghost" id="dash-card-editor-next">SEGUINTE ›</button>
+        </div>
+        <p class="dash-muted dash-card-editor-hint">Os slides são guardados neste navegador até copiar para o <code>.html</code> do treino. O slide final com botões já existe na página publicada — aqui edita-se só o conteúdo da trilha.</p>
+        <div id="dash-card-editor-addbar" class="dash-card-editor-addbar" hidden>
+          <button type="button" class="term-btn ghost" id="dash-edit-add-content">+ SLIDE DE CONTEÚDO</button>
+          <button type="button" class="term-btn ghost" id="dash-edit-add-pause">+ PAUSA</button>
+        </div>
+
+        <div id="dash-card-editor-step-meta" class="dash-card-editor-pane">
+          <div class="ref-section-title" style="margin-bottom:0.75rem;">1 · CARD (METADADOS · API)</div>
+          <form id="dash-card-form" class="dash-card-form">
+            <label class="fb-label">Slug <span class="dash-req">*</span>
+              <input class="fb-input" id="dash-card-slug" name="slug" required maxlength="80" placeholder="git" />
+            </label>
+            <label class="fb-label">Tema <span class="dash-req">*</span>
+              <select class="fb-input" id="dash-card-theme" required>
+                <option value="git">git</option>
+                <option value="docker">docker</option>
+                <option value="npm">npm</option>
+                <option value="dotnet">dotnet</option>
+              </select>
+            </label>
+            <label class="fb-label">Nome exibido <span class="dash-req">*</span>
+              <input class="fb-input" id="dash-card-display" required maxlength="120" />
+            </label>
+            <label class="fb-label">Badge raridade <span class="dash-req">*</span>
+              <input class="fb-input" id="dash-card-rarity" required maxlength="40" placeholder="ESSENTIAL" />
+            </label>
+            <label class="fb-label">Classe / subtítulo <span class="dash-req">*</span>
+              <input class="fb-input" id="dash-card-class" required maxlength="80" placeholder="VERSION CONTROL" />
+            </label>
+            <div class="dash-form-row">
+              <label class="fb-label">XP atual
+                <input class="fb-input" id="dash-card-xpc" type="number" min="0" value="0" />
+              </label>
+              <label class="fb-label">XP máx
+                <input class="fb-input" id="dash-card-xpm" type="number" min="1" value="3000" />
+              </label>
+              <label class="fb-label">Ordem
+                <input class="fb-input" id="dash-card-sort" type="number" value="0" />
+              </label>
+            </div>
+            <label class="fb-label">Link iniciante <span class="dash-req">*</span>
+              <input class="fb-input" id="dash-card-link-b" required maxlength="200" placeholder="git.html?tab=beginner" />
+            </label>
+            <label class="fb-label">Link referência <span class="dash-req">*</span>
+              <input class="fb-input" id="dash-card-link-r" required maxlength="200" placeholder="git.html?tab=ref" />
+            </label>
+            <label class="fb-label">Botão primário
+              <input class="fb-input" id="dash-card-btn1" maxlength="80" placeholder="▶ COMEÇAR" />
+            </label>
+            <label class="fb-label">Botão secundário
+              <input class="fb-input" id="dash-card-btn2" maxlength="80" placeholder="🎮 CHEAT CODES" />
+            </label>
+            <label class="fb-label">Descrição (HTML)
+              <textarea class="fb-input fb-textarea" id="dash-card-desc" rows="5" placeholder="<p>…</p>"></textarea>
+            </label>
+            <details class="dash-details">
+              <summary>Ícones (opcional)</summary>
+              <label class="fb-label">Layout ícone
+                <select class="fb-input" id="dash-card-icon-layout">
+                  <option value="single">single</option>
+                  <option value="dual">dual</option>
+                </select>
+              </label>
+              <label class="fb-label">Icone primário (URL/caminho)
+                <input class="fb-input" id="dash-card-icon-pri" maxlength="300" placeholder="imagens/gitlogobr.png" />
+              </label>
+              <label class="fb-label">Alt primário
+                <input class="fb-input" id="dash-card-icon-pri-alt" maxlength="120" />
+              </label>
+              <label class="fb-label">Icone secundário (dual)
+                <input class="fb-input" id="dash-card-icon-sec" maxlength="300" />
+              </label>
+              <label class="fb-label">Alt secundário
+                <input class="fb-input" id="dash-card-icon-sec-alt" maxlength="120" />
+              </label>
+            </details>
+            <label class="fb-label dash-check">
+              <input type="checkbox" id="dash-card-published" checked />
+              Publicado
+            </label>
+            <div class="dash-form-actions">
+              <button type="submit" class="term-btn primary" id="dash-card-save">SALVAR CARD</button>
+            </div>
+            <div id="dash-card-form-status" class="fb-status" aria-live="polite"></div>
+          </form>
+        </div>
+
+        <div id="dash-card-editor-step-slides" class="dash-card-editor-pane" hidden>
+          <div id="dash-edit-slides-root" class="dash-edit-slides-root"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-view" data-dash-view="cards-create" hidden>
+      <div class="dash-view-head">
+        <button type="button" class="term-btn ghost dash-back-btn" data-dash-back="cards-hub">← VOLTAR</button>
+      </div>
+
+      <div id="dash-create-step-meta" class="fb-card dash-panel-inner dash-create-panel">
+        <div class="ref-section-title">1 · METADADOS DO CARD</div>
+        <p class="dash-muted">Ícone com o mesmo tamanho padrão dos cards do index (referência NPM).</p>
+        <label class="fb-label">Título (nome do card)
+          <input class="fb-input" id="dash-wiz-title" maxlength="120" />
+        </label>
+        <label class="fb-label">Imagem do ícone
+          <input class="fb-input" id="dash-wiz-icon-file" type="file" accept="image/*" />
+        </label>
+        <div class="dash-wiz-icon-frame" aria-hidden="true">
+          <span class="dash-wiz-icon-label">Preview (tamanho card NPM)</span>
+          <div class="dash-wiz-icon-slot">
+            <img id="dash-wiz-icon-preview" alt="" hidden />
+          </div>
+        </div>
+        <label class="fb-label">Badge (raridade)
+          <input class="fb-input" id="dash-wiz-badge" maxlength="40" placeholder="CORE" />
+        </label>
+        <label class="fb-label">Classe / subtítulo
+          <input class="fb-input" id="dash-wiz-class" maxlength="80" placeholder="PACKAGE MANAGER" />
+        </label>
+        <div class="dash-form-row">
+          <label class="fb-label">XP atual
+            <input class="fb-input" id="dash-wiz-xpc" type="number" min="0" value="0" />
+          </label>
+          <label class="fb-label">XP máximo
+            <input class="fb-input" id="dash-wiz-xpm" type="number" min="1" value="3000" />
+          </label>
+        </div>
+        <label class="fb-label">Descrição (texto curto; vira HTML simples no card)
+          <textarea class="fb-input fb-textarea" id="dash-wiz-desc" rows="4"></textarea>
+        </label>
+        <div class="dash-form-actions">
+          <button type="button" class="term-btn primary" id="dash-wiz-to-slides">PRÓXIMO · SLIDES</button>
+        </div>
+      </div>
+
+      <div id="dash-create-step-slides" class="dash-create-slides-wrap" hidden>
+        <div class="fb-card dash-panel-inner">
+          <div class="ref-section-title">2 · SLIDES DO TREINAMENTO</div>
+          <p class="dash-muted">Cada slide de conteúdo: abas Texto, Comandos (terminal verde) e Observação (borda verde). Pausa: só texto e observação opcional. O slide final com os botões é sempre incluído ao publicar.</p>
+          <div id="dash-wiz-slides-root"></div>
+          <div class="dash-wiz-slide-actions">
+            <button type="button" class="term-btn ghost" id="dash-wiz-add-content">+ SLIDE DE CONTEÚDO</button>
+            <button type="button" class="term-btn ghost" id="dash-wiz-add-pause">+ PAUSA</button>
+          </div>
+          <div class="dash-wiz-final-locked fb-card">
+            <div class="ref-section-title" style="margin-bottom:0.5rem;">SLIDE FINAL (OBRIGATÓRIO)</div>
+            <p class="dash-muted">Sempre presente na trilha publicada.</p>
+            <div class="term-actions" style="margin-top:0.75rem;">
+              <span class="term-btn ghost" style="pointer-events:none;opacity:0.85;">← VOLTAR AO INÍCIO</span>
+              <span class="term-btn primary" style="pointer-events:none;opacity:0.85;">INICIAR TREINAMENTO</span>
+            </div>
+          </div>
+          <div class="dash-form-actions" style="margin-top:1.25rem;">
+            <button type="button" class="term-btn ghost" id="dash-wiz-back-meta">← METADADOS</button>
+            <button type="button" class="term-btn primary" id="dash-wiz-save-draft">SALVAR RASCUNHO (NAVEGADOR)</button>
+          </div>
+          <div id="dash-wiz-status" class="fb-status" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+
+    <section class="fb-card dash-collab dash-view-collab" id="dash-collab-section" aria-labelledby="dash-collab-title">
+      <div class="ref-section-title" id="dash-collab-title">COLABORADORES</div>
+      <label class="fb-label">
+        E-mail do colaborador
+        <input class="fb-input" id="dash-collab-email" type="email" maxlength="120" placeholder="nome@empresa.com" />
+      </label>
+      <div class="dash-login-actions" style="margin-top:0.75rem;">
+        <button type="button" class="term-btn primary" id="dash-collab-submit">Adicionar colaborador</button>
+      </div>
+      <div id="dash-collab-status" class="fb-status" aria-live="polite"></div>
+    </section>
+  </main>
+</div>
+
+<footer><span>BUILD</span>XP — De dev pra dev.</footer>
+<script src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feedback — BuildXP</title>
+  <meta name="description" content="Envie feedback público para melhorar o BuildXP." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="nav-logo" aria-label="BuildXP — Início">
+    <img class="nav-logo-img" src="imagens/logo2buildxpret.png" alt="BuildXP" />
+  </a>
+  <button class="hamburger" id="hamburger" aria-label="Menu">☰</button>
+  <ul class="nav-links" id="nav-links">
+    <li><a href="index.html#cards">Cards</a></li>
+    <li><a href="index.html#terminal">Terminal</a></li>
+    <li><a href="feedback.html">Feedback</a></li>
+    <li><a href="index.html#contact">Contato</a></li>
+  </ul>
+</nav>
+
+<main class="page-container">
+  <a href="index.html" class="back-link">← VOLTAR</a>
+
+  <div class="page-hero">
+    <div class="page-hero-glow"></div>
+    <div class="page-icon"><span style="font-family:var(--f-display);color:var(--accent);text-shadow:var(--accent-glow)">✎</span></div>
+    <div>
+      <div class="page-class">COMUNIDADE</div>
+      <div class="page-title">Feedback público</div>
+      <div class="page-meta">
+        <span class="lvl-badge">POSTE IDEIAS · ERROS · SUGESTÕES</span>
+      </div>
+    </div>
+  </div>
+
+  <section class="fb-wrap" id="feedback-app">
+    <div class="fb-grid">
+      <div class="fb-card">
+        <div class="ref-section-title">ENVIAR FEEDBACK</div>
+        <form id="fb-form" class="fb-form">
+          <label class="fb-label">
+            Seu nome (opcional)
+            <input class="fb-input" id="fb-name" type="text" maxlength="40" placeholder="ex: Gislane" />
+          </label>
+
+          <label class="fb-label">
+            Categoria
+            <select class="fb-input" id="fb-kind">
+              <option value="Sugestão de ajuste">Sugestão de ajuste</option>
+              <option value="Ideia">Ideia</option>
+              <option value="Solicitação de card">Solicitação de card</option>
+              <option value="Erro">Erro</option>
+            </select>
+          </label>
+
+          <label class="fb-label">
+            Mensagem
+            <textarea class="fb-input fb-textarea" id="fb-msg" rows="6" maxlength="400" required placeholder="Escreva seu feedback... (público)"></textarea>
+          </label>
+
+          <div class="fb-actions">
+            <button class="term-btn primary" type="submit">PUBLICAR</button>
+          </div>
+
+          <div id="fb-status" class="fb-status" aria-live="polite"></div>
+        </form>
+      </div>
+
+      <div class="fb-card">
+        <div class="fb-head">
+          <div class="ref-section-title" style="margin:0;">MURAL</div>
+          <div class="fb-tools">
+            <input class="fb-input fb-search" id="fb-search" type="text" placeholder="Buscar..." />
+          </div>
+        </div>
+
+        <div id="fb-list" class="fb-list"></div>
+        <div id="fb-empty" class="fb-empty" style="display:none;">
+          Nenhum feedback ainda. Seja o primeiro.
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><span>BUILD</span>XP — De dev pra dev.</footer>
+<script src="main.js"></script>
+</body>
+</html>
+

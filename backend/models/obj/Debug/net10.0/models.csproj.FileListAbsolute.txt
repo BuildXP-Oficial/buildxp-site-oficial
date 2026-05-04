@@ -132,3 +132,14 @@ C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\bin\Debug\net10.0\M
 C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\bin\Debug\net10.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\bin\Debug\net10.0\Microsoft.IdentityModel.Tokens.dll
 C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\bin\Debug\net10.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\bin\Debug\net10.0\models.staticwebassets.runtime.json
+C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\mcp7bala8v-{0}-jhbjyicfkh-jhbjyicfkh.gz
+C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\nmgjk5rcgh-{0}-u3tbmbr2du-u3tbmbr2du.gz
+C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\8yacpscsa6-{0}-7s2hztyup7-7s2hztyup7.gz
+C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\wvlo09p08l-{0}-83f5rrei46-83f5rrei46.gz
+C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\7edw1vpa0v-{0}-m8bat0bgui-m8bat0bgui.gz
+C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\h0tplqijkn-{0}-3mlnfegjve-3mlnfegjve.gz
+C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\84xb0uywul-{0}-a745zbb8lu-a745zbb8lu.gz
+c:\Users\gisla\Documents\buildxp-site-oficial\backend\models\bin\Debug\net10.0\Resend.dll
+c:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\2xy6akra5m-{0}-rtl791z6z6-rtl791z6z6.gz
+c:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\ca686fc4h1-{0}-rzrv2po9ql-rzrv2po9ql.gz

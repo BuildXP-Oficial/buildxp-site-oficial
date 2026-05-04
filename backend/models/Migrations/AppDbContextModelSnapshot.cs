@@ -62,7 +62,7 @@ namespace models.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("AtualizadoEm")
+                    b.Property<DateTime?>("AvaliadoEm")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("CriadoEm")
@@ -169,7 +169,7 @@ namespace models.Migrations
                     b.Property<bool>("Ativo")
                         .HasColumnType("boolean");
 
-                    b.Property<DateTime?>("AtualizadoEm")
+                    b.Property<DateTime>("AtualizadoEm")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Classe")
@@ -195,7 +195,7 @@ namespace models.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
-                    b.Property<int>("Posicao")
+                    b.Property<int>("Ordem")
                         .HasColumnType("integer");
 
                     b.Property<string>("Raridade")
@@ -208,10 +208,10 @@ namespace models.Migrations
                         .HasMaxLength(60)
                         .HasColumnType("character varying(60)");
 
-                    b.Property<int>("XPAtual")
+                    b.Property<int>("XpAtual")
                         .HasColumnType("integer");
 
-                    b.Property<int>("XPMaximo")
+                    b.Property<int>("XpMaximo")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
