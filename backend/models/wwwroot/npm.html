@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NPM — BuildXP</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>:root { --accent: var(--npm); --accent-glow: var(--npm-glow); }</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="index.html" class="nav-logo" aria-label="BuildXP — Início">
+    <img class="nav-logo-img" src="imagens/logo2buildxpret.png" alt="BuildXP" />
+  </a>
+  <button class="hamburger" id="hamburger">☰</button>
+  <ul class="nav-links" id="nav-links">
+    <li><a href="index.html#cards">Cards</a></li>
+    <li><a href="index.html#terminal">Terminal</a></li>
+    <li><a href="feedback.html">Feedback</a></li>
+    <li><a href="index.html#contact">Contato</a></li>
+  </ul>
+</nav>
+
+<div class="page-container">
+  <a href="index.html" class="back-link">← VOLTAR AOS CARDS</a>
+
+  <div class="page-hero">
+    <div class="page-hero-glow"></div>
+    <div class="page-icon"><img src="imagens/npmlogo.png" alt="NPM" /></div>
+    <div>
+      <div class="page-class">PACKAGE MANAGER</div>
+      <div class="page-title">NPM</div>
+      <div class="page-meta">
+        <span class="lvl-badge">LVL 4 · CORE</span>
+        <div class="xp-mini"><div class="xp-mini-fill" style="width:40%"></div></div>
+        <span style="font-family:var(--f-mono);font-size:0.65rem;color:var(--text-muted)">1200 XP</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="beginner">▶ INICIANTE</button>
+    <button class="tab-btn" data-tab="ref">⌘ REFERÊNCIA RÁPIDA</button>
+  </div>
+
+  <!-- BEGINNER -->
+  <div class="tab-pane active" id="beginner">
+    <div class="steps-slider" data-steps-slider>
+      <button class="steps-nav" type="button" aria-label="Anterior" data-slide-prev>‹</button>
+      <div class="steps steps-track">
+
+      <div class="step">
+        <div class="step-num">01</div>
+        <div>
+          <div class="step-title">O que é NPM?</div>
+          <div class="step-desc">
+            NPM (Node Package Manager) é o gerenciador de pacotes do Node.js. Com ele você instala, atualiza e gerencia bibliotecas e ferramentas de terceiros no seu projeto JavaScript. Pensa nele como uma "loja de peças" para seu código.
+          </div>
+          <div class="callout callout-info">ℹ️ O NPM vem instalado automaticamente junto com o Node.js — não precisa instalar separadamente.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">02</div>
+        <div>
+          <div class="step-title">Instalar o Node.js (e NPM)</div>
+          <div class="step-desc">Baixe e instale o Node.js — o NPM vem junto no pacote.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code># Windows / macOS → https://nodejs.org (baixe a versão LTS)
+
+# Linux (via NVM — recomendado)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+nvm install --lts
+nvm use --lts
+
+# Verificar instalação
+node --version
+npm --version</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">03</div>
+        <div>
+          <div class="step-title">Inicializar um projeto</div>
+          <div class="step-desc">O <code>npm init</code> cria o arquivo <code>package.json</code> — o coração do seu projeto, onde ficam registradas todas as dependências e scripts.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code># Modo interativo (faz perguntas sobre o projeto)
+npm init
+
+# Modo rápido (preenche tudo com padrão)
+npm init -y</code>
+          </div>
+          <div class="callout callout-tip">💡 Use <code>npm init -y</code> quando quiser começar rápido. Você edita o package.json depois.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">04</div>
+        <div>
+          <div class="step-title">Instalar pacotes</div>
+          <div class="step-desc">Existem dois tipos de dependências: as de produção (necessárias para o app rodar) e as de desenvolvimento (ferramentas usadas apenas durante o desenvolvimento).</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code># Dependência de produção (vai pro "dependencies")
+npm install express
+npm i express          # atalho
+
+# Dependência de desenvolvimento (vai pro "devDependencies")
+npm install --save-dev nodemon
+npm i -D nodemon       # atalho
+
+# Instalar versão específica
+npm install axios@1.6.0</code>
+          </div>
+          <div class="callout callout-info">ℹ️ O NPM cria a pasta <code>node_modules</code> — nunca a commite no Git. Adicione ao <code>.gitignore</code>.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">05</div>
+        <div>
+          <div class="step-title">O arquivo package.json</div>
+          <div class="step-desc">Entenda a estrutura básica do arquivo mais importante do seu projeto Node.js.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code>{
+  "name": "meu-projeto",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "build": "tsc",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">06</div>
+        <div>
+          <div class="step-title">Executar scripts</div>
+          <div class="step-desc">Os scripts definidos no <code>package.json</code> são executados com <code>npm run</code>.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code>npm run dev       # roda o script "dev"
+npm run build     # roda o script "build"
+npm test          # atalho para "test"
+npm start         # atalho para "start"</code>
+          </div>
+          <div class="callout callout-tip">💡 <code>start</code> e <code>test</code> não precisam do <code>run</code>. Os outros precisam.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">07</div>
+        <div>
+          <div class="step-title">Restaurar dependências de um projeto existente</div>
+          <div class="step-desc">Quando você clona um repositório que já tem um <code>package.json</code>, precisa instalar as dependências antes de rodar.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code># Instala tudo que está no package.json
+npm install
+
+# Em CI/CD — instala exatamente o que está no package-lock.json
+npm ci</code>
+          </div>
+          <div class="callout callout-info">ℹ️ Use <code>npm ci</code> em pipelines de deploy — é mais rápido e mais seguro que <code>npm install</code>.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">08</div>
+        <div>
+          <div class="step-title">.gitignore para projetos Node.js</div>
+          <div class="step-desc">Sempre adicione esses arquivos ao seu <code>.gitignore</code>.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code># .gitignore
+node_modules/
+.env
+dist/
+build/
+*.log</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">FIM</div>
+        <div>
+          <div class="step-title">Você chegou ao final.</div>
+          <div class="step-desc">Espero que tenha entendido como funciona.</div>
+          <div class="term-actions">
+            <button class="term-btn ghost" type="button" data-steps-restart>← VOLTAR AO INÍCIO</button>
+            <a class="term-btn primary" href="index.html#terminal">INICIAR TREINAMENTO</a>
+          </div>
+        </div>
+      </div>
+
+      </div>
+      <button class="steps-nav" type="button" aria-label="Próximo" data-slide-next>›</button>
+      <div class="steps-index" data-steps-index aria-label="Índice clicável dos slides"></div>
+    </div>
+  </div>
+
+  <!-- REFERENCE -->
+  <div class="tab-pane" id="ref">
+    <div class="ref-search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="ref-search" id="ref-search" type="text" placeholder="Buscar comando... ex: install, update, run" />
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">PROJETO</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">npm init -y</span><span class="cmd-desc">Inicializar projeto com padrões</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm install</span><span class="cmd-desc">Instalar todas as dependências</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm ci</span><span class="cmd-desc">Instalação limpa via package-lock.json</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm --version</span><span class="cmd-desc">Ver versão do NPM</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">INSTALAR PACOTES</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">npm i &lt;pacote&gt;</span><span class="cmd-desc">Instalar como dependência de produção</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm i -D &lt;pacote&gt;</span><span class="cmd-desc">Instalar como devDependency</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm i -g &lt;pacote&gt;</span><span class="cmd-desc">Instalar globalmente</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm i &lt;pacote&gt;@&lt;versão&gt;</span><span class="cmd-desc">Instalar versão específica</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm i &lt;pacote1&gt; &lt;pacote2&gt;</span><span class="cmd-desc">Instalar múltiplos pacotes</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">GERENCIAR PACOTES</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">npm uninstall &lt;pacote&gt;</span><span class="cmd-desc">Remover pacote</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm update &lt;pacote&gt;</span><span class="cmd-desc">Atualizar pacote específico</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm update</span><span class="cmd-desc">Atualizar todos os pacotes</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm outdated</span><span class="cmd-desc">Ver pacotes desatualizados</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm list</span><span class="cmd-desc">Listar pacotes instalados</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm list -g --depth=0</span><span class="cmd-desc">Listar pacotes globais</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">SCRIPTS</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">npm start</span><span class="cmd-desc">Executar script "start"</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm test</span><span class="cmd-desc">Executar script "test"</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm run &lt;script&gt;</span><span class="cmd-desc">Executar script customizado</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm run build</span><span class="cmd-desc">Executar script "build"</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm run dev</span><span class="cmd-desc">Executar script "dev"</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">AUDITORIA & SEGURANÇA</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">npm audit</span><span class="cmd-desc">Verificar vulnerabilidades</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm audit fix</span><span class="cmd-desc">Corrigir vulnerabilidades automaticamente</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm cache clean --force</span><span class="cmd-desc">Limpar cache do NPM</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">PUBLICAR PACOTES</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">npm login</span><span class="cmd-desc">Autenticar no NPM registry</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm publish</span><span class="cmd-desc">Publicar pacote no registry</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm version patch</span><span class="cmd-desc">Incrementar versão patch (1.0.0 → 1.0.1)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm version minor</span><span class="cmd-desc">Incrementar versão minor (1.0.0 → 1.1.0)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm version major</span><span class="cmd-desc">Incrementar versão major (1.0.0 → 2.0.0)</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer><span>BUILD</span>XP — De dev pra dev.</footer>
+<script src="main.js"></script>
+</body>
+</html>

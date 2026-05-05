@@ -22,6 +22,39 @@ namespace models.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("BuildXP.API.Models.Colaborador", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Senha")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TokenConvite")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("TokenExpiraEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Colaboradores");
+                });
+
             modelBuilder.Entity("BuildXP.API.Models.ConteudoSlide", b =>
                 {
                     b.Property<int>("Id")
@@ -62,7 +95,7 @@ namespace models.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("AtualizadoEm")
+                    b.Property<DateTime?>("AvaliadoEm")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("CriadoEm")
@@ -169,13 +202,23 @@ namespace models.Migrations
                     b.Property<bool>("Ativo")
                         .HasColumnType("boolean");
 
-                    b.Property<DateTime?>("AtualizadoEm")
+                    b.Property<DateTime>("AtualizadoEm")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("BtnPrimaryLabel")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("BtnSecondaryLabel")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
 
                     b.Property<string>("Classe")
                         .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
 
                     b.Property<string>("CorBorda")
                         .IsRequired()
@@ -187,34 +230,82 @@ namespace models.Migrations
 
                     b.Property<string>("Descricao")
                         .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
+                        .HasColumnType("text");
+
+                    b.Property<string>("IconLayout")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("IconPrimaryAlt")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("IconPrimarySrc")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("IconSecondaryAlt")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("IconSecondarySrc")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
 
                     b.Property<string>("Icone")
                         .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
 
-                    b.Property<int>("Posicao")
+                    b.Property<string>("LinkBeginner")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("LinkRef")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<int>("Ordem")
                         .HasColumnType("integer");
 
                     b.Property<string>("Raridade")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(48)
+                        .HasColumnType("character varying(48)");
+
+                    b.Property<string>("Theme")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.Property<string>("Titulo")
                         .IsRequired()
-                        .HasMaxLength(60)
-                        .HasColumnType("character varying(60)");
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
 
-                    b.Property<int>("XPAtual")
+                    b.Property<int>("XpAtual")
                         .HasColumnType("integer");
 
-                    b.Property<int>("XPMaximo")
+                    b.Property<int>("XpMaximo")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasFilter("\"Slug\" <> ''");
 
                     b.ToTable("SkillCards");
                 });

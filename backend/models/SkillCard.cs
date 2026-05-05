@@ -3,18 +3,34 @@ namespace BuildXP.API.Models; // Nome do Arquivo: SkillCard.cs
 public class SkillCard // Classe do Modelo de SkillCard
 {
     public int Id { get; set; } = 0; // ID da SkillCard
+
+    /// <summary>Identificador estável usado na URL da API e no dashboard (ex.: git, docker).</summary>
+    public string Slug { get; set; } = string.Empty;
+
+    /// <summary>Tema visual: git, docker, npm, dotnet.</summary>
+    public string Theme { get; set; } = string.Empty;
+
     public string Titulo { get; set; } = string.Empty; // Titulo da SkillCard
-    public string Icone { get; set; } = string.Empty; // Icone da SkillCard
+    public string Icone { get; set; } = string.Empty; // legacy — ícone curto; ver IconPrimarySrc
     public string Classe { get; set; } = string.Empty; // Classe da SkillCard ex: VERSION CONTROL 
     public string Raridade { get; set; } = string.Empty; // Raridade da SkillCard ex: ESSENTIAL
     public string CorBorda { get; set; } = "#39d353"; // Cor da Borda da SkillCard ex: #000000
-    public string Descricao { get; set; } = string.Empty; // Descrição da SkillCard
-    public int Posicao { get; set; } = 0; // Posição na página
+    public string Descricao { get; set; } = string.Empty; // Descrição / HTML do card
+    public string LinkBeginner { get; set; } = string.Empty;
+    public string LinkRef { get; set; } = string.Empty;
+    public string BtnPrimaryLabel { get; set; } = string.Empty;
+    public string BtnSecondaryLabel { get; set; } = string.Empty;
+    public string IconLayout { get; set; } = "single";
+    public string IconPrimarySrc { get; set; } = string.Empty;
+    public string IconPrimaryAlt { get; set; } = string.Empty;
+    public string IconSecondarySrc { get; set; } = string.Empty;
+    public string IconSecondaryAlt { get; set; } = string.Empty;
+    public int Ordem { get; set; } = 0; // Posição na página
     public bool Ativo { get; set; } = true; // Se a SkillCard está ativo 
-    public int XPAtual { get; set; } = 0; // XP Calculado automaticamente
-    public int XPMaximo { get; set; } = 0; // XP Máximo da SkillCard
+    public int XpAtual { get; set; } = 0; // XP Calculado automaticamente
+    public int XpMaximo { get; set; } = 0; // XP Máximo da SkillCard
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow; // Data de Criação da SkillCard - gerada automaticamente 
-    public DateTime? AtualizadoEm { get; set; } // Só preenchido quando a SkillCard é atualizada 
+    public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow; // Só preenchido quando a SkillCard é atualizada 
 
     public List<Slide> Slides { get; set; } = []; // Um card tem vários slides 
     public List<ReferenciaRapida> Referencias { get; set; } = []; // Um card tem várias referências rápidas
