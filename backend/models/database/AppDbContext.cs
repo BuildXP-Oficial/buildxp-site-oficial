@@ -33,12 +33,26 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
         // SkillCard
         modelBuilder.Entity<SkillCard>(entity =>
         {
-            entity.Property(s => s.Titulo).HasMaxLength(60);
-            entity.Property(s => s.Icone).HasMaxLength(10);
-            entity.Property(s => s.Classe).HasMaxLength(40);
-            entity.Property(s => s.Raridade).HasMaxLength(20);
+            entity.Property(s => s.Slug).HasMaxLength(48);
+            entity.Property(s => s.Theme).HasMaxLength(32);
+            entity.Property(s => s.Titulo).HasMaxLength(120);
+            entity.Property(s => s.Icone).HasMaxLength(512);
+            entity.Property(s => s.Classe).HasMaxLength(60);
+            entity.Property(s => s.Raridade).HasMaxLength(32);
             entity.Property(s => s.CorBorda).HasMaxLength(7);   // ex: #39d353
-            entity.Property(s => s.Descricao).HasMaxLength(300);
+            entity.Property(s => s.Descricao).HasColumnType("text");
+            entity.Property(s => s.LinkBeginner).HasMaxLength(512);
+            entity.Property(s => s.LinkRef).HasMaxLength(512);
+            entity.Property(s => s.BtnPrimaryLabel).HasMaxLength(80);
+            entity.Property(s => s.BtnSecondaryLabel).HasMaxLength(80);
+            entity.Property(s => s.IconLayout).HasMaxLength(16);
+            entity.Property(s => s.IconPrimarySrc).HasMaxLength(512);
+            entity.Property(s => s.IconPrimaryAlt).HasMaxLength(200);
+            entity.Property(s => s.IconSecondarySrc).HasMaxLength(512);
+            entity.Property(s => s.IconSecondaryAlt).HasMaxLength(200);
+            entity.HasIndex(s => s.Slug)
+                .IsUnique()
+                .HasFilter("\"Slug\" <> ''");
         });
 
         // ReferenciaRapida

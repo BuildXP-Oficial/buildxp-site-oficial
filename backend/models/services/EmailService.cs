@@ -71,4 +71,26 @@ public class EmailService
 
         await _resend.EmailSendAsync(email);
     }
+
+    public async Task EnviarCodigoRecuperacaoSenhaAsync(string emailDestino, string codigo)
+    {
+        var de = _config["Resend:De"]
+                 ?? throw new InvalidOperationException("Resend:De não configurado.");
+        var email = new EmailMessage
+        {
+            From = de,
+            To = { emailDestino.Trim() },
+            Subject = "BuildXP — Código para recuperar senha",
+            HtmlBody = $"""
+                <div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#111;">
+                  <h2 style="color:#0d47a1;">BuildXP — Recuperação de senha</h2>
+                  <p>Seu código no painel admin (válido por <strong>15 minutos</strong>):</p>
+                  <p style="font-size:1.85rem;letter-spacing:0.35em;font-weight:700;font-family:ui-monospace,monospace;padding:0.75rem 1rem;background:#f4f6fb;border-radius:8px;display:inline-block;">{codigo}</p>
+                  <p style="color:#666;font-size:0.9rem;margin-top:1.25rem;">Se você não pediu a recuperação, pode ignorar este e-mail.</p>
+                </div>
+                """
+        };
+
+        await _resend.EmailSendAsync(email);
+    }
 }

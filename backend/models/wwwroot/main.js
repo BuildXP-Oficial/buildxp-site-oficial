@@ -344,11 +344,6 @@ function initSearch() {
   };
 
   const apply = () => {
-    const gate = norm(search.value).replace(/\s+/g, ' ');
-    if (gate === 'eu sou admin') {
-      window.location.href = 'dashboard.html';
-      return;
-    }
     const tokens = tokenize(search.value);
     items.forEach(it => {
       const s = scoreItem(it, tokens);
@@ -442,41 +437,90 @@ function initFeedback() {
     statusEl.classList.toggle('bad', type === 'bad');
   }
 
+  const feedbackApiPrefix = () =>
+    typeof getBuildXpApiBase === 'function' ? String(getBuildXpApiBase()).replace(/\/$/, '') : '';
+
+  function mapApiFeedbackToWallItem(f) {
+    const rawMsg = f.mensagem ?? '';
+    const bracket = String(rawMsg).match(/^\[([^\]]+)\]\s*\n*/);
+    const kind = bracket ? bracket[1] : 'Feedback';
+    const msg = bracket ? String(rawMsg).slice(bracket[0].length).trim() : String(rawMsg);
+    return {
+      id: String(f.id ?? ''),
+      name: String(f.nome ?? '').slice(0, 100),
+      kind,
+      msg: msg.slice(0, 1000),
+      createdAt: f.criadoEm ?? new Date().toISOString(),
+    };
+  }
+
+  async function fetchApprovedFromApi() {
+    try {
+      const url = `${feedbackApiPrefix()}/api/feedback/aprovados`;
+      const res = await fetch(url, {
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!Array.isArray(data)) return null;
+      return data.map(mapApiFeedbackToWallItem);
+    } catch {
+      return null;
+    }
+  }
+
+  /** Itens do mural: API (aprovados) quando disponível; senão cache local. */
+  let displayItems = load();
+
   function render() {
     const q = norm(searchEl.value);
-    const items = load();
+    const items = displayItems;
     const filtered = !q
       ? items
-      : items.filter(it =>
-          norm(it.name).includes(q) ||
-          norm(it.kind).includes(q) ||
-          norm(it.msg).includes(q)
+      : items.filter(
+          (it) =>
+            norm(it.name).includes(q) ||
+            norm(it.kind).includes(q) ||
+            norm(it.msg).includes(q),
         );
 
     listEl.innerHTML = '';
-    emptyEl.style.display = (filtered.length === 0) ? '' : 'none';
+    emptyEl.style.display = filtered.length === 0 ? '' : 'none';
 
     filtered
       .slice()
       .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
-      .forEach(it => {
+      .forEach((it) => {
         const div = document.createElement('div');
         div.className = 'fb-item';
         div.innerHTML = `
           <div class="fb-item-top">
-            <span class="fb-kind">${it.kind}</span>
-            <span class="fb-meta">${it.name ? it.name + ' · ' : ''}${fmtDate(it.createdAt)}</span>
+            <span class="fb-kind"></span>
+            <span class="fb-meta"></span>
           </div>
           <div class="fb-msg"></div>
         `;
+        div.querySelector('.fb-kind').textContent = it.kind;
+        div.querySelector('.fb-meta').textContent = `${it.name ? `${it.name} · ` : ''}${fmtDate(it.createdAt)}`;
         div.querySelector('.fb-msg').textContent = it.msg;
         listEl.appendChild(div);
       });
   }
 
+  async function refreshWall() {
+    const remote = await fetchApprovedFromApi();
+    if (remote !== null) {
+      displayItems = remote;
+    } else {
+      displayItems = load();
+    }
+    render();
+  }
+
   searchEl?.addEventListener('input', () => render());
 
-  form?.addEventListener('submit', (e) => {
+  form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     setStatus('', '');
 
@@ -495,6 +539,30 @@ function initFeedback() {
       return;
     }
 
+    const mensagem = `[${kind}]\n\n${msg}`.slice(0, 1000);
+    const payload = {
+      nome: name.slice(0, 100),
+      mensagem,
+    };
+
+    try {
+      const url = `${feedbackApiPrefix()}/api/feedback`;
+      const res = await fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        msgEl.value = '';
+        setStatus('Recebido! Após moderação pode aparecer no mural.', 'ok');
+        await refreshWall();
+        return;
+      }
+    } catch {
+      /* fallback local abaixo */
+    }
+
     const items = load();
     items.push({
       id: crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2),
@@ -504,13 +572,13 @@ function initFeedback() {
       createdAt: new Date().toISOString(),
     });
     save(items);
-
+    displayItems = load();
     msgEl.value = '';
-    setStatus('Publicado no mural! Obrigado por contribuir.', 'ok');
+    setStatus('Enviado só neste navegador (API indisponível).', 'ok');
     render();
   });
 
-  render();
+  refreshWall();
 }
 
 /* ── TRAINING TERMINAL ──────────────────────────────────────*/
@@ -591,6 +659,105 @@ const TRAIN_BANK = {
 function initTrainingTerminal() {
   const mount = document.getElementById('terminal');
   if (!mount) return;
+
+  /** Prova silenciosa → dashboard (qualquer terminal: intro ou treino; sem área dedicada). */
+  let adminGateBuffer = [];
+
+  const normAdmin = (s) =>
+    String(s ?? '')
+      .trim()
+      .replace(/\s+/g, ' ');
+
+  const compactCs = (s) => String(s).replace(/\s+/g, '');
+
+  /** Remove espaços + aspas “tipográficas” / zero-width (cópia de editores). */
+  function compactAdminBody(s) {
+    return String(s)
+      .replace(/[\u200B-\u200D\uFEFF]/g, '')
+      .replace(/[\u201C\u201D\u201E\u201F\u00AB\u00BB]/g, '"')
+      .replace(/\s+/g, '');
+  }
+
+  /** Quatro linhas (compactadas na validação). */
+  const ADMIN_BRACE_OPEN = compactAdminBody('{');
+  const ADMIN_ACESSO = compactAdminBody(
+    'public static object Acesso = new { id = 0xB1D, fecho = "AdminDash"};',
+  );
+  const ADMIN_BRACE_CLOSE = compactAdminBody('}');
+
+  function isFirstLineAdminDash(s) {
+    const t = normAdmin(s);
+    return t === 'private class AdminDash' || t === 'private class AdminDash {';
+  }
+
+  function validateAdminGate(lines) {
+    if (lines.length !== 4) return false;
+    if (!isFirstLineAdminDash(lines[0])) return false;
+    if (compactAdminBody(lines[1]) !== ADMIN_BRACE_OPEN) return false;
+    if (compactAdminBody(lines[2]) !== ADMIN_ACESSO) return false;
+    if (compactAdminBody(lines[3]) !== ADMIN_BRACE_CLOSE) return false;
+    return true;
+  }
+
+  function gateLog(text, cls = '') {
+    const screen = mount.querySelector('#term-screen');
+    if (!screen) return;
+    const div = document.createElement('div');
+    div.className = 'term-line' + (cls ? ` ${cls}` : '');
+    div.textContent = text;
+    screen.appendChild(div);
+    screen.scrollTop = screen.scrollHeight;
+  }
+
+  function replayAdminGate() {
+    const screen = mount.querySelector('#term-screen');
+    if (!screen) return;
+    screen.innerHTML = '';
+    adminGateBuffer.forEach((l) => gateLog(`$ ${l}`, 'term-dim'));
+    if (adminGateBuffer.length === 1 && isFirstLineAdminDash(adminGateBuffer[0])) {
+      gateLog('A seguir: { , a linha do Acesso, e }', 'term-dim');
+    }
+  }
+
+  /**
+   * @param {string} raw
+   * @param {'intro'|'run'} mode — intro: ignora silenciosamente o que não for a 1.ª linha da prova
+   * @returns {boolean} true = input tratado pela prova (não passar ao quiz / não fazer mais nada)
+   */
+  function tryConsumeAdminGate(raw, mode) {
+    const trimmed = String(raw ?? '').trim();
+    if (!trimmed) return false;
+
+    if (adminGateBuffer.length === 0) {
+      if (!isFirstLineAdminDash(trimmed)) {
+        return mode === 'intro';
+      }
+      adminGateBuffer.push(trimmed);
+      gateLog(`$ ${trimmed}`, 'term-dim');
+      gateLog('A seguir: { , a linha do Acesso, e }', 'term-dim');
+      return true;
+    }
+
+    adminGateBuffer.push(trimmed);
+    gateLog(`$ ${trimmed}`, 'term-dim');
+
+    if (adminGateBuffer.length > 4) {
+      gateLog('Ainda a finalizar', 'term-pending');
+      return true;
+    }
+
+    if (adminGateBuffer.length === 4) {
+      if (validateAdminGate(adminGateBuffer)) {
+        window.location.href = 'dashboard.html';
+        return true;
+      }
+      gateLog('Classe ou objeto inválido. Recomece.', 'term-bad');
+      adminGateBuffer = [];
+      return true;
+    }
+
+    return true;
+  }
 
   const state = {
     topic: 'Git',
@@ -827,6 +994,8 @@ function initTrainingTerminal() {
     state.currentSet = pickQuestions(state.topic, state.levelMode, state.runLevel);
     renderTerminalShell();
 
+    replayAdminGate();
+
     line(`BuildXP Terminal Training — ${state.topic}`, 'term-dim');
     line(`Objetivo: ${state.goalXp} XP.`, 'term-dim');
     line(`Regras: 5 desafios. +20 certo, +10 parcial, +0 errado.`, 'term-dim');
@@ -875,9 +1044,15 @@ function initTrainingTerminal() {
     const input = mount.querySelector('#term-input');
     if (!input) return;
     const raw = input.value;
+    if (!raw.trim()) return;
+
+    if (tryConsumeAdminGate(raw, 'run')) {
+      input.value = '';
+      return;
+    }
+
     const q = state.currentSet[state.questionIdx];
     if (!q) return;
-    if (!raw.trim()) return;
 
     line(`$ ${raw}`, 'term-dim');
 
@@ -1238,16 +1413,44 @@ function dashEscapeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
+function dashNormalizeFeedbackStatus(raw) {
+  const v = raw?.status ?? raw?.Status;
+  if (typeof v === 'number') {
+    if (v === 0) return 'pending';
+    if (v === 1) return 'approved';
+    if (v === 2) return 'rejected';
+  }
+  const s = String(v ?? '').toLowerCase();
+  if (s === 'pendente' || s === 'pending') return 'pending';
+  if (s === 'aprovado' || s === 'approved') return 'approved';
+  if (s === 'rejeitado' || s === 'rejected') return 'rejected';
+  return 'pending';
+}
+
 function dashNormalizePending(raw) {
-  const id = raw.id ?? raw.uuid;
+  const id = raw.id ?? raw.Id ?? raw.uuid;
   if (id === undefined || id === null) return null;
+  const name = raw.author_name ?? raw.name ?? raw.nome ?? '';
+  const rawMsg = raw.message ?? raw.msg ?? raw.body ?? raw.mensagem ?? '';
+  const status = dashNormalizeFeedbackStatus(raw);
+  let kind = raw.category ?? raw.kind ?? '';
+  let msg = typeof rawMsg === 'string' ? rawMsg : String(rawMsg ?? '');
+  if (!kind && msg.length) {
+    const bracket = msg.match(/^\[([^\]]+)\]\s*\n*/);
+    if (bracket) {
+      kind = bracket[1];
+      msg = msg.slice(bracket[0].length).trim();
+    }
+  }
+  if (!kind) kind = '—';
+  const createdAt = raw.created_at ?? raw.createdAt ?? raw.criadoEm ?? '';
   return {
     id: String(id),
-    name: raw.author_name ?? raw.name ?? '',
-    kind: raw.category ?? raw.kind ?? '—',
-    msg: raw.message ?? raw.msg ?? raw.body ?? '',
-    createdAt: raw.created_at ?? raw.createdAt ?? '',
-    status: raw.status ?? 'pending',
+    name,
+    kind,
+    msg,
+    createdAt,
+    status,
   };
 }
 
@@ -1294,9 +1497,10 @@ function dashApplyCardToForm(raw) {
 
 function getDashApiPath(key) {
   const defaults = {
-    login: '/api/admin/login',
-    forgotRequest: '/api/auth/forgot-password',
-    resetPassword: '/api/auth/reset-password',
+    login: '/api/Auth/login',
+    forgotRequest: '/api/auth/recuperar-senha',
+    validateRecoveryCode: '/api/auth/validar-codigo-recuperacao',
+    resetPassword: '/api/auth/redefinir-senha',
     inviteCollaborator: '/api/Colaborador/convidar',
   };
   const p = window.BUILDXP_API_PATHS || {};
@@ -1340,6 +1544,38 @@ function getToken()       { try { return sessionStorage.getItem(BUILDXP_JWT_KEY)
 function saveToken(t)     { try { sessionStorage.setItem(BUILDXP_JWT_KEY, t); } catch(_) {} }
 function removeToken()    { try { sessionStorage.removeItem(BUILDXP_JWT_KEY); } catch(_) {} }
 
+/** Ex.: gislanesenaa@gmail.com → gis*********@gm*****com */
+function maskRecoveryEmailDisplay(email) {
+  const raw = String(email || '').trim();
+  const at = raw.indexOf('@');
+  if (at < 1 || at === raw.length - 1) return '***';
+  const local = raw.slice(0, at);
+  const host = raw.slice(at + 1);
+  if (!host) return '***';
+  const dot = host.lastIndexOf('.');
+  const domain = dot > 0 ? host.slice(0, dot) : host;
+  const tld = dot > 0 ? host.slice(dot + 1) : '';
+
+  let localMasked;
+  if (local.length <= 2) {
+    localMasked = `${local[0] || '*'}**`;
+  } else {
+    localMasked = `${local.slice(0, 3)}${'*'.repeat(9)}`;
+  }
+
+  let domMasked;
+  if (tld) {
+    domMasked =
+      domain.length <= 2
+        ? `${domain.padEnd(2, '*').slice(0, 2)}*****${tld}`
+        : `${domain.slice(0, 2)}*****${tld}`;
+  } else {
+    domMasked = `${domain.slice(0, 2)}*****`;
+  }
+
+  return `${localMasked}@${domMasked}`;
+}
+
 async function tryAdminLogin(username, password) {
   // nosso backend espera {usuario, senha} e retorna {token}
   const r = await dashFetchNoThrow('/api/Auth/login', {
@@ -1381,6 +1617,11 @@ function initDashboard() {
   const shellEl = document.getElementById('dash-shell');
   if (!loginEl || !shellEl) return;
 
+  document.getElementById('dash-nav-logo')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (typeof window.__dashGoHome === 'function') window.__dashGoHome();
+  });
+
   const ADMIN_SESSION_KEY = 'buildxp_admin_session';
   const loginForm = document.getElementById('dash-login-form');
   const loginUser = document.getElementById('dash-login-username');
@@ -1392,34 +1633,104 @@ function initDashboard() {
   const forgotClose = document.getElementById('dash-forgot-close');
   const forgotCancel = document.getElementById('dash-forgot-cancel');
   const forgotOpen = document.getElementById('dash-open-forgot');
-  const forgotStep1 = document.getElementById('dash-forgot-step1');
-  const forgotStep2 = document.getElementById('dash-forgot-step2');
+  const forgotPanelEmail = document.getElementById('dash-forgot-panel-email');
+  const forgotPanelCode = document.getElementById('dash-forgot-panel-code');
+  const forgotPanelPassword = document.getElementById('dash-forgot-panel-password');
   const forgotEmailEl = document.getElementById('dash-forgot-email');
   const forgotStep1Status = document.getElementById('dash-forgot-step1-status');
-  const forgotStep2Status = document.getElementById('dash-forgot-step2-status');
-  const forgotBack = document.getElementById('dash-forgot-back');
+  const forgotCodeStatus = document.getElementById('dash-forgot-code-status');
+  const forgotPasswordStatus = document.getElementById('dash-forgot-step-password-status');
+  const forgotVerifyCodeBtn = document.getElementById('dash-forgot-verify-code');
+  const forgotResendBtn = document.getElementById('dash-forgot-resend');
+  const forgotBackToEmail = document.getElementById('dash-forgot-back-to-email');
+  const forgotBackToCode = document.getElementById('dash-forgot-back-to-code');
+  const FORGOT_RESEND_SEC = 50;
   let pendingForgotEmail = '';
+  let pendingForgotCode = '';
+  let forgotResendTimer = null;
+
+  function clearForgotResendTimer() {
+    if (forgotResendTimer) {
+      clearInterval(forgotResendTimer);
+      forgotResendTimer = null;
+    }
+  }
+
+  function updateForgotResendButton(sec) {
+    if (!forgotResendBtn) return;
+    if (sec > 0) {
+      forgotResendBtn.disabled = true;
+      forgotResendBtn.textContent = `Reenviar código (${sec}s)`;
+    } else {
+      forgotResendBtn.disabled = false;
+      forgotResendBtn.textContent = 'Reenviar código';
+    }
+  }
+
+  function startForgotResendCooldown() {
+    clearForgotResendTimer();
+    let sec = FORGOT_RESEND_SEC;
+    updateForgotResendButton(sec);
+    forgotResendTimer = setInterval(() => {
+      sec -= 1;
+      if (sec <= 0) {
+        clearForgotResendTimer();
+        updateForgotResendButton(0);
+      } else {
+        updateForgotResendButton(sec);
+      }
+    }, 1000);
+  }
+
+  function showForgotStep(which) {
+    if (forgotPanelEmail) forgotPanelEmail.hidden = which !== 'email';
+    if (forgotPanelCode) forgotPanelCode.hidden = which !== 'code';
+    if (forgotPanelPassword) forgotPanelPassword.hidden = which !== 'password';
+    const maskedEl = document.getElementById('dash-forgot-email-masked');
+    if (maskedEl) {
+      maskedEl.textContent =
+        which === 'code' && pendingForgotEmail ? maskRecoveryEmailDisplay(pendingForgotEmail) : '';
+    }
+  }
 
   function openForgotModal() {
     if (!forgotModal) return;
     pendingForgotEmail = '';
-    if (forgotStep1) forgotStep1.hidden = false;
-    if (forgotStep2) forgotStep2.hidden = true;
+    pendingForgotCode = '';
+    clearForgotResendTimer();
+    if (forgotResendBtn) {
+      forgotResendBtn.disabled = true;
+      forgotResendBtn.textContent = `Reenviar código (${FORGOT_RESEND_SEC}s)`;
+    }
+    showForgotStep('email');
     if (forgotEmailEl) forgotEmailEl.value = '';
+    const codeEl = document.getElementById('dash-forgot-code');
+    if (codeEl) codeEl.value = '';
+    const np = document.getElementById('dash-forgot-newpw');
+    const np2 = document.getElementById('dash-forgot-newpw2');
+    if (np) np.value = '';
+    if (np2) np2.value = '';
     if (forgotStep1Status) {
       forgotStep1Status.textContent = '';
       forgotStep1Status.classList.remove('ok', 'bad');
     }
-    if (forgotStep2Status) {
-      forgotStep2Status.textContent = '';
-      forgotStep2Status.classList.remove('ok', 'bad');
+    if (forgotCodeStatus) {
+      forgotCodeStatus.textContent = '';
+      forgotCodeStatus.classList.remove('ok', 'bad');
     }
+    if (forgotPasswordStatus) {
+      forgotPasswordStatus.textContent = '';
+      forgotPasswordStatus.classList.remove('ok', 'bad');
+    }
+    const maskedReset = document.getElementById('dash-forgot-email-masked');
+    if (maskedReset) maskedReset.textContent = '';
     forgotModal.removeAttribute('hidden');
     document.body.style.overflow = 'hidden';
   }
 
   function closeForgotModal() {
     if (!forgotModal) return;
+    clearForgotResendTimer();
     forgotModal.setAttribute('hidden', '');
     document.body.style.overflow = '';
   }
@@ -1428,13 +1739,29 @@ function initDashboard() {
   forgotClose?.addEventListener('click', () => closeForgotModal());
   forgotCancel?.addEventListener('click', () => closeForgotModal());
   forgotBackdrop?.addEventListener('click', () => closeForgotModal());
-  forgotBack?.addEventListener('click', () => {
-    if (forgotStep1) forgotStep1.hidden = false;
-    if (forgotStep2) forgotStep2.hidden = true;
-    if (forgotStep2Status) {
-      forgotStep2Status.textContent = '';
-      forgotStep2Status.classList.remove('ok', 'bad');
+
+  forgotBackToEmail?.addEventListener('click', () => {
+    pendingForgotCode = '';
+    showForgotStep('email');
+    if (forgotCodeStatus) {
+      forgotCodeStatus.textContent = '';
+      forgotCodeStatus.classList.remove('ok', 'bad');
     }
+    forgotEmailEl?.focus();
+  });
+
+  forgotBackToCode?.addEventListener('click', () => {
+    pendingForgotCode = '';
+    showForgotStep('code');
+    if (forgotPasswordStatus) {
+      forgotPasswordStatus.textContent = '';
+      forgotPasswordStatus.classList.remove('ok', 'bad');
+    }
+    const np = document.getElementById('dash-forgot-newpw');
+    const np2 = document.getElementById('dash-forgot-newpw2');
+    if (np) np.value = '';
+    if (np2) np2.value = '';
+    document.getElementById('dash-forgot-code')?.focus();
   });
 
   document.getElementById('dash-forgot-step1')?.addEventListener('submit', async (e) => {
@@ -1451,57 +1778,124 @@ function initDashboard() {
     });
     if (r.ok) {
       pendingForgotEmail = email;
+      pendingForgotCode = '';
       forgotStep1Status.textContent = '';
       forgotStep1Status.classList.add('ok');
-      if (forgotStep1) forgotStep1.hidden = true;
-      if (forgotStep2) forgotStep2.hidden = false;
+      showForgotStep('code');
+      const codeEl = document.getElementById('dash-forgot-code');
+      if (codeEl) {
+        codeEl.value = '';
+        codeEl.focus();
+      }
+      if (forgotCodeStatus) {
+        forgotCodeStatus.textContent = '';
+        forgotCodeStatus.classList.remove('ok', 'bad');
+      }
+      startForgotResendCooldown();
     } else {
-      forgotStep1Status.textContent = '';
+      forgotStep1Status.textContent =
+        (r.data && typeof r.data === 'object' && r.data.message) || 'Não foi possível enviar o código.';
       forgotStep1Status.classList.add('bad');
     }
   });
 
-  document.getElementById('dash-forgot-step2')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!forgotStep2Status) return;
+  forgotVerifyCodeBtn?.addEventListener('click', async () => {
+    if (!forgotCodeStatus || !pendingForgotEmail) return;
     const code = document.getElementById('dash-forgot-code')?.value?.trim() || '';
-    const np = document.getElementById('dash-forgot-newpw')?.value || '';
-    const np2 = document.getElementById('dash-forgot-newpw2')?.value || '';
-    if (!pendingForgotEmail) {
-      forgotStep2Status.textContent = '';
-      forgotStep2Status.classList.add('bad');
+    forgotCodeStatus.textContent = '';
+    forgotCodeStatus.classList.remove('ok', 'bad');
+    if (!code) {
+      forgotCodeStatus.textContent = 'Informe o código.';
+      forgotCodeStatus.classList.add('bad');
       return;
     }
-    if (!code || !np) {
-      forgotStep2Status.textContent = '';
-      forgotStep2Status.classList.add('bad');
+    const path = getDashApiPath('validateRecoveryCode');
+    const r = await dashFetchNoThrow(path, {
+      method: 'POST',
+      body: JSON.stringify({ email: pendingForgotEmail, codigo: code }),
+    });
+    if (r.ok) {
+      pendingForgotCode = code;
+      forgotCodeStatus.classList.add('ok');
+      showForgotStep('password');
+      document.getElementById('dash-forgot-newpw')?.focus();
+    } else {
+      const msg =
+        (r.data && typeof r.data === 'object' && r.data.message) || 'Código inválido ou expirado.';
+      forgotCodeStatus.textContent = msg;
+      forgotCodeStatus.classList.add('bad');
+    }
+  });
+
+  forgotResendBtn?.addEventListener('click', async () => {
+    if (!pendingForgotEmail || forgotResendBtn?.disabled) return;
+    if (forgotCodeStatus) {
+      forgotCodeStatus.textContent = '';
+      forgotCodeStatus.classList.remove('ok', 'bad');
+    }
+    const path = getDashApiPath('forgotRequest');
+    const r = await dashFetchNoThrow(path, {
+      method: 'POST',
+      body: JSON.stringify({ email: pendingForgotEmail }),
+    });
+    if (r.ok) {
+      startForgotResendCooldown();
+      if (forgotCodeStatus) {
+        forgotCodeStatus.textContent = 'Novo código enviado.';
+        forgotCodeStatus.classList.remove('bad');
+        forgotCodeStatus.classList.add('ok');
+      }
+    } else if (forgotCodeStatus) {
+      forgotCodeStatus.textContent =
+        (r.data && typeof r.data === 'object' && r.data.message) || 'Não foi possível reenviar.';
+      forgotCodeStatus.classList.add('bad');
+    }
+  });
+
+  document.getElementById('dash-forgot-step-password')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!forgotPasswordStatus) return;
+    const np = document.getElementById('dash-forgot-newpw')?.value || '';
+    const np2 = document.getElementById('dash-forgot-newpw2')?.value || '';
+    if (!pendingForgotEmail || !pendingForgotCode) {
+      forgotPasswordStatus.textContent = 'Valide o código novamente.';
+      forgotPasswordStatus.classList.add('bad');
+      return;
+    }
+    if (!np) {
+      forgotPasswordStatus.textContent = 'Informe a nova senha.';
+      forgotPasswordStatus.classList.add('bad');
       return;
     }
     if (np !== np2) {
-      forgotStep2Status.textContent = '';
-      forgotStep2Status.classList.add('bad');
+      forgotPasswordStatus.textContent = 'As senhas não conferem.';
+      forgotPasswordStatus.classList.add('bad');
       return;
     }
-    forgotStep2Status.textContent = '';
-    forgotStep2Status.classList.remove('ok', 'bad');
+    forgotPasswordStatus.textContent = '';
+    forgotPasswordStatus.classList.remove('ok', 'bad');
     const path = getDashApiPath('resetPassword');
     const r = await dashFetchNoThrow(path, {
       method: 'POST',
       body: JSON.stringify({
         email: pendingForgotEmail,
-        code,
-        newPassword: np,
+        codigo: pendingForgotCode,
+        novaSenha: np,
       }),
     });
     if (r.ok) {
-      forgotStep2Status.textContent = '';
-      forgotStep2Status.classList.add('ok');
+      forgotPasswordStatus.textContent = 'Senha alterada com sucesso.';
+      forgotPasswordStatus.classList.add('ok');
       setTimeout(() => {
         closeForgotModal();
       }, 400);
     } else {
-      forgotStep2Status.textContent = '';
-      forgotStep2Status.classList.add('bad');
+      const msg =
+        (r.data && typeof r.data === 'object' && r.data.message) ||
+        (typeof r.data === 'string' ? r.data : null) ||
+        'Não foi possível redefinir a senha.';
+      forgotPasswordStatus.textContent = msg;
+      forgotPasswordStatus.classList.add('bad');
     }
   });
 
@@ -1533,7 +1927,7 @@ function initDashboard() {
     const app = document.getElementById('dash-app');
     if (!app) return;
     app.querySelectorAll('[data-dash-view]').forEach((el) => {
-      const on = el.dataset.dashView === 'home';
+      const on = el.getAttribute('data-dash-view') === 'home';
       el.toggleAttribute('hidden', !on);
       el.classList.toggle('dash-view--active', on);
     });
@@ -1599,10 +1993,12 @@ function initDashboard() {
     if (ok) {
       writeSession();
       loginStatus.textContent = '';
+      loginStatus.classList.remove('bad');
       showShell();
     } else {
-      loginStatus.textContent = '';
-      loginStatus.classList.remove('ok', 'bad');
+      loginStatus.textContent = 'Senha incorreta.';
+      loginStatus.classList.remove('ok');
+      loginStatus.classList.add('bad');
     }
   });
 
@@ -1632,15 +2028,19 @@ function initDashboard() {
     const cardsRefresh = document.getElementById('dash-cards-refresh');
 
     function setDashView(name) {
+      const view = String(name || 'home').trim() || 'home';
       root.querySelectorAll('[data-dash-view]').forEach((el) => {
-        const on = el.dataset.dashView === name;
+        const v = el.getAttribute('data-dash-view');
+        const on = v === view;
         el.toggleAttribute('hidden', !on);
         el.classList.toggle('dash-view--active', on);
       });
       if (collabSection) {
-        collabSection.hidden = name !== 'home';
+        collabSection.hidden = view !== 'home';
       }
     }
+
+    window.__dashGoHome = () => setDashView('home');
 
     document.getElementById('dash-open-feedback')?.addEventListener('click', () => {
       setDashView('feedback');
@@ -1657,11 +2057,14 @@ function initDashboard() {
       setDashView('cards-create');
     });
 
-    root.querySelectorAll('[data-dash-back]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const target = btn.getAttribute('data-dash-back') || 'home';
-        setDashView(target);
-      });
+    /** Delegação: clique no texto dentro do botão «VOLTAR» também volta ao destino certo. */
+    root.addEventListener('click', (e) => {
+      const el = e.target instanceof Element ? e.target : e.target.parentElement;
+      const back = el?.closest('[data-dash-back]');
+      if (!back || !root.contains(back)) return;
+      e.preventDefault();
+      const target = back.getAttribute('data-dash-back') || 'home';
+      setDashView(target);
     });
 
     root.querySelectorAll('[data-dash-fb-scope]').forEach((btn) => {
@@ -2029,7 +2432,13 @@ function initDashboard() {
         try {
           localStorage.setItem(dashSlidesStorageKey(editSlidesSlug), JSON.stringify(editSlides));
         } catch (_) { /* ignore */ }
-        alert('Erro ao salvar na API. Salvo apenas localmente.');
+        const extra =
+          e?.status === 401
+            ? ' Faça login com o utilizador admin (JWT).'
+            : e?.message
+              ? ` (${e.message})`
+              : '';
+        alert('Erro ao salvar na API. Salvo apenas localmente.' + extra);
       }
     });
 
@@ -2589,13 +2998,16 @@ function initDashboard() {
       setCardFormStatus('', '');
       await loadCards();
     } catch (err) {
-      setCardFormStatus('', '');
+      setCardFormStatus(
+        (err && err.message) || 'Não foi possível salvar. Verifique o login e a consola do servidor.',
+        'bad',
+      );
     }
   });
 
   const collabEmail = document.getElementById('dash-collab-email');
   const collabStatus = document.getElementById('dash-collab-status');
-  document.getElementById('dash-collab-submit')?.addEventListener('click', async () => {
+  const submitCollabInvite = async () => {
     if (!collabEmail || !collabStatus) return;
     const email = collabEmail.value.trim();
     if (!email) {
@@ -2636,6 +3048,13 @@ function initDashboard() {
       collabStatus.textContent = msg;
       collabStatus.classList.add('bad');
       collabStatus.classList.remove('ok');
+    }
+  };
+  document.getElementById('dash-collab-submit')?.addEventListener('click', submitCollabInvite);
+  collabEmail?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitCollabInvite();
     }
   });
 

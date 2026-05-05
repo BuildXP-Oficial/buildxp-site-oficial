@@ -13,6 +13,50 @@ public class CardService
         _context = context;
     }
 
+    private static string CorParaTema(string? theme)
+    {
+        if (string.IsNullOrWhiteSpace(theme)) return "#39d353";
+        return theme.Trim().ToLowerInvariant() switch
+        {
+            "git" => "#39d353",
+            "docker" => "#2496ed",
+            "npm" => "#cb3837",
+            "dotnet" => "#512bd4",
+            _ => "#39d353",
+        };
+    }
+
+    public void AplicarPayload(SkillCard card, CardDashboardPayload p)
+    {
+        var theme = string.IsNullOrWhiteSpace(p.Theme) ? "git" : p.Theme!.Trim();
+        if (!string.IsNullOrWhiteSpace(p.Slug))
+            card.Slug = p.Slug!.Trim().ToLowerInvariant();
+        card.Theme = theme;
+        card.Titulo = (p.DisplayName ?? card.Titulo).Trim();
+        if (string.IsNullOrEmpty(card.Titulo) && !string.IsNullOrEmpty(card.Slug))
+            card.Titulo = card.Slug;
+        card.Raridade = (p.RarityLabel ?? card.Raridade).Trim();
+        card.Classe = (p.CardClass ?? card.Classe).Trim();
+        card.Descricao = p.DescriptionHtml ?? card.Descricao;
+        card.LinkBeginner = (p.LinkBeginner ?? card.LinkBeginner).Trim();
+        card.LinkRef = (p.LinkRef ?? card.LinkRef).Trim();
+        card.BtnPrimaryLabel = (p.BtnPrimaryLabel ?? card.BtnPrimaryLabel).Trim();
+        card.BtnSecondaryLabel = (p.BtnSecondaryLabel ?? card.BtnSecondaryLabel).Trim();
+        card.IconLayout = string.IsNullOrWhiteSpace(p.IconLayout) ? card.IconLayout : p.IconLayout!.Trim();
+        var pri = (p.IconPrimarySrc ?? card.IconPrimarySrc).Trim();
+        card.IconPrimarySrc = pri;
+        card.Icone = pri.Length > 0 ? pri : card.Icone;
+        card.IconPrimaryAlt = (p.IconPrimaryAlt ?? card.IconPrimaryAlt).Trim();
+        var sec = (p.IconSecondarySrc ?? card.IconSecondarySrc).Trim();
+        card.IconSecondarySrc = sec;
+        card.IconSecondaryAlt = (p.IconSecondaryAlt ?? card.IconSecondaryAlt).Trim();
+        if (p.XpCurrent is int xpc) card.XpAtual = xpc;
+        if (p.XpMax is int xpm) card.XpMaximo = xpm;
+        if (p.SortOrder is int so) card.Ordem = so;
+        if (p.IsPublished is bool pub) card.Ativo = pub;
+        card.CorBorda = CorParaTema(theme);
+    }
+
     // lista cards ativos — página pública do site
     public async Task<List<SkillCard>> ListarAtivosAsync()
     {
@@ -40,6 +84,27 @@ public class CardService
             .FirstOrDefaultAsync(c => c.Id == id && c.Ativo);
     }
 
+    /// <summary>Card público por slug (só ativos).</summary>
+    public async Task<SkillCard?> BuscarPorSlugAsync(string slug)
+    {
+        var s = slug.Trim().ToLowerInvariant();
+        return await _context.SkillCards
+            .Include(c => c.Slides)
+                .ThenInclude(s => s.Conteudos)
+            .Include(c => c.Referencias)
+            .FirstOrDefaultAsync(c => c.Ativo && c.Slug == s);
+    }
+
+    public async Task<int?> ResolverIdPorSlugAsync(string slug)
+    {
+        var s = slug.Trim().ToLowerInvariant();
+        var id = await _context.SkillCards.AsNoTracking()
+            .Where(c => c.Slug == s)
+            .Select(c => (int?)c.Id)
+            .FirstOrDefaultAsync();
+        return id;
+    }
+
     // cria um novo card
     public async Task<SkillCard> CriarAsync(SkillCard card)
     {
@@ -52,22 +117,40 @@ public class CardService
         return card;
     }
 
+    public async Task<SkillCard> CriarDoPayloadAsync(CardDashboardPayload payload)
+    {
+        var card = new SkillCard();
+        AplicarPayload(card, payload);
+        if (string.IsNullOrWhiteSpace(card.Slug))
+            throw new InvalidOperationException("Slug é obrigatório.");
+        card.CriadoEm = DateTime.UtcNow;
+        card.AtualizadoEm = DateTime.UtcNow;
+        if (card.XpMaximo <= 0) card.XpMaximo = 3000;
+        _context.SkillCards.Add(card);
+        await _context.SaveChangesAsync();
+        return card;
+    }
+
     // edita dados básicos do card
-    public async Task<bool> EditarAsync(int id, SkillCard dados)
+    public async Task<bool> EditarAsync(int id, CardDashboardPayload payload)
     {
         var card = await _context.SkillCards.FindAsync(id);
         if (card is null) return false;
 
-        // atualiza só os campos que o dashboard pode mudar
-        card.Titulo = dados.Titulo;
-        card.Icone = dados.Icone;
-        card.Classe = dados.Classe;
-        card.Raridade = dados.Raridade;
-        card.CorBorda = dados.CorBorda;
-        card.Descricao = dados.Descricao;
-        card.Ordem = dados.Ordem;
+        AplicarPayload(card, payload);
         card.AtualizadoEm = DateTime.UtcNow;
 
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> EditarPorSlugAsync(string slug, CardDashboardPayload payload)
+    {
+        var s = slug.Trim().ToLowerInvariant();
+        var card = await _context.SkillCards.FirstOrDefaultAsync(c => c.Slug == s);
+        if (card is null) return false;
+        AplicarPayload(card, payload);
+        card.AtualizadoEm = DateTime.UtcNow;
         await _context.SaveChangesAsync();
         return true;
     }

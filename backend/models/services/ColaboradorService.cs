@@ -45,7 +45,7 @@ public class ColaboradorService
         {
             _context.Colaboradores.Remove(colaborador);
             await _context.SaveChangesAsync();
-            return "Não foi possível enviar o e-mail. Confira Resend:ApiKey (User Secrets), o remetente \"De\" no Resend e se o domínio está verificado.";
+            return "Não foi possível enviar o e-mail. Confira Resend:ApiKey em appsettings / variável de ambiente, o remetente \"De\" permitido no Resend e se o domínio está verificado.";
         }
 
         return null;

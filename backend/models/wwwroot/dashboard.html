@@ -22,9 +22,10 @@
   <script>
     window.BUILDXP_API_PATHS = Object.assign(
       {
-        login: '/api/admin/login',
-        forgotRequest: '/api/auth/forgot-password',
-        resetPassword: '/api/auth/reset-password',
+        login: '/api/Auth/login',
+        forgotRequest: '/api/auth/recuperar-senha',
+        validateRecoveryCode: '/api/auth/validar-codigo-recuperacao',
+        resetPassword: '/api/auth/redefinir-senha',
         inviteCollaborator: '/api/Colaborador/convidar',
       },
       window.BUILDXP_API_PATHS || {},
@@ -34,7 +35,7 @@
 <body class="dash-body">
 
 <nav class="navbar navbar--dash" aria-label="Admin">
-  <a href="index.html" class="nav-logo" aria-label="BuildXP — Início">
+  <a href="#" class="nav-logo" id="dash-nav-logo" aria-label="BuildXP — Início do painel">
     <img class="nav-logo-img" src="imagens/logo2buildxpret.png" alt="BuildXP" />
   </a>
 </nav>
@@ -70,36 +71,57 @@
       <div class="ref-section-title" id="dash-forgot-title">Esqueci a senha / Criar senha</div>
       <button type="button" class="dash-modal-close" id="dash-forgot-close" aria-label="Fechar">×</button>
     </div>
-    <form id="dash-forgot-step1" class="fb-form">
-      <label class="fb-label">
-        E-mail
-        <input class="fb-input" id="dash-forgot-email" type="email" required maxlength="120" autocomplete="email" />
-      </label>
-      <div class="dash-login-actions">
-        <button type="submit" class="term-btn primary" id="dash-forgot-send">Enviar código</button>
-        <button type="button" class="term-btn ghost" id="dash-forgot-cancel">Cancelar</button>
+    <div id="dash-forgot-panel-email" class="dash-forgot-panel">
+      <form id="dash-forgot-step1" class="fb-form">
+        <label class="fb-label">
+          E-mail
+          <input class="fb-input" id="dash-forgot-email" type="email" required maxlength="120" autocomplete="email" />
+        </label>
+        <div class="dash-login-actions">
+          <button type="submit" class="term-btn primary" id="dash-forgot-send">Enviar código</button>
+          <button type="button" class="term-btn ghost" id="dash-forgot-cancel">Cancelar</button>
+        </div>
+        <div id="dash-forgot-step1-status" class="fb-status" aria-live="polite"></div>
+      </form>
+    </div>
+    <div id="dash-forgot-panel-code" class="dash-forgot-panel" hidden>
+      <div class="fb-form">
+        <p class="dash-muted" style="margin:0 0 0.75rem;">
+          Digite o código de 6 dígitos enviado para
+          <strong id="dash-forgot-email-masked" style="font-family:var(--f-mono);color:var(--accent);"></strong>.
+        </p>
+        <label class="fb-label">
+          Código recebido no e-mail
+          <input class="fb-input" id="dash-forgot-code" type="text" inputmode="numeric" maxlength="12" autocomplete="one-time-code" />
+        </label>
+        <div class="dash-login-actions" style="flex-wrap:wrap;gap:0.5rem;">
+          <button type="button" class="term-btn primary" id="dash-forgot-verify-code">Validar código</button>
+          <button type="button" class="term-btn ghost" id="dash-forgot-resend" disabled>Reenviar código (50s)</button>
+        </div>
+        <div id="dash-forgot-code-status" class="fb-status" aria-live="polite"></div>
+        <div class="dash-login-actions">
+          <button type="button" class="term-btn ghost" id="dash-forgot-back-to-email">← Voltar</button>
+        </div>
       </div>
-      <div id="dash-forgot-step1-status" class="fb-status" aria-live="polite"></div>
-    </form>
-    <form id="dash-forgot-step2" class="fb-form" hidden>
-      <label class="fb-label">
-        Código recebido no e-mail
-        <input class="fb-input" id="dash-forgot-code" type="text" maxlength="12" autocomplete="one-time-code" />
-      </label>
-      <label class="fb-label">
-        Nova senha
-        <input class="fb-input" id="dash-forgot-newpw" type="password" autocomplete="new-password" />
-      </label>
-      <label class="fb-label">
-        Confirmar nova senha
-        <input class="fb-input" id="dash-forgot-newpw2" type="password" autocomplete="new-password" />
-      </label>
-      <div class="dash-login-actions">
-        <button type="submit" class="term-btn primary" id="dash-forgot-save">Redefinir senha</button>
-        <button type="button" class="term-btn ghost" id="dash-forgot-back">Voltar</button>
-      </div>
-      <div id="dash-forgot-step2-status" class="fb-status" aria-live="polite"></div>
-    </form>
+    </div>
+    <div id="dash-forgot-panel-password" class="dash-forgot-panel" hidden>
+      <form id="dash-forgot-step-password" class="fb-form">
+        <p class="dash-muted" style="margin:0 0 0.75rem;">Código confirmado. Defina a nova senha.</p>
+        <label class="fb-label">
+          Nova senha
+          <input class="fb-input" id="dash-forgot-newpw" type="password" autocomplete="new-password" />
+        </label>
+        <label class="fb-label">
+          Confirmar nova senha
+          <input class="fb-input" id="dash-forgot-newpw2" type="password" autocomplete="new-password" />
+        </label>
+        <div class="dash-login-actions">
+          <button type="submit" class="term-btn primary" id="dash-forgot-save">Definir nova senha</button>
+          <button type="button" class="term-btn ghost" id="dash-forgot-back-to-code">← Voltar</button>
+        </div>
+        <div id="dash-forgot-step-password-status" class="fb-status" aria-live="polite"></div>
+      </form>
+    </div>
   </div>
 </div>
 

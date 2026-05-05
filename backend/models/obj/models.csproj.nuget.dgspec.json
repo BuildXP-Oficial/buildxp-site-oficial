@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\gisla\\Documents\\buildxp-site-oficial\\Backend\\models\\models.csproj": {}
+    "c:\\Users\\gisla\\Documents\\buildxp-site-oficial\\backend\\models\\models.csproj": {}
   },
   "projects": {
-    "C:\\Users\\gisla\\Documents\\buildxp-site-oficial\\Backend\\models\\models.csproj": {
+    "c:\\Users\\gisla\\Documents\\buildxp-site-oficial\\backend\\models\\models.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\gisla\\Documents\\buildxp-site-oficial\\Backend\\models\\models.csproj",
+        "projectUniqueName": "c:\\Users\\gisla\\Documents\\buildxp-site-oficial\\backend\\models\\models.csproj",
         "projectName": "models",
-        "projectPath": "C:\\Users\\gisla\\Documents\\buildxp-site-oficial\\Backend\\models\\models.csproj",
+        "projectPath": "c:\\Users\\gisla\\Documents\\buildxp-site-oficial\\backend\\models\\models.csproj",
         "packagesPath": "C:\\Users\\gisla\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\gisla\\Documents\\buildxp-site-oficial\\Backend\\models\\obj\\",
+        "outputPath": "c:\\Users\\gisla\\Documents\\buildxp-site-oficial\\backend\\models\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

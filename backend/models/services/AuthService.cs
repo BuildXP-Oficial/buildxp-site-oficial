@@ -58,11 +58,12 @@ public class AuthService
 
     public async Task<string> GerarCodigoRecuperacaoAsync(string email)
     {
+        var e = email.Trim();
         var codigo = new Random().Next(100000, 999999).ToString();
 
         var recuperacao = new RecuperacaoSenha
         {
-            Email = email,
+            Email = e,
             Codigo = codigo,
             ExpiraEm = DateTime.UtcNow.AddMinutes(15),
             Usado = false
@@ -74,11 +75,29 @@ public class AuthService
         return codigo;
     }
 
+    /// <summary>Confirma que o código existe, não foi usado e não expirou (sem marcar como usado).</summary>
+    public async Task<bool> CodigoRecuperacaoValidoAsync(string email, string codigo)
+    {
+        var e = email.Trim();
+        var c = codigo.Trim();
+        if (string.IsNullOrEmpty(e) || string.IsNullOrEmpty(c)) return false;
+
+        return await _context.RecuperacoesSenha.AsNoTracking()
+            .AnyAsync(r =>
+                r.Email == e
+                && r.Codigo == c
+                && !r.Usado
+                && r.ExpiraEm > DateTime.UtcNow);
+    }
+
     public async Task<bool> RedefinirSenhaAsync(string email, string codigo, string novaSenha)
     {
+        var em = email.Trim();
+        var cod = codigo.Trim();
+
         var recuperacao = await _context.RecuperacoesSenha
-            .Where(r => r.Email == email
-                     && r.Codigo == codigo
+            .Where(r => r.Email == em
+                     && r.Codigo == cod
                      && r.Usado == false
                      && r.ExpiraEm > DateTime.UtcNow)
             .FirstOrDefaultAsync();
