@@ -63,5 +63,16 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
             entity.Property(r => r.Categoria).HasMaxLength(50);
         });
 
+        modelBuilder.Entity<Colaborador>(entity =>
+        {
+            entity.Property(c => c.Email).HasMaxLength(320);
+            entity.Property(c => c.Senha).HasMaxLength(500);
+            entity.Property(c => c.Usuario).HasMaxLength(80);
+            entity.Property(c => c.FotoMimeType).HasMaxLength(64);
+            entity.HasIndex(c => c.Usuario)
+                .IsUnique()
+                .HasFilter("\"Usuario\" IS NOT NULL");
+        });
+
     }
 }

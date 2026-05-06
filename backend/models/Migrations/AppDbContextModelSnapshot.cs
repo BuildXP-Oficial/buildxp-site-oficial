@@ -38,11 +38,20 @@ namespace models.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
+                    b.Property<byte[]>("FotoBytes")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("FotoMimeType")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<string>("Senha")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("TokenConvite")
                         .HasColumnType("text");
@@ -50,7 +59,15 @@ namespace models.Migrations
                     b.Property<DateTime?>("TokenExpiraEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Usuario")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("Usuario")
+                        .IsUnique()
+                        .HasFilter("\"Usuario\" IS NOT NULL");
 
                     b.ToTable("Colaboradores");
                 });

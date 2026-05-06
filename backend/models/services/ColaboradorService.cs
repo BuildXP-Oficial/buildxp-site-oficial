@@ -18,8 +18,9 @@ public class ColaboradorService
     // null = sucesso; senão mensagem (já convidado ou falha ao enviar e-mail)
     public async Task<string?> ConvidarAsync(string emailColaborador)
     {
+        var emailNorm = emailColaborador.Trim().ToLowerInvariant();
         var existe = await _context.Colaboradores
-            .AnyAsync(c => c.Email == emailColaborador);
+            .AnyAsync(c => c.Email.ToLower() == emailNorm);
 
         if (existe)
             return "Este e-mail já foi convidado.";
@@ -28,7 +29,7 @@ public class ColaboradorService
 
         var colaborador = new Colaborador
         {
-            Email = emailColaborador,
+            Email = emailNorm,
             TokenConvite = token,
             TokenExpiraEm = DateTime.UtcNow.AddHours(24),
             Ativo = false
@@ -39,7 +40,7 @@ public class ColaboradorService
 
         try
         {
-            await _email.EnviarConviteColaboradorAsync(emailColaborador, token);
+            await _email.EnviarConviteColaboradorAsync(emailNorm, token);
         }
         catch
         {

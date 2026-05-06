@@ -57,6 +57,18 @@ public class CardService
         card.CorBorda = CorParaTema(theme);
     }
 
+    private async Task AssertSlugDisponivelAsync(SkillCard card, CardDashboardPayload payload)
+    {
+        if (string.IsNullOrWhiteSpace(payload.Slug)) return;
+        var desired = payload.Slug.Trim().ToLowerInvariant();
+        if (desired == card.Slug) return;
+        if (string.IsNullOrEmpty(desired))
+            throw new InvalidOperationException("Slug não pode ficar vazio.");
+        var taken = await _context.SkillCards.AnyAsync(c => c.Slug == desired && c.Id != card.Id);
+        if (taken)
+            throw new InvalidOperationException("Este slug já está em uso por outro card.");
+    }
+
     // lista cards ativos — página pública do site
     public async Task<List<SkillCard>> ListarAtivosAsync()
     {
@@ -137,6 +149,8 @@ public class CardService
         var card = await _context.SkillCards.FindAsync(id);
         if (card is null) return false;
 
+        await AssertSlugDisponivelAsync(card, payload);
+
         AplicarPayload(card, payload);
         card.AtualizadoEm = DateTime.UtcNow;
 
@@ -149,6 +163,9 @@ public class CardService
         var s = slug.Trim().ToLowerInvariant();
         var card = await _context.SkillCards.FirstOrDefaultAsync(c => c.Slug == s);
         if (card is null) return false;
+
+        await AssertSlugDisponivelAsync(card, payload);
+
         AplicarPayload(card, payload);
         card.AtualizadoEm = DateTime.UtcNow;
         await _context.SaveChangesAsync();

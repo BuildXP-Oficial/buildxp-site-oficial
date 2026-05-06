@@ -65,6 +65,10 @@ public class CardClientDto
     [JsonPropertyName("is_published")]
     public bool IsPublished { get; set; }
 
+    /// <summary>Slides da aba Iniciante (GET público por slug/id) — mesma ordem que no dashboard.</summary>
+    [JsonPropertyName("slides")]
+    public List<SlideClientDto> Slides { get; set; } = [];
+
     public static CardClientDto FromEntity(SkillCard c) => new()
     {
         Id = c.Id,
@@ -87,5 +91,31 @@ public class CardClientDto
         IconSecondarySrc = string.IsNullOrEmpty(c.IconSecondarySrc) ? null : c.IconSecondarySrc,
         IconSecondaryAlt = c.IconSecondaryAlt,
         IsPublished = c.Ativo,
+        Slides = (c.Slides ?? [])
+            .Where(s => s.Ativo)
+            .OrderBy(s => s.Ordem)
+            .Select(s => new SlideClientDto
+            {
+                Id = s.Id,
+                Ordem = s.Ordem,
+                Titulo = s.Titulo ?? string.Empty,
+                Descricao = s.Descricao ?? string.Empty,
+            })
+            .ToList(),
     };
+}
+
+public sealed class SlideClientDto
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("ordem")]
+    public int Ordem { get; set; }
+
+    [JsonPropertyName("titulo")]
+    public string Titulo { get; set; } = string.Empty;
+
+    [JsonPropertyName("descricao")]
+    public string Descricao { get; set; } = string.Empty;
 }

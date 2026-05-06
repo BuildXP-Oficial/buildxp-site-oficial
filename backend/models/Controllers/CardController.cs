@@ -53,7 +53,7 @@ public class CardController : ControllerBase
     // ── ROTAS PRIVADAS — só o dashboard acessa ──────────────
 
     [HttpGet("dashboard")]
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin,colaborador")]
     public async Task<IActionResult> ListarDashboard()
     {
         var cards = await _service.ListarTodosAsync();
@@ -78,23 +78,37 @@ public class CardController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin,colaborador")]
     public async Task<IActionResult> Editar(int id, [FromBody] CardDashboardPayload payload)
     {
-        var resultado = await _service.EditarAsync(id, payload);
-        if (!resultado) return NotFound("Card não encontrado.");
-        return Ok("Card atualizado.");
+        try
+        {
+            var resultado = await _service.EditarAsync(id, payload);
+            if (!resultado) return NotFound("Card não encontrado.");
+            return Ok("Card atualizado.");
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpPut(CardRouteConstants.SlugSegment)]
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin,colaborador")]
     public async Task<IActionResult> EditarPorSlug(string slug, [FromBody] CardDashboardPayload payload)
     {
         if (string.Equals(slug, "dashboard", StringComparison.OrdinalIgnoreCase))
             return NotFound();
-        var resultado = await _service.EditarPorSlugAsync(slug, payload);
-        if (!resultado) return NotFound("Card não encontrado.");
-        return Ok("Card atualizado.");
+        try
+        {
+            var resultado = await _service.EditarPorSlugAsync(slug, payload);
+            if (!resultado) return NotFound("Card não encontrado.");
+            return Ok("Card atualizado.");
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpDelete("{id:int}")]
@@ -107,16 +121,17 @@ public class CardController : ControllerBase
     }
 
     [HttpPost("{id:int}/slides")]
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin,colaborador")]
     public async Task<IActionResult> AdicionarSlide(int id, [FromBody] Slide slide)
     {
         slide.CardId = id;
         var criado = await _service.AdicionarSlideAsync(slide);
-        return Created("", criado);
+        // Não devolver a entidade Slide — evita ciclos de referência na serialização JSON (500).
+        return Created("", new { id = criado.Id, cardId = criado.CardId, ordem = criado.Ordem });
     }
 
     [HttpPost($"{CardRouteConstants.SlugSegment}/slides")]
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin,colaborador")]
     public async Task<IActionResult> AdicionarSlidePorSlug(string slug, [FromBody] Slide slide)
     {
         if (string.Equals(slug, "dashboard", StringComparison.OrdinalIgnoreCase))
@@ -125,11 +140,11 @@ public class CardController : ControllerBase
         if (cardId is null) return NotFound("Card não encontrado.");
         slide.CardId = cardId.Value;
         var criado = await _service.AdicionarSlideAsync(slide);
-        return Created("", criado);
+        return Created("", new { id = criado.Id, cardId = criado.CardId, ordem = criado.Ordem });
     }
 
     [HttpPut("slides/{slideId:int}")]
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin,colaborador")]
     public async Task<IActionResult> EditarSlide(int slideId, [FromBody] Slide slide)
     {
         var resultado = await _service.EditarSlideAsync(slideId, slide);
@@ -138,7 +153,7 @@ public class CardController : ControllerBase
     }
 
     [HttpDelete("slides/{slideId:int}")]
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin,colaborador")]
     public async Task<IActionResult> RemoverSlide(int slideId)
     {
         var resultado = await _service.RemoverSlideAsync(slideId);
@@ -147,7 +162,7 @@ public class CardController : ControllerBase
     }
 
     [HttpPost("{id:int}/referencias")]
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin,colaborador")]
     public async Task<IActionResult> AdicionarReferencia(int id, [FromBody] ReferenciaRapida referencia)
     {
         referencia.CardId = id;
@@ -156,7 +171,7 @@ public class CardController : ControllerBase
     }
 
     [HttpPost($"{CardRouteConstants.SlugSegment}/referencias")]
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin,colaborador")]
     public async Task<IActionResult> AdicionarReferenciaPorSlug(string slug, [FromBody] ReferenciaRapida referencia)
     {
         if (string.Equals(slug, "dashboard", StringComparison.OrdinalIgnoreCase))
@@ -169,7 +184,7 @@ public class CardController : ControllerBase
     }
 
     [HttpDelete("referencias/{refId:int}")]
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin,colaborador")]
     public async Task<IActionResult> RemoverReferencia(int refId)
     {
         var resultado = await _service.RemoverReferenciaAsync(refId);

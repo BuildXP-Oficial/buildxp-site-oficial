@@ -49,14 +49,16 @@ function getCmdBlockCopyText(block) {
 }
 
 function initCopy() {
-  document.querySelectorAll('.copy-btn').forEach(btn => {
+  document.querySelectorAll('.copy-btn:not([data-bxp-copy-init])').forEach((btn) => {
+    btn.setAttribute('data-bxp-copy-init', '1');
     btn.addEventListener('click', () => {
       const block = btn.closest('.cmd-block');
       const code = getCmdBlockCopyText(block);
       doCopy(btn, code, 'copy');
     });
   });
-  document.querySelectorAll('.cmd-copy').forEach(btn => {
+  document.querySelectorAll('.cmd-copy:not([data-bxp-copy-init])').forEach((btn) => {
+    btn.setAttribute('data-bxp-copy-init', '1');
     btn.addEventListener('click', () => {
       const code = btn.closest('.cmd-item').querySelector('.cmd-text').innerText;
       doCopy(btn, code, 'copy');
@@ -283,6 +285,7 @@ function initSearch() {
     compose: ['compose','docker-compose','dockercompose'],
 
     // npm-ish
+    prisma: ['prisma','migrate','migration','generate','npx','schema','orm'],
     instalar: ['install','instalar','i','add'],
     atualizar: ['update','upgrade','atualizar'],
     remover: ['uninstall','remove','rm','remover'],
@@ -654,7 +657,158 @@ const TRAIN_BANK = {
       { q: 'Crie um projeto xUnit chamado "MeuApp.Tests".', accept: ['dotnet new xunit -n MeuApp.Tests'], must: ['dotnet', 'new', 'xunit'] },
     ],
   },
+  /** Treino só no site: validação por estrutura (nomes de classe/variáveis livres). */
+  'C#': {
+    beginner: [
+      {
+        kind: 'csharp',
+        q: '[C#] Programa com static void Main que calcule a área de um retângulo com base 4 e altura 5 (use variáveis ou literais), multiplique com * e imprima com Console.WriteLine. Nomes livres. Várias linhas; envie com ###',
+        feedback: 'Precisa: Main estático, operador * com 4 e 5 (ou resultado 20) e Console.WriteLine.',
+        csChecks: [
+          (n) => /static\s+void\s+main\s*\(/.test(n),
+          (n) => /console\.writeline\s*\(/.test(n),
+          (n) =>
+            /\*/.test(n) &&
+            ((/\b4\b/.test(n) && /\b5\b/.test(n)) || /\b20\b/.test(n) || /=?\s*20\b/.test(n)),
+        ],
+      },
+      {
+        kind: 'csharp',
+        q: '[C#] Uma classe qualquer com um método que use return. No Main: new, chame o método e Console.WriteLine com o resultado. ###',
+        feedback: 'Precisa: class, return, new, Main e Console.WriteLine.',
+        csChecks: [
+          (n) => /\bclass\s+\w+/.test(n),
+          (n) => /\breturn\b/.test(n),
+          (n) => /\bnew\s+\w+\s*\(/.test(n),
+          (n) => /static\s+void\s+main\s*\(/.test(n),
+          (n) => /console\.writeline/.test(n),
+        ],
+      },
+      {
+        kind: 'csharp',
+        q: '[C#] Herança básica: uma classe derivada com sintaxe class Filha : Pai (nomes livres). No Main instancie a derivada e use Console.WriteLine. ###',
+        feedback: 'Precisa: class Derivada : Base, Main, new e Console.WriteLine.',
+        csChecks: [
+          (n) => /\bclass\s+\w+\s*:\s*\w+/.test(n),
+          (n) => /static\s+void\s+main/.test(n),
+          (n) => /\bnew\s+\w+\s*\(/.test(n),
+          (n) => /console\.writeline/.test(n),
+        ],
+      },
+      {
+        kind: 'csharp',
+        q: '[C#] No Main, um for que conta de 1 até 5 com int e imprima cada valor com Console.WriteLine. ###',
+        feedback: 'Precisa: for com int iniciando em 1, limite 5 (<=5 ou <6), ++ e Console.WriteLine.',
+        csChecks: [
+          (n) => /static\s+void\s+main/.test(n),
+          (n) => /\bfor\s*\(\s*int\s+\w+\s*=\s*1\b/.test(n),
+          (n) => /<=\s*5\b|<\s*6\b/.test(n),
+          (n) => /\+\+/.test(n),
+          (n) => /console\.writeline/.test(n),
+        ],
+      },
+      {
+        kind: 'csharp',
+        q: '[C#] Menu interativo: do { } while (...), switch com pelo menos duas cases diferentes + default, e Console.ReadLine. ###',
+        feedback: 'Precisa: do/while, switch, 2+ case, default e Console.ReadLine.',
+        csChecks: [
+          (n) => /\bdo\s*\{/.test(n),
+          (n) => /\bwhile\s*\(/.test(n),
+          (n) => /\bswitch\s*\(/.test(n),
+          (n) => (n.match(/\bcase\b/g) || []).length >= 2,
+          (n) => /\bdefault\s*:/.test(n),
+          (n) => /console\.readline/.test(n),
+        ],
+      },
+    ],
+    advanced: [
+      {
+        kind: 'csharp',
+        q: '[C#] No Main, encadeie if / else (classificar número: positivo, negativo ou zero) e Console.WriteLine em cada ramo. ###',
+        feedback: 'Precisa: if, else e Console.WriteLine.',
+        csChecks: [
+          (n) => /static\s+void\s+main/.test(n),
+          (n) => /\bif\s*\(/.test(n),
+          (n) => /\belse\b/.test(n),
+          (n) => (n.match(/console\.writeline/g) || []).length >= 2,
+        ],
+      },
+      {
+        kind: 'csharp',
+        q: '[C#] foreach sobre array ou lista e Console.WriteLine para cada item. ###',
+        feedback: 'Precisa: foreach ... in e Console.WriteLine.',
+        csChecks: [
+          (n) => /\bforeach\s*\(/.test(n),
+          (n) => /\bin\b/.test(n),
+          (n) => /console\.writeline/.test(n),
+          (n) => /\[\s*\]/.test(n) || /new\s+int\s*\[/.test(n) || /list\s*</.test(n),
+        ],
+      },
+      {
+        kind: 'csharp',
+        q: '[C#] try { ... } catch (...) { ... } no Main (por exemplo int.Parse inválido) e mensagem com Console.WriteLine no catch. ###',
+        feedback: 'Precisa: try, catch e Console.WriteLine.',
+        csChecks: [
+          (n) => /\btry\s*\{/.test(n),
+          (n) => /\bcatch\s*\(/.test(n),
+          (n) => /static\s+void\s+main/.test(n),
+          (n) => /console\.writeline/.test(n),
+        ],
+      },
+      {
+        kind: 'csharp',
+        q: '[C#] Classe com propriedade automática { get; set; }, Main atribui/lê a propriedade e Console.WriteLine. ###',
+        feedback: 'Precisa: class, get e set na propriedade, Main e Console.WriteLine.',
+        csChecks: [
+          (n) => /\bclass\s+\w+/.test(n),
+          (n) => /\bget\b/.test(n) && /\bset\b/.test(n),
+          (n) => /static\s+void\s+main/.test(n),
+          (n) => /console\.writeline/.test(n),
+        ],
+      },
+      {
+        kind: 'csharp',
+        q: '[C#] Condicional com && ou || no if (duas condições). Main + Console.WriteLine. ###',
+        feedback: 'Precisa: if com && ou || e Console.WriteLine.',
+        csChecks: [
+          (n) => /static\s+void\s+main/.test(n),
+          (n) => /\bif\s*\(/.test(n),
+          (n) => /&&|\|\|/.test(n),
+          (n) => /console\.writeline/.test(n),
+        ],
+      },
+    ],
+  },
 };
+
+/** Normaliza C# para checagens flexíveis (comentários e strings neutras). */
+function normCsForMatch(raw) {
+  return String(raw)
+    .replace(/\/\/[^\n]*/g, ' ')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/"(?:[^"\\]|\\.)*"|@"(?:""|[^"])*"|'(?:[^'\\]|\\.)*'/g, '""')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function gradeCSharp(raw, q) {
+  const checks = q.csChecks || [];
+  const n = normCsForMatch(raw);
+  let passed = 0;
+  for (const fn of checks) {
+    try {
+      if (fn(n)) passed++;
+    } catch (_) {
+      /* ignore */
+    }
+  }
+  const total = checks.length;
+  if (total === 0) return { result: 'wrong', xp: 0 };
+  if (passed === total) return { result: 'correct', xp: 20 };
+  if (passed >= Math.ceil(total * 0.65)) return { result: 'partial', xp: 10 };
+  return { result: 'wrong', xp: 0 };
+}
 
 function initTrainingTerminal() {
   const mount = document.getElementById('terminal');
@@ -667,8 +821,6 @@ function initTrainingTerminal() {
     String(s ?? '')
       .trim()
       .replace(/\s+/g, ' ');
-
-  const compactCs = (s) => String(s).replace(/\s+/g, '');
 
   /** Remove espaços + aspas “tipográficas” / zero-width (cópia de editores). */
   function compactAdminBody(s) {
@@ -686,8 +838,8 @@ function initTrainingTerminal() {
   const ADMIN_BRACE_CLOSE = compactAdminBody('}');
 
   function isFirstLineAdminDash(s) {
-    const t = normAdmin(s);
-    return t === 'private class AdminDash' || t === 'private class AdminDash {';
+    const compact = compactAdminBody(normAdmin(s));
+    return compact === 'privateclassAdminDash' || compact === 'privateclassAdminDash{';
   }
 
   function validateAdminGate(lines) {
@@ -762,7 +914,9 @@ function initTrainingTerminal() {
   const state = {
     topic: 'Git',
     levelMode: 'beginner',
-    introStep: 'topic', // 'topic' | 'level'
+    introStep: 'topic', // 'topic' | 'dotnetMode' | 'level'
+    dotnetTrack: 'cli', // 'cli' | 'csharp' — só para tema .NET
+    codeBlockAccum: null,
     runLevel: 1,
     questionIdx: 0,
     totalXp: 0,
@@ -770,6 +924,17 @@ function initTrainingTerminal() {
     asked: [],
     currentSet: [],
   };
+
+  function getBankTopic() {
+    if (state.topic === '.NET' && state.dotnetTrack === 'csharp') return 'C#';
+    return state.topic;
+  }
+
+  function termBadgeLabel() {
+    if (state.topic === '.NET' && state.dotnetTrack === 'csharp') return '.NET · CÓDIGO C#';
+    if (state.topic === '.NET' && state.dotnetTrack === 'cli') return '.NET · CLI';
+    return state.topic;
+  }
 
   const norm = (s) =>
     String(s ?? '')
@@ -783,9 +948,9 @@ function initTrainingTerminal() {
       .filter(Boolean)
       .map(t => t.replace(/^['"]|['"]$/g, ''));
 
-  function pickQuestions(topic, levelMode, runLevel) {
-    const poolBeginner = TRAIN_BANK[topic].beginner;
-    const poolAdvanced = TRAIN_BANK[topic].advanced;
+  function pickQuestions(bankTopic, levelMode, runLevel) {
+    const poolBeginner = TRAIN_BANK[bankTopic].beginner;
+    const poolAdvanced = TRAIN_BANK[bankTopic].advanced;
     let pool = poolBeginner;
     if (levelMode === 'advanced') pool = poolAdvanced;
     if (levelMode === 'mixed') pool = [...poolBeginner, ...poolAdvanced];
@@ -798,30 +963,52 @@ function initTrainingTerminal() {
 
   function renderIntro() {
     const isTopicStep = state.introStep === 'topic';
+    const isDotnetModeStep = state.introStep === 'dotnetMode';
+    const stepsDotnet = state.topic === '.NET';
+    const metaTopic =
+      isTopicStep ? `1/${stepsDotnet ? '3' : '2'} · ESCOLHA O TEMA`
+      : isDotnetModeStep ? '2/3 · .NET — CLI OU CÓDIGO C#'
+      : `${stepsDotnet ? '3/3' : '2/2'} · ESCOLHA O NÍVEL`;
+
     mount.innerHTML = `
       <div class="term-intro">
         <div class="term-title">TERMINAL TRAINING</div>
         <div class="term-sub">
-          Responda como se estivesse no terminal: eu faço a pergunta, você digita o comando.<br>
+          ${isDotnetModeStep || (state.topic === '.NET' && state.introStep === 'level')
+            ? 'No tema <strong>.NET</strong>: ou você treina <strong>comandos da CLI</strong> (<code>dotnet</code> …) ou <strong>C#</strong> no navegador — nomes de classe e variáveis podem mudar; vale a estrutura e a lógica.<br>'
+            : ''}
+          Nos outros temas: faço a pergunta, você digita o comando.<br>
           Pontuação: <span class="term-good">+50 XP</span> certo · <span class="term-warn">+25 XP</span> parcialmente correto · <span class="term-bad">-1 XP</span> errado
         </div>
 
         ${isTopicStep ? `
           <div class="term-dim" style="text-align:center;margin-bottom:0.75rem;font-family:var(--f-mono);font-size:0.72rem;letter-spacing:2px;">
-            1/2 · ESCOLHA O TEMA
+            ${metaTopic}
           </div>
           <div class="term-pick" id="pick-topic"></div>
-        ` : `
+        ` : isDotnetModeStep ? `
           <div class="term-dim" style="text-align:center;margin-bottom:0.75rem;font-family:var(--f-mono);font-size:0.72rem;letter-spacing:2px;">
-            2/2 · ESCOLHA O NÍVEL
+            ${metaTopic}
           </div>
           <div class="term-pick" style="justify-content:center;margin-bottom:0.8rem;">
-            <span class="term-chip active" style="cursor:default;">${state.topic}</span>
+            <span class="term-chip active" style="cursor:default;">.NET</span>
+          </div>
+          <div class="term-pick" id="pick-dotnet-track"></div>
+          <div class="term-actions">
+            <button class="term-btn primary" type="button" id="term-dotnet-next">▶ CONTINUAR PARA O NÍVEL</button>
+            <button class="term-btn ghost" type="button" id="term-back-dotnet">← TROCAR TEMA</button>
+          </div>
+        ` : `
+          <div class="term-dim" style="text-align:center;margin-bottom:0.75rem;font-family:var(--f-mono);font-size:0.72rem;letter-spacing:2px;">
+            ${metaTopic}
+          </div>
+          <div class="term-pick" style="justify-content:center;margin-bottom:0.8rem;">
+            <span class="term-chip active" style="cursor:default;">${termBadgeLabel()}</span>
           </div>
           <div class="term-pick" id="pick-level"></div>
           <div class="term-actions">
             <button class="term-btn primary" type="button" id="term-start">▶ INICIAR</button>
-            <button class="term-btn ghost" type="button" id="term-back">← TROCAR TEMA</button>
+            <button class="term-btn ghost" type="button" id="term-back">${state.topic === '.NET' ? '← VOLTAR' : '← TROCAR TEMA'}</button>
           </div>
         `}
       </div>
@@ -844,10 +1031,35 @@ function initTrainingTerminal() {
         b.addEventListener('click', () => {
           state.topic = t;
           setAccentForTopic(t);
-          state.introStep = 'level';
+          state.introStep = t === '.NET' ? 'dotnetMode' : 'level';
+          if (t === '.NET') state.dotnetTrack = 'cli';
           renderIntro();
         });
         topicWrap.appendChild(b);
+      });
+    } else if (isDotnetModeStep) {
+      const trackWrap = mount.querySelector('#pick-dotnet-track');
+      [
+        { id: 'cli', label: 'COMANDOS DOTNET' },
+        { id: 'csharp', label: 'CÓDIGO C#' },
+      ].forEach(({ id, label }) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'term-chip' + (state.dotnetTrack === id ? ' active' : '');
+        b.textContent = label;
+        b.addEventListener('click', () => {
+          state.dotnetTrack = id;
+          renderIntro();
+        });
+        trackWrap.appendChild(b);
+      });
+      mount.querySelector('#term-back-dotnet').addEventListener('click', () => {
+        state.introStep = 'topic';
+        renderIntro();
+      });
+      mount.querySelector('#term-dotnet-next').addEventListener('click', () => {
+        state.introStep = 'level';
+        renderIntro();
       });
     } else {
       const levelWrap = mount.querySelector('#pick-level');
@@ -865,18 +1077,23 @@ function initTrainingTerminal() {
 
       mount.querySelector('#term-start').addEventListener('click', () => startRun(true));
       mount.querySelector('#term-back').addEventListener('click', () => {
-        state.introStep = 'topic';
+        if (state.topic === '.NET') state.introStep = 'dotnetMode';
+        else state.introStep = 'topic';
         renderIntro();
       });
     }
   }
 
   function renderTerminalShell() {
+    const inputPh =
+      state.topic === '.NET' && state.dotnetTrack === 'csharp'
+        ? 'linha de código e Enter · linha só com ### envia o bloco'
+        : 'digite o comando e pressione Enter...';
     mount.innerHTML = `
       <div class="term-frame">
         <div class="term-topbar">
           <div class="term-meta">
-            <span class="term-badge">${state.topic}</span>
+            <span class="term-badge">${termBadgeLabel()}</span>
             <span class="term-dim">NÍVEL</span>
             <span class="term-badge">LVL ${state.runLevel}</span>
             <span class="term-dim">MODO</span>
@@ -890,7 +1107,7 @@ function initTrainingTerminal() {
         <div class="term-screen" id="term-screen" aria-live="polite"></div>
         <div class="term-inputbar">
           <span class="term-prompt">$</span>
-          <input class="term-input" id="term-input" autocomplete="off" spellcheck="false" placeholder="digite o comando e pressione Enter..." />
+          <input class="term-input" id="term-input" autocomplete="off" spellcheck="false" placeholder="${inputPh.replace(/"/g, '&quot;')}" />
           <button class="term-send" type="button" id="term-send">ENVIAR</button>
         </div>
         <div class="term-actions" style="padding: 1rem;">
@@ -991,15 +1208,21 @@ function initTrainingTerminal() {
     state.questionIdx = 0;
     state.totalXp = 0;
     state.goalXp = 80;
-    state.currentSet = pickQuestions(state.topic, state.levelMode, state.runLevel);
+    state.codeBlockAccum = null;
+    state.currentSet = pickQuestions(getBankTopic(), state.levelMode, state.runLevel);
     renderTerminalShell();
 
     replayAdminGate();
 
-    line(`BuildXP Terminal Training — ${state.topic}`, 'term-dim');
+    line(`BuildXP Terminal Training — ${termBadgeLabel()}`, 'term-dim');
     line(`Objetivo: ${state.goalXp} XP.`, 'term-dim');
     line(`Regras: 5 desafios. +20 certo, +10 parcial, +0 errado.`, 'term-dim');
-    line(`Dica: ignore os <arquivo> e foque na estrutura do comando.`, 'term-dim');
+    if (getBankTopic() === 'C#') {
+      line(`Modo C#: nomes de classe e variáveis livres; importa a montagem e operadores.`, 'term-dim');
+      line(`Bloco: uma linha por Enter; linha final só com ### para enviar.`, 'term-dim');
+    } else {
+      line(`Dica: ignore os <arquivo> e foque na estrutura do comando.`, 'term-dim');
+    }
     line('', '');
     askCurrent();
 
@@ -1017,11 +1240,17 @@ function initTrainingTerminal() {
   function askCurrent() {
     const q = state.currentSet[state.questionIdx];
     line(`[${state.questionIdx + 1}/5] ${q.q}`, '');
+    if (q.kind === 'csharp') {
+      state.codeBlockAccum = [];
+      line('Bloco: uma linha por Enter; última linha só ### para enviar.', 'term-dim');
+    } else {
+      state.codeBlockAccum = null;
+    }
   }
 
   function gradeAnswer(raw, q) {
     const user = norm(raw);
-    const accepted = q.accept.map(norm);
+    const accepted = (q.accept ?? []).map(norm);
 
     if (accepted.includes(user)) return { result: 'correct', xp: 20 };
 
@@ -1046,13 +1275,53 @@ function initTrainingTerminal() {
     const raw = input.value;
     if (!raw.trim()) return;
 
+    const q = state.currentSet[state.questionIdx];
+    if (!q) return;
+
+    /* Modo C# acumula linhas em bloco (###); tem de passar antes pelo portão admin. */
     if (tryConsumeAdminGate(raw, 'run')) {
       input.value = '';
       return;
     }
 
-    const q = state.currentSet[state.questionIdx];
-    if (!q) return;
+    if (q.kind === 'csharp') {
+      if (!Array.isArray(state.codeBlockAccum)) state.codeBlockAccum = [];
+
+      if (raw.trim() !== '###') {
+        state.codeBlockAccum.push(raw);
+        line(`· ${raw}`, 'term-dim');
+        input.value = '';
+        return;
+      }
+
+      const full = state.codeBlockAccum.join('\n');
+      state.codeBlockAccum = [];
+      input.value = '';
+      line('$ ###', 'term-dim');
+
+      if (!full.trim()) {
+        line('Envie pelo menos uma linha de código antes de ###.', 'term-bad');
+        line('Mesmo desafio: reenvie o bloco terminando em ###.', 'term-dim');
+        state.codeBlockAccum = [];
+        return;
+      }
+
+      const g = gradeCSharp(full, q);
+      if (g.result === 'correct') line('✔ Correto.', 'term-good');
+      else if (g.result === 'partial') line('◐ Parcialmente correto.', 'term-warn');
+      else line('✖ Incorreto.', 'term-bad');
+
+      if (g.xp > 0) animateXpGain(g.xp);
+
+      line(q.feedback || 'Confira o enunciado e os elementos obrigatórios.', 'term-dim');
+      line('', '');
+
+      state.questionIdx++;
+
+      if (state.questionIdx >= 5) finishRun();
+      else askCurrent();
+      return;
+    }
 
     line(`$ ${raw}`, 'term-dim');
 
@@ -1063,7 +1332,7 @@ function initTrainingTerminal() {
 
     if (g.xp > 0) animateXpGain(g.xp);
 
-    line(`Resposta esperada: ${q.accept[0]}`, 'term-dim');
+    if (q.accept?.length) line(`Resposta esperada: ${q.accept[0]}`, 'term-dim');
     line('', '');
 
     state.questionIdx++;
@@ -1097,7 +1366,7 @@ function initTrainingTerminal() {
     mount.querySelector('#term-nextlvl')?.addEventListener('click', () => {
       state.runLevel++;
       state.questionIdx = 0;
-      state.currentSet = pickQuestions(state.topic, state.levelMode, state.runLevel);
+      state.currentSet = pickQuestions(getBankTopic(), state.levelMode, state.runLevel);
       // keep XP accumulating per run? requirement says sum appears at end of test; each test 5 questions.
       // so reset XP for the new run, but keep level.
       state.totalXp = 0;
@@ -1116,6 +1385,130 @@ function getBuildXpApiBase() {
     return window.BUILDXP_API_BASE.trim().replace(/\/$/, '');
   }
   return '';
+}
+
+/** Slug do card de treino (git, docker, …) a partir do URL ou `window.BUILDXP_TRAINING_CARD_SLUG`. */
+function buildxpTrainingSlugFromPath() {
+  const custom =
+    typeof window.BUILDXP_TRAINING_CARD_SLUG === 'string' ? window.BUILDXP_TRAINING_CARD_SLUG.trim() : '';
+  if (custom) return custom.toLowerCase();
+  try {
+    const name = (window.location.pathname || '').split('/').pop() || '';
+    const m = name.match(/^(git|docker|npm|dotnet)\.html$/i);
+    return m ? m[1].toLowerCase() : '';
+  } catch (_) {
+    return '';
+  }
+}
+
+function buildxpFindFinStepClone(track) {
+  if (!track) return null;
+  for (const el of track.querySelectorAll('.step')) {
+    const num = (el.querySelector('.step-num')?.textContent || '').trim().toUpperCase();
+    if (num === 'FIM' || el.querySelector('.term-actions')) return el.cloneNode(true);
+  }
+  return null;
+}
+
+/** Título reservado na API para slides «pausa». */
+const BUILDXP_SLIDE_PAUSE_TITULO = '__buildxp_pause__';
+
+/** Converte um slide da API (titulo/descricao) para o mesmo DOM que o HTML estático usa. */
+function buildxpApiSlideToDom(slide) {
+  const ordem = Number(slide.ordem ?? slide.Ordem ?? 0) || 0;
+  const tituloRaw = String(slide.titulo ?? slide.Titulo ?? '');
+  const titulo = tituloRaw.trim();
+  const descricao = String(slide.descricao ?? slide.Descricao ?? '');
+  const codigo = String(slide.codigo_bloco ?? slide.codigoBloco ?? '').trim() || '';
+
+  const isPause = tituloRaw === BUILDXP_SLIDE_PAUSE_TITULO || tituloRaw.trim() === '';
+
+  const wrap = document.createElement('div');
+  wrap.className = isPause ? 'step step-pause' : 'step';
+  const numEl = document.createElement('div');
+  numEl.className = 'step-num';
+  numEl.textContent = isPause ? 'PAUSA' : String(ordem).padStart(2, '0');
+  const body = document.createElement('div');
+
+  if (isPause) {
+    if (/<[a-z][\s\S]*>/i.test(descricao)) body.innerHTML = descricao;
+    else
+      body.innerHTML = descricao
+        ? `<div class="step-desc">${dashEscapeHtml(descricao).replace(/\n/g, '<br>')}</div>`
+        : '';
+  } else {
+    const titleEl = document.createElement('div');
+    titleEl.className = 'step-title';
+    titleEl.textContent = titulo;
+    body.appendChild(titleEl);
+    if (descricao) {
+      const holder = document.createElement('div');
+      holder.innerHTML = descricao;
+      while (holder.firstChild) body.appendChild(holder.firstChild);
+    }
+    if (codigo) {
+      const block = document.createElement('div');
+      block.className = 'cmd-block';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'copy-btn';
+      btn.textContent = 'copy';
+      const code = document.createElement('code');
+      code.textContent = codigo;
+      block.appendChild(btn);
+      block.appendChild(code);
+      body.appendChild(block);
+    }
+  }
+
+  wrap.appendChild(numEl);
+  wrap.appendChild(body);
+  return wrap;
+}
+
+/**
+ * Substitui os slides da aba Iniciante pelo conteúdo do GET público `/api/card/{slug}` quando existir slides na BD.
+ * Mantém o slide final (FIM + botões) clonado do HTML publicado.
+ * @returns {Promise<boolean>}
+ */
+async function buildxpHydrateTrainingSlidesFromApi() {
+  const slug = buildxpTrainingSlugFromPath();
+  if (!slug) return false;
+
+  const track =
+    document.querySelector('#beginner .steps.steps-track') ||
+    document.querySelector('#beginner .steps-track') ||
+    document.querySelector('.tab-pane#beginner .steps-track') ||
+    document.querySelector('.tab-pane#beginner .steps.steps-track');
+  if (!track) return false;
+
+  const base = getBuildXpApiBase();
+  const url = `${base}/api/card/${encodeURIComponent(slug)}`;
+  let data;
+  try {
+    const res = await fetch(url, {
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) return false;
+    data = await res.json();
+  } catch (_) {
+    return false;
+  }
+
+  const slidesRaw = data.slides ?? data.Slides;
+  if (!Array.isArray(slidesRaw) || slidesRaw.length === 0) return false;
+
+  const finClone = buildxpFindFinStepClone(track);
+  track.innerHTML = '';
+
+  const sorted = [...slidesRaw].sort(
+    (a, b) => (Number(a.ordem ?? a.Ordem) || 0) - (Number(b.ordem ?? b.Ordem) || 0),
+  );
+  sorted.forEach((s) => track.appendChild(buildxpApiSlideToDom(s)));
+  if (finClone) track.appendChild(finClone);
+  return true;
 }
 
 const BUILDXP_INDEX_ORDER_KEY = 'buildxp_index_card_order';
@@ -1164,7 +1557,7 @@ const INDEX_CARD_STATIC_DEFAULTS = {
     slug: 'docker',
     theme: 'docker',
     display_name: 'Docker',
-    rarity_label: 'ADVANCED',
+    rarity_label: 'CORE',
     card_class: 'CONTAINERIZATION',
     xp_current: 1800,
     xp_max: 3000,
@@ -1196,7 +1589,7 @@ const INDEX_CARD_STATIC_DEFAULTS = {
     btn_primary_label: '▶ COMEÇAR',
     btn_secondary_label: '🎮 CHEAT CODES',
     description_html:
-      '<p>Gerencie pacotes, scripts e dependências de projetos Node.js. Do <code>npm init</code> ao publish no registry.<br>Clique no botão para começar a aprender NPM e para o que ele serve.</p>',
+      '<p>Gerencie pacotes, scripts e dependências de projetos Node.js. Do <code>npm init</code> ao publish no registry. Inclui também Prisma como pacote npm e comandos <code>npx prisma</code> (generate e migrations).<br>Clique no botão para começar a aprender NPM e para o que ele serve.</p>',
     icon_layout: 'single',
     icon_primary_src: 'imagens/npmlogo.png',
     icon_primary_alt: 'NPM',
@@ -1364,13 +1757,51 @@ function dashSlidesHasEditableContent(slides) {
   return Array.isArray(slides) && slides.some((s) => s && typeof s === 'object' && s.type !== 'fin');
 }
 
+async function dashTryLoadSlidesFromPublicCardApi(slug) {
+  try {
+    const base = getBuildXpApiBase();
+    const url = `${base}/api/card/${encodeURIComponent(slug)}`;
+    const res = await fetch(url, {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+      credentials: 'same-origin',
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const slidesRaw = data.slides ?? data.Slides;
+    if (!Array.isArray(slidesRaw) || slidesRaw.length === 0) return [];
+    const sorted = [...slidesRaw].sort(
+      (a, b) => (Number(a.ordem ?? a.Ordem) || 0) - (Number(b.ordem ?? b.Ordem) || 0),
+    );
+    return sorted.map((s) => {
+      const titulo = String(s.titulo ?? s.Titulo ?? '');
+      const desc = String(s.descricao ?? s.Descricao ?? '');
+      if (titulo === BUILDXP_SLIDE_PAUSE_TITULO || titulo.trim() === '') {
+        return { id: dashNewSlideId(), type: 'pause', text: desc, observation: '' };
+      }
+      return {
+        id: dashNewSlideId(),
+        type: 'content',
+        title: titulo.trim(),
+        text: desc,
+        commands: '',
+        observation: '',
+      };
+    });
+  } catch (_) {
+    return [];
+  }
+}
+
 async function dashLoadSlidesForSlug(slug) {
   const local = dashReadSlidesFromLocalStorage(slug);
+  const fromApi = await dashTryLoadSlidesFromPublicCardApi(slug);
   const remote = await dashFetchParsedSlidesOnly(slug);
   /* localStorage com só `fin` (rascunho antigo) ou vazio útil não deve bloquear o HTML publicado */
   if (dashSlidesHasEditableContent(local)) return local;
+  if (dashSlidesHasEditableContent(fromApi)) return fromApi;
   if (dashSlidesHasEditableContent(remote)) return remote;
-  return local.length ? local : remote;
+  return local.length ? local : fromApi.length ? fromApi : remote;
 }
 
 function getIndexCardOrder() {
@@ -1378,18 +1809,132 @@ function getIndexCardOrder() {
     const raw = localStorage.getItem(BUILDXP_INDEX_ORDER_KEY);
     const arr = raw ? JSON.parse(raw) : null;
     if (Array.isArray(arr) && arr.length) {
-      const valid = arr.filter((s) => BUILDXP_INDEX_SLUGS.includes(s));
-      if (valid.length) return valid;
+      return arr
+        .filter((s) => typeof s === 'string' && s.trim())
+        .map((s) => s.trim().toLowerCase());
     }
   } catch (_) { /* ignore */ }
   return [...BUILDXP_INDEX_SLUGS];
 }
 
 function setIndexCardOrder(order) {
-  const next = order.filter((s) => BUILDXP_INDEX_SLUGS.includes(s));
+  const next = order
+    .filter((s) => typeof s === 'string' && s.trim())
+    .map((s) => s.trim().toLowerCase());
   try {
-    localStorage.setItem(BUILDXP_INDEX_ORDER_KEY, JSON.stringify(next.length ? next : [...BUILDXP_INDEX_SLUGS]));
+    localStorage.setItem(
+      BUILDXP_INDEX_ORDER_KEY,
+      JSON.stringify(next.length ? next : [...BUILDXP_INDEX_SLUGS]),
+    );
   } catch (_) { /* ignore */ }
+}
+
+function buildxpNormalizeHomeCardFromDto(raw) {
+  const slug = String(raw.slug ?? '').trim().toLowerCase();
+  if (!slug) return null;
+  const published = raw.is_published ?? raw.IsPublished;
+  if (published === false) return null;
+  const themeRaw = String(raw.theme ?? 'git').toLowerCase();
+  const theme = ['docker', 'npm', 'dotnet'].includes(themeRaw) ? themeRaw : 'git';
+  const xpMax = Math.max(1, Number(raw.xp_max ?? raw.xpMax ?? 3000));
+  const xpCurrent = Math.max(0, Number(raw.xp_current ?? raw.xpCurrent ?? 0));
+  return {
+    slug,
+    theme,
+    display_name: String(raw.display_name ?? raw.DisplayName ?? slug),
+    rarity_label: String(raw.rarity_label ?? raw.RarityLabel ?? ''),
+    card_class: String(raw.card_class ?? raw.CardClass ?? ''),
+    description_html: String(raw.description_html ?? raw.DescriptionHtml ?? ''),
+    link_beginner:
+      String(raw.link_beginner ?? raw.LinkBeginner ?? '').trim() || `${slug}.html?tab=beginner`,
+    link_ref: String(raw.link_ref ?? raw.LinkRef ?? '').trim() || `${slug}.html?tab=ref`,
+    btn_primary_label: String(raw.btn_primary_label ?? raw.BtnPrimaryLabel ?? '▶ COMEÇAR'),
+    btn_secondary_label: String(raw.btn_secondary_label ?? raw.BtnSecondaryLabel ?? '🎮 CHEAT CODES'),
+    icon_layout: String(raw.icon_layout ?? raw.IconLayout ?? 'single').toLowerCase(),
+    icon_primary_src: String(raw.icon_primary_src ?? raw.IconPrimarySrc ?? ''),
+    icon_primary_alt: String(raw.icon_primary_alt ?? raw.IconPrimaryAlt ?? ''),
+    icon_secondary_src: raw.icon_secondary_src ?? raw.IconSecondarySrc ?? '',
+    icon_secondary_alt: String(raw.icon_secondary_alt ?? raw.IconSecondaryAlt ?? ''),
+    xp_current: xpCurrent,
+    xp_max: xpMax,
+    sort_order: Number(raw.sort_order ?? raw.SortOrder ?? 0),
+  };
+}
+
+function buildxpRenderIndexCardEl(c) {
+  const tileTheme = c.theme === 'dotnet' ? 'dotnet' : c.theme;
+  const pct = Math.min(100, Math.round((c.xp_current / c.xp_max) * 100));
+  const dual =
+    c.icon_layout === 'dual' && String(c.icon_secondary_src ?? '').trim();
+  const primarySrc = String(c.icon_primary_src || '').trim() || 'imagens/gitlogobr.png';
+  const primaryAlt = dashEscapeHtml(c.icon_primary_alt || c.display_name || c.slug);
+  let iconHtml;
+  if (dual) {
+    const secSrc = String(c.icon_secondary_src).trim();
+    const secAlt = dashEscapeHtml(c.icon_secondary_alt || '');
+    iconHtml = `<div class="card-icon dual"><img class="icon-git" src="${dashEscapeHtml(primarySrc)}" alt="${primaryAlt}" /><img src="${dashEscapeHtml(secSrc)}" alt="${secAlt}" /></div>`;
+  } else {
+    iconHtml = `<div class="card-icon"><img src="${dashEscapeHtml(primarySrc)}" alt="${primaryAlt}" /></div>`;
+  }
+  const wrap = document.createElement('div');
+  wrap.className = `card c-${tileTheme}`;
+  wrap.dataset.cardSlug = c.slug;
+  wrap.innerHTML = `
+    <span class="card-rarity">${dashEscapeHtml(c.rarity_label || '—')}</span>
+    ${iconHtml}
+    <div>
+      <div class="card-class">${dashEscapeHtml(c.card_class || '')}</div>
+      <div class="card-name">${dashEscapeHtml(c.display_name)}</div>
+    </div>
+    <div>
+      <div class="xp-row"><span>XP</span><span>${dashEscapeHtml(String(c.xp_current))} / ${dashEscapeHtml(String(c.xp_max))}</span></div>
+      <div class="xp-track"><div class="xp-fill" style="width:${pct}%"></div></div>
+    </div>
+    <div class="card-desc">${c.description_html || ''}</div>
+    <div class="card-actions">
+      <a href="${dashEscapeHtml(c.link_beginner)}" class="card-btn btn-primary">${dashEscapeHtml(c.btn_primary_label)}</a>
+      <a href="${dashEscapeHtml(c.link_ref)}" class="card-btn btn-secondary">${dashEscapeHtml(c.btn_secondary_label)}</a>
+    </div>
+  `;
+  return wrap;
+}
+
+async function buildxpHydrateIndexCardsFromApi() {
+  const grid = document.getElementById('index-cards-grid');
+  if (!grid) return;
+  const base = getBuildXpApiBase();
+  const url = `${base}/api/card`;
+  try {
+    const res = await fetch(url, {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+      credentials: 'same-origin',
+    });
+    if (!res.ok) return;
+    const arr = await res.json();
+    if (!Array.isArray(arr) || !arr.length) return;
+    const normalized = arr
+      .map(buildxpNormalizeHomeCardFromDto)
+      .filter((c) => c != null);
+    if (!normalized.length) return;
+    normalized.sort((a, b) => (a.sort_order - b.sort_order) || a.slug.localeCompare(b.slug));
+
+    const existingSlugs = new Set(
+      [...grid.querySelectorAll('[data-card-slug]')].map((el) => el.dataset.cardSlug),
+    );
+    const newNorm = normalized.filter((c) => !existingSlugs.has(c.slug));
+    newNorm.forEach((c) => grid.appendChild(buildxpRenderIndexCardEl(c)));
+
+    let order = getIndexCardOrder().filter((s) =>
+      grid.querySelector(`[data-card-slug="${CSS.escape(s)}"]`),
+    );
+    newNorm.forEach((c) => {
+      if (!order.includes(c.slug)) order.push(c.slug);
+    });
+    setIndexCardOrder(order);
+  } catch (_) {
+    /* mantém HTML estático */
+  }
 }
 
 function applyIndexCardOrder() {
@@ -1399,10 +1944,184 @@ function applyIndexCardOrder() {
   grid.querySelectorAll('[data-card-slug]').forEach((el) => {
     nodes[el.dataset.cardSlug] = el;
   });
-  getIndexCardOrder().forEach((slug) => {
+  const order = getIndexCardOrder();
+  const used = new Set();
+  order.forEach((slug) => {
     const n = nodes[slug];
-    if (n) grid.appendChild(n);
+    if (n) {
+      grid.appendChild(n);
+      used.add(slug);
+    }
   });
+  Object.keys(nodes).forEach((slug) => {
+    if (!used.has(slug)) grid.appendChild(nodes[slug]);
+  });
+}
+
+let indexCardsMarqueeRafId = null;
+let indexMarqueeNavAbort = null;
+let indexMarqueeResizeObs = null;
+
+function stopIndexCardsMarqueeLoop() {
+  if (indexCardsMarqueeRafId != null) {
+    cancelAnimationFrame(indexCardsMarqueeRafId);
+    indexCardsMarqueeRafId = null;
+  }
+}
+
+/**
+ * Marquee infinito: move o track com translateX (direita → esquerda).
+ * scrollLeft falha quando a linha cabe na viewport (sem overflow); transform funciona sempre.
+ */
+function initIndexCardsHomeMarquee() {
+  const viewport = document.getElementById('index-cards-viewport');
+  const track = document.getElementById('index-cards-marquee-track');
+  const grid = document.getElementById('index-cards-grid');
+  const prev = document.getElementById('index-cards-strip-prev');
+  const next = document.getElementById('index-cards-strip-next');
+  const hoverShell = viewport?.closest('.cards-strip-viewport-shell');
+  if (!viewport || !track || !grid || !prev || !next) return;
+
+  stopIndexCardsMarqueeLoop();
+  indexMarqueeNavAbort?.abort();
+  indexMarqueeNavAbort = new AbortController();
+  const sig = indexMarqueeNavAbort.signal;
+  indexMarqueeResizeObs?.disconnect();
+
+  track.querySelectorAll('.cards-marquee-clone').forEach((n) => n.remove());
+  track.classList.remove('cards-marquee-track--animated');
+  delete grid.dataset.marqueeInit;
+  track.style.transform = '';
+
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cards = grid.querySelectorAll('.card');
+
+  function scrollAmount() {
+    const card = grid.querySelector('.card');
+    const w = card?.offsetWidth ?? 280;
+    return Math.max(220, Math.round(w + 24));
+  }
+
+  function loopHalfWidth() {
+    return Math.max(1, track.scrollWidth / 2);
+  }
+
+  /** Offset horizontal do track (px); valores mais negativos = faixa anda para a esquerda. */
+  let tx = 0;
+
+  function normalizeTx() {
+    const half = loopHalfWidth();
+    let guard = 0;
+    while (tx <= -half && guard++ < 64) tx += half;
+    guard = 0;
+    while (tx > 0 && guard++ < 64) tx -= half;
+  }
+
+  function applyTransform() {
+    track.style.transform = `translate3d(${tx}px, 0, 0)`;
+  }
+
+  function updateNavDisabled() {
+    const half = loopHalfWidth();
+    const canStep = cards.length >= 2 && half > 1;
+    prev.disabled = !canStep;
+    next.disabled = !canStep;
+  }
+
+  if (cards.length < 2) {
+    updateNavDisabled();
+    return;
+  }
+
+  const clone = grid.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.setAttribute('aria-hidden', 'true');
+  clone.classList.add('cards-marquee-clone');
+  track.appendChild(clone);
+  grid.dataset.marqueeInit = '1';
+
+  tx = 0;
+  applyTransform();
+
+  let pausedByHover = false;
+  function bindPauseHover(el) {
+    el.addEventListener(
+      'mouseenter',
+      () => {
+        pausedByHover = true;
+      },
+      { signal: sig },
+    );
+    el.addEventListener(
+      'mouseleave',
+      () => {
+        pausedByHover = false;
+      },
+      { signal: sig },
+    );
+  }
+  if (hoverShell) bindPauseHover(hoverShell);
+  else bindPauseHover(viewport);
+
+  let lastTs = 0;
+  const pxPerSec = 38;
+
+  function tick(ts) {
+    indexCardsMarqueeRafId = requestAnimationFrame(tick);
+    const animate = !prefersReduced && !pausedByHover && !document.hidden;
+    if (!animate) {
+      lastTs = 0;
+      applyTransform();
+      return;
+    }
+    if (!lastTs) lastTs = ts;
+    const dt = Math.min(ts - lastTs, 48);
+    lastTs = ts;
+    const half = loopHalfWidth();
+    tx -= (pxPerSec * dt) / 1000;
+    while (tx <= -half) tx += half;
+    applyTransform();
+  }
+
+  prev.addEventListener(
+    'click',
+    () => {
+      tx += scrollAmount();
+      normalizeTx();
+      applyTransform();
+      updateNavDisabled();
+    },
+    { signal: sig },
+  );
+  next.addEventListener(
+    'click',
+    () => {
+      tx -= scrollAmount();
+      normalizeTx();
+      applyTransform();
+      updateNavDisabled();
+    },
+    { signal: sig },
+  );
+
+  window.addEventListener('resize', () => {
+    normalizeTx();
+    applyTransform();
+    updateNavDisabled();
+  }, { signal: sig });
+
+  if (typeof ResizeObserver !== 'undefined') {
+    indexMarqueeResizeObs = new ResizeObserver(() => {
+      normalizeTx();
+      applyTransform();
+      updateNavDisabled();
+    });
+    indexMarqueeResizeObs.observe(viewport);
+    indexMarqueeResizeObs.observe(track);
+  }
+
+  indexCardsMarqueeRafId = requestAnimationFrame(tick);
+  updateNavDisabled();
 }
 
 function dashEscapeHtml(s) {
@@ -1411,6 +2130,89 @@ function dashEscapeHtml(s) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+/** Junta texto, comandos e observação num único HTML guardado em `Slide.Descricao` (a BD só tem Titulo+Descricao). */
+function dashComposeContentSlideDescricaoForApi(slide) {
+  const parts = [];
+  if (slide.text?.trim()) parts.push(slide.text.trim());
+  if (slide.commands?.trim()) {
+    const codeEsc = dashEscapeHtml(slide.commands.trim());
+    parts.push(
+      `<div class="cmd-block"><button type="button" class="copy-btn">copy</button><code>${codeEsc}</code></div>`,
+    );
+  }
+  if (slide.observation?.trim()) {
+    parts.push(`<div class="callout callout-tip">${slide.observation.trim()}</div>`);
+  }
+  return parts.join('\n');
+}
+
+function dashComposePauseDescricaoForApi(slide) {
+  const parts = [];
+  if (slide.text?.trim()) {
+    const t = slide.text.trim();
+    parts.push(/<[a-z][\s\S]*>/i.test(t) ? t : `<div class="step-desc">${t}</div>`);
+  }
+  if (slide.observation?.trim()) {
+    parts.push(`<div class="callout callout-tip">${slide.observation.trim()}</div>`);
+  }
+  return parts.join('\n') || '<div class="step-desc"></div>';
+}
+
+/** Corpo JSON para POST slide na API (campos que o modelo `Slide` persiste). */
+function dashSlideToApiBody(slide, idx) {
+  const ordem = idx + 1;
+  if (slide.type === 'pause') {
+    return {
+      cardId: 0,
+      ordem,
+      titulo: BUILDXP_SLIDE_PAUSE_TITULO,
+      descricao: dashComposePauseDescricaoForApi(slide),
+      ativo: true,
+    };
+  }
+  const titulo = (slide.title || '').trim() || `Slide ${ordem}`;
+  return {
+    cardId: 0,
+    ordem,
+    titulo,
+    descricao: dashComposeContentSlideDescricaoForApi(slide),
+    ativo: true,
+  };
+}
+
+function buildWizCardPayloadForApi(slug, meta, themeRaw) {
+  const theme =
+    String(themeRaw || 'git')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z]/g, '') || 'git';
+  const iconPri = meta.iconDataUrl || 'imagens/logo2buildxpret.png';
+  const desc = meta.desc || '';
+  const description_html =
+    !desc ? '<p></p>' : /<[a-z][\s\S]*>/i.test(desc) ? desc : `<p>${dashEscapeHtml(desc).replace(/\n/g, '<br>')}</p>`;
+  return {
+    slug,
+    theme,
+    rarity_label: meta.badge,
+    card_class: meta.cardClass,
+    display_name: meta.title,
+    description_html,
+    link_beginner: `${slug}.html?tab=beginner`,
+    link_ref: `${slug}.html?tab=ref`,
+    xp_current: meta.xpCurrent,
+    xp_max: meta.xpMax,
+    sort_order: 10,
+    btn_primary_label: '▶ COMEÇAR',
+    btn_secondary_label: '🎮 CHEAT CODES',
+    icon_layout: 'single',
+    icon_primary_src: iconPri,
+    icon_primary_alt: meta.title || slug,
+    icon_secondary_src: null,
+    icon_secondary_alt: '',
+    is_published: true,
+  };
 }
 
 function dashNormalizeFeedbackStatus(raw) {
@@ -1502,6 +2304,8 @@ function getDashApiPath(key) {
     validateRecoveryCode: '/api/auth/validar-codigo-recuperacao',
     resetPassword: '/api/auth/redefinir-senha',
     inviteCollaborator: '/api/Colaborador/convidar',
+    perfilMe: '/api/Perfil/me',
+    perfilPut: '/api/Perfil/me',
   };
   const p = window.BUILDXP_API_PATHS || {};
   return p[key] || defaults[key] || '';
@@ -1612,6 +2416,58 @@ async function tryAdminLogin(username, password) {
   return false;
 }
 
+function resetDashPwWraps(root) {
+  if (!root) return;
+  root.querySelectorAll('.dash-pw-wrap').forEach((wrap) => {
+    const input = wrap.querySelector('input');
+    const btn = wrap.querySelector('.dash-pw-toggle');
+    if (input) input.type = 'password';
+    if (btn) {
+      const peerSel = btn.getAttribute('data-dash-pw-peer');
+      if (peerSel) {
+        const peer = document.querySelector(peerSel);
+        if (peer && peer.tagName === 'INPUT') peer.type = 'password';
+      }
+      btn.setAttribute('aria-pressed', 'false');
+      btn.setAttribute('aria-label', 'Mostrar senha');
+      btn.textContent = 'Mostrar';
+    }
+  });
+}
+
+let dashPwToggleDelegationBound = false;
+
+/** Captura em document: corre mesmo que initDashboard saia cedo ou outro código pare a propagação. */
+function ensureDashPasswordToggleDelegation() {
+  if (dashPwToggleDelegationBound) return;
+  dashPwToggleDelegationBound = true;
+  document.addEventListener(
+    'click',
+    (e) => {
+      const el = e.target;
+      if (!el || typeof el.closest !== 'function') return;
+      const btn = el.closest('.dash-pw-toggle');
+      if (!btn) return;
+      const wrap = btn.closest('.dash-pw-wrap');
+      if (!wrap) return;
+      const input = wrap.querySelector('input');
+      if (!input) return;
+      const nextType = input.type === 'text' ? 'password' : 'text';
+      input.type = nextType;
+      const peerSel = btn.getAttribute('data-dash-pw-peer');
+      if (peerSel) {
+        const peer = document.querySelector(peerSel);
+        if (peer && peer.tagName === 'INPUT') peer.type = nextType;
+      }
+      const nowVisible = nextType === 'text';
+      btn.setAttribute('aria-pressed', nowVisible ? 'true' : 'false');
+      btn.setAttribute('aria-label', nowVisible ? 'Ocultar senha' : 'Mostrar senha');
+      btn.textContent = nowVisible ? 'Ocultar' : 'Mostrar';
+    },
+    true,
+  );
+}
+
 function initDashboard() {
   const loginEl = document.getElementById('dash-login');
   const shellEl = document.getElementById('dash-shell');
@@ -1710,6 +2566,7 @@ function initDashboard() {
     const np2 = document.getElementById('dash-forgot-newpw2');
     if (np) np.value = '';
     if (np2) np2.value = '';
+    resetDashPwWraps(forgotPanelPassword);
     if (forgotStep1Status) {
       forgotStep1Status.textContent = '';
       forgotStep1Status.classList.remove('ok', 'bad');
@@ -1731,6 +2588,7 @@ function initDashboard() {
   function closeForgotModal() {
     if (!forgotModal) return;
     clearForgotResendTimer();
+    resetDashPwWraps(forgotModal);
     forgotModal.setAttribute('hidden', '');
     document.body.style.overflow = '';
   }
@@ -1761,6 +2619,7 @@ function initDashboard() {
     const np2 = document.getElementById('dash-forgot-newpw2');
     if (np) np.value = '';
     if (np2) np2.value = '';
+    resetDashPwWraps(forgotPanelPassword);
     document.getElementById('dash-forgot-code')?.focus();
   });
 
@@ -1777,7 +2636,7 @@ function initDashboard() {
       body: JSON.stringify({ email }),
     });
     if (r.ok) {
-      pendingForgotEmail = email;
+      pendingForgotEmail = email.trim().toLowerCase();
       pendingForgotCode = '';
       forgotStep1Status.textContent = '';
       forgotStep1Status.classList.add('ok');
@@ -1852,9 +2711,10 @@ function initDashboard() {
     }
   });
 
+  let forgotPasswordSubmitting = false;
   document.getElementById('dash-forgot-step-password')?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!forgotPasswordStatus) return;
+    if (!forgotPasswordStatus || forgotPasswordSubmitting) return;
     const np = document.getElementById('dash-forgot-newpw')?.value || '';
     const np2 = document.getElementById('dash-forgot-newpw2')?.value || '';
     if (!pendingForgotEmail || !pendingForgotCode) {
@@ -1874,28 +2734,255 @@ function initDashboard() {
     }
     forgotPasswordStatus.textContent = '';
     forgotPasswordStatus.classList.remove('ok', 'bad');
+    const saveBtn = document.getElementById('dash-forgot-save');
+    forgotPasswordSubmitting = true;
+    if (saveBtn) saveBtn.disabled = true;
     const path = getDashApiPath('resetPassword');
+    try {
+      const r = await dashFetchNoThrow(path, {
+        method: 'POST',
+        body: JSON.stringify({
+          email: pendingForgotEmail,
+          codigo: pendingForgotCode,
+          novaSenha: np,
+        }),
+      });
+      if (r.ok) {
+        forgotPasswordStatus.textContent = 'Senha alterada com sucesso.';
+        forgotPasswordStatus.classList.add('ok');
+        setTimeout(() => {
+          closeForgotModal();
+        }, 400);
+      } else {
+        const msg =
+          (r.data && typeof r.data === 'object' && r.data.message) ||
+          (typeof r.data === 'string' ? r.data : null) ||
+          'Não foi possível redefinir a senha.';
+        forgotPasswordStatus.textContent = msg;
+        forgotPasswordStatus.classList.add('bad');
+      }
+    } finally {
+      forgotPasswordSubmitting = false;
+      if (saveBtn) saveBtn.disabled = false;
+    }
+  });
+
+  const profileSheet = document.getElementById('dash-profile-sheet');
+  const profileBackdrop = document.getElementById('dash-profile-sheet-backdrop');
+  const profileClose = document.getElementById('dash-profile-close');
+  const profileOpenBtn = document.getElementById('dash-profile-open');
+  const profileAdminMsg = document.getElementById('dash-profile-admin-msg');
+  const profileForm = document.getElementById('dash-profile-form');
+  const profileStatus = document.getElementById('dash-profile-status');
+  const profileAlterarSenha = document.getElementById('dash-profile-alterar-senha');
+  const profileSenhaFields = document.getElementById('dash-profile-senha-fields');
+  let profilePendingRemoverFoto = false;
+  let profilePendingBase64 = null;
+  let profilePendingMime = null;
+
+  function resetProfilePendingFiles() {
+    profilePendingRemoverFoto = false;
+    profilePendingBase64 = null;
+    profilePendingMime = null;
+    const fi = document.getElementById('dash-profile-foto-file');
+    if (fi) fi.value = '';
+  }
+
+  function closeProfileSheet() {
+    if (!profileSheet) return;
+    profileSheet.setAttribute('hidden', '');
+    profileSheet.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('dash-profile-sheet-open');
+    resetDashPwWraps(profileSheet);
+    resetProfilePendingFiles();
+    if (profileStatus) {
+      profileStatus.textContent = '';
+      profileStatus.classList.remove('ok', 'bad');
+    }
+  }
+
+  async function loadDashProfileChip() {
+    const img = document.getElementById('dash-profile-avatar-img');
+    const ph = document.getElementById('dash-profile-avatar-placeholder');
+    const tok = getToken();
+    if (!tok || !img || !ph) return;
+    const path = getDashApiPath('perfilMe');
+    const r = await dashFetchNoThrow(path, { method: 'GET' });
+    if (!r.ok || !r.data || typeof r.data !== 'object') return;
+    const u = r.data.fotoDataUrl;
+    if (u && typeof u === 'string') {
+      img.src = u;
+      img.hidden = false;
+      ph.hidden = true;
+    } else {
+      img.removeAttribute('src');
+      img.hidden = true;
+      ph.hidden = false;
+    }
+  }
+
+  async function openProfileSheet() {
+    if (!profileSheet) return;
+    resetProfilePendingFiles();
+    if (profileAdminMsg) {
+      profileAdminMsg.innerHTML =
+        '<p class="dash-muted">Conta de <strong>administrador</strong>: alterações de Username e palavra-passe fazem-se na configuração do servidor (appsettings).</p>';
+    }
+    if (profileStatus) {
+      profileStatus.textContent = '';
+      profileStatus.classList.remove('ok', 'bad');
+    }
+    const tok = getToken();
+    if (!tok) return;
+    const path = getDashApiPath('perfilMe');
+    const r = await dashFetchNoThrow(path, { method: 'GET' });
+    if (!r.ok || !r.data || typeof r.data !== 'object') {
+      if (profileAdminMsg) {
+        profileAdminMsg.hidden = false;
+        profileAdminMsg.innerHTML =
+          '<p class="dash-muted">Não foi possível carregar o perfil. Confirme que está com sessão válida (JWT).</p>';
+      }
+      if (profileForm) profileForm.hidden = true;
+      profileSheet.removeAttribute('hidden');
+      profileSheet.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('dash-profile-sheet-open');
+      return;
+    }
+    const d = r.data;
+    if (d.role === 'admin') {
+      if (profileAdminMsg) profileAdminMsg.hidden = false;
+      if (profileForm) profileForm.hidden = true;
+    } else {
+      if (profileAdminMsg) profileAdminMsg.hidden = true;
+      if (profileForm) profileForm.hidden = false;
+      const emEl = document.getElementById('dash-profile-email-display');
+      const uEl = document.getElementById('dash-profile-usuario');
+      if (emEl) emEl.textContent = d.email || '';
+      if (uEl) uEl.value = d.usuario ? String(d.usuario) : '';
+      if (profileAlterarSenha) profileAlterarSenha.checked = false;
+      if (profileSenhaFields) profileSenhaFields.hidden = true;
+      ['dash-profile-senha-atual', 'dash-profile-nova-senha', 'dash-profile-confirm-senha'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+    }
+    profileSheet.removeAttribute('hidden');
+    profileSheet.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('dash-profile-sheet-open');
+  }
+
+  profileOpenBtn?.addEventListener('click', () => {
+    void openProfileSheet();
+  });
+  profileClose?.addEventListener('click', () => closeProfileSheet());
+  profileBackdrop?.addEventListener('click', () => closeProfileSheet());
+
+  profileAlterarSenha?.addEventListener('change', () => {
+    if (profileSenhaFields) profileSenhaFields.hidden = !profileAlterarSenha.checked;
+  });
+
+  document.getElementById('dash-profile-foto-file')?.addEventListener('change', async (e) => {
+    const f = e.target.files && e.target.files[0];
+    profilePendingRemoverFoto = false;
+    profilePendingBase64 = null;
+    profilePendingMime = null;
+    if (!f) return;
+    if (f.size > 256 * 1024) {
+      if (profileStatus) {
+        profileStatus.textContent = 'Imagem demasiado grande (máx. 256 KB).';
+        profileStatus.classList.add('bad');
+      }
+      e.target.value = '';
+      return;
+    }
+    const mime = f.type || '';
+    if (!/^image\/(jpeg|png|webp)$/i.test(mime)) {
+      if (profileStatus) {
+        profileStatus.textContent = 'Use JPEG, PNG ou WebP.';
+        profileStatus.classList.add('bad');
+      }
+      e.target.value = '';
+      return;
+    }
+    const dataUrl = await new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(String(fr.result || ''));
+      fr.onerror = () => reject(fr.error);
+      fr.readAsDataURL(f);
+    });
+    const m = /^data:([^;]+);base64,(.+)$/i.exec(dataUrl);
+    if (m) {
+      profilePendingMime = m[1];
+      profilePendingBase64 = m[2];
+    }
+    if (profileStatus) profileStatus.classList.remove('bad');
+  });
+
+  document.getElementById('dash-profile-remover-foto')?.addEventListener('click', () => {
+    profilePendingRemoverFoto = true;
+    profilePendingBase64 = null;
+    profilePendingMime = null;
+    const fi = document.getElementById('dash-profile-foto-file');
+    if (fi) fi.value = '';
+    if (profileStatus) {
+      profileStatus.textContent = 'Foto será removida ao guardar.';
+      profileStatus.classList.remove('bad');
+      profileStatus.classList.add('ok');
+    }
+  });
+
+  profileForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!profileStatus) return;
+    profileStatus.textContent = '';
+    profileStatus.classList.remove('ok', 'bad');
+    const alterar = !!(profileAlterarSenha && profileAlterarSenha.checked);
+    const usuarioVal = document.getElementById('dash-profile-usuario')?.value?.trim() ?? '';
+    const body = {
+      usuario: usuarioVal === '' ? null : usuarioVal,
+      senhaAtual: alterar ? document.getElementById('dash-profile-senha-atual')?.value ?? '' : null,
+      novaSenha: alterar ? document.getElementById('dash-profile-nova-senha')?.value ?? '' : null,
+      confirmarSenha: alterar ? document.getElementById('dash-profile-confirm-senha')?.value ?? '' : null,
+      removerFoto: profilePendingRemoverFoto,
+      fotoBase64: profilePendingBase64,
+      fotoMimeType: profilePendingMime,
+    };
+    if (alterar) {
+      if (!body.senhaAtual || String(body.senhaAtual).length === 0) {
+        profileStatus.textContent = 'Informe a senha atual.';
+        profileStatus.classList.add('bad');
+        return;
+      }
+      if (!body.novaSenha || String(body.novaSenha).length < 6) {
+        profileStatus.textContent = 'A nova senha deve ter pelo menos 6 caracteres.';
+        profileStatus.classList.add('bad');
+        return;
+      }
+      if (body.novaSenha !== body.confirmarSenha) {
+        profileStatus.textContent = 'Nova senha e confirmação não coincidem.';
+        profileStatus.classList.add('bad');
+        return;
+      }
+    }
+    const path = getDashApiPath('perfilPut');
     const r = await dashFetchNoThrow(path, {
-      method: 'POST',
-      body: JSON.stringify({
-        email: pendingForgotEmail,
-        codigo: pendingForgotCode,
-        novaSenha: np,
-      }),
+      method: 'PUT',
+      body: JSON.stringify(body),
     });
     if (r.ok) {
-      forgotPasswordStatus.textContent = 'Senha alterada com sucesso.';
-      forgotPasswordStatus.classList.add('ok');
-      setTimeout(() => {
-        closeForgotModal();
-      }, 400);
+      profileStatus.textContent =
+        (r.data && typeof r.data === 'object' && r.data.message) || 'Guardado com sucesso.';
+      profileStatus.classList.add('ok');
+      if (r.data && typeof r.data === 'object' && r.data.token) saveToken(r.data.token);
+      resetProfilePendingFiles();
+      await loadDashProfileChip();
+      setTimeout(() => closeProfileSheet(), 600);
     } else {
-      const msg =
+      profileStatus.textContent =
         (r.data && typeof r.data === 'object' && r.data.message) ||
         (typeof r.data === 'string' ? r.data : null) ||
-        'Não foi possível redefinir a senha.';
-      forgotPasswordStatus.textContent = msg;
-      forgotPasswordStatus.classList.add('bad');
+        'Não foi possível guardar.';
+      profileStatus.classList.add('bad');
     }
   });
 
@@ -1937,6 +3024,7 @@ function initDashboard() {
 
   function showLogin() {
     closeForgotModal();
+    closeProfileSheet();
     document.body.classList.remove('dash-body--authed');
     loginEl.hidden = false;
     loginEl.removeAttribute('aria-hidden');
@@ -1967,6 +3055,7 @@ function initDashboard() {
     } else {
       refreshAll();
     }
+    void loadDashProfileChip();
   }
 
   let dashReloadAll = null;
@@ -2127,6 +3216,61 @@ function initDashboard() {
     let editSlides = [];
     let editSlidesSlug = null;
     let cardEditorStepIndex = 0;
+    let dashCardIconObjectUrl = null;
+
+    function revokeDashCardIconPreviewUrl() {
+      if (dashCardIconObjectUrl) {
+        URL.revokeObjectURL(dashCardIconObjectUrl);
+        dashCardIconObjectUrl = null;
+      }
+    }
+
+    function resetDashCardIconFileUi() {
+      revokeDashCardIconPreviewUrl();
+      const fi = document.getElementById('dash-card-icon-file');
+      if (fi) fi.value = '';
+    }
+
+    function syncDashCardIconPreviewFromInput() {
+      const img = document.getElementById('dash-card-icon-preview');
+      const pri = document.getElementById('dash-card-icon-pri')?.value?.trim();
+      if (!img) return;
+      revokeDashCardIconPreviewUrl();
+      img.onload = () => {
+        img.style.display = 'block';
+      };
+      img.onerror = () => {
+        img.style.display = 'none';
+      };
+      if (!pri) {
+        img.style.display = 'none';
+        img.removeAttribute('src');
+        return;
+      }
+      img.src = pri;
+    }
+
+    document.getElementById('dash-card-icon-pri')?.addEventListener('input', syncDashCardIconPreviewFromInput);
+    document.getElementById('dash-card-icon-file')?.addEventListener('change', (ev) => {
+      const f = ev.target.files?.[0];
+      const img = document.getElementById('dash-card-icon-preview');
+      const priInp = document.getElementById('dash-card-icon-pri');
+      if (!f) return;
+      revokeDashCardIconPreviewUrl();
+      dashCardIconObjectUrl = URL.createObjectURL(f);
+      if (img) {
+        img.onload = () => {
+          img.style.display = 'block';
+        };
+        img.onerror = () => {
+          img.style.display = 'none';
+        };
+        img.src = dashCardIconObjectUrl;
+      }
+      const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const suggestion = `imagens/${safe}`;
+      if (priInp && !priInp.value.trim()) priInp.value = suggestion;
+    });
 
     function syncSlideEditThemeFromForm() {
       const panel = document.getElementById('dash-card-editor-theme-host');
@@ -2149,13 +3293,6 @@ function initDashboard() {
 
     async function loadCardEditorSlidesData(slug) {
       if (!slug) {
-        editSlidesSlug = null;
-        editSlides = [];
-        renderEditSlides();
-        return false;
-      }
-      const def = BUILDXP_INDEX_CARD_DEFS.find((d) => d.slug === slug);
-      if (!def) {
         editSlidesSlug = null;
         editSlides = [];
         renderEditSlides();
@@ -2342,6 +3479,7 @@ function initDashboard() {
     async function openIndexCardForDeepEdit(slug) {
       const def = BUILDXP_INDEX_CARD_DEFS.find((d) => d.slug === slug);
       if (!def) return;
+      setSlidesSaveStatus('', '');
       const staticD = INDEX_CARD_STATIC_DEFAULTS[slug];
       editingCardSlug = slug;
       if (staticD) dashApplyCardToForm(staticD);
@@ -2351,12 +3489,13 @@ function initDashboard() {
       } catch (_) {
         /* mantém estático */
       }
-      setSlugLocked(true);
       await loadCardEditorSlidesData(slug);
       setDashView('card-editor');
       setCardEditorScreenTitles(`Editar · ${def.label}`, `slug: ${slug}`);
       cardEditorStepIndex = getEditSlidesContentOnly().length ? 1 : 0;
       renderCardEditorChrome();
+      resetDashCardIconFileUi();
+      syncDashCardIconPreviewFromInput();
     }
 
     function insertEditSlideBeforeFin(newSlide) {
@@ -2365,58 +3504,73 @@ function initDashboard() {
       else editSlides.push(newSlide);
     }
 
+    const slidesSaveStatusEl = document.getElementById('dash-card-editor-slides-status');
+    function setSlidesSaveStatus(msg, kind) {
+      if (!slidesSaveStatusEl) return;
+      slidesSaveStatusEl.textContent = msg || '';
+      slidesSaveStatusEl.classList.toggle('ok', kind === 'ok');
+      slidesSaveStatusEl.classList.toggle('bad', kind === 'bad');
+    }
+
     document.getElementById('dash-slides-save')?.addEventListener('click', async () => {
       if (!editSlidesSlug) return;
 
-      const def = BUILDXP_INDEX_CARD_DEFS.find((d) => d.slug === editSlidesSlug);
-      if (!def) return;
-
-      let cardId = typeof def.id === 'number' ? def.id : 0;
-      if (!cardId) {
-        try {
-          const data = await fetchJson('/api/card');
-          const arr = Array.isArray(data) ? data : data?.items ?? data?.data ?? [];
-          const raw = arr.find(
-            (c) => String(c.slug ?? c.Slug ?? '').toLowerCase() === String(editSlidesSlug).toLowerCase(),
-          );
-          cardId = Number(raw?.id ?? raw?.Id ?? 0) || 0;
-        } catch (_) { /* ignore */ }
+      setSlidesSaveStatus('', '');
+      let postCardId = 0;
+      let meta = null;
+      try {
+        meta = await fetchJson(`/api/card/${encodeURIComponent(editSlidesSlug)}`);
+        postCardId = Number(meta?.id ?? meta?.Id ?? 0) || 0;
+      } catch (_) {
+        const def = BUILDXP_INDEX_CARD_DEFS.find((d) => d.slug === editSlidesSlug);
+        if (def && typeof def.id === 'number') postCardId = def.id;
+      }
+      if (!postCardId) {
+        setSlidesSaveStatus(
+          'Não foi possível obter o id do card na API. Confirme o slug, o login (JWT) e o servidor.',
+          'bad',
+        );
+        return;
       }
 
       const slidesParaSalvar = getEditSlidesContentOnly();
 
       try {
-        for (const [idx, slide] of slidesParaSalvar.entries()) {
-          const body = {
-            cardId: cardId || 0,
-            ordem: idx + 1,
-            titulo: slide.title || '',
-            descricao: slide.text || '',
-            codigoBloco: slide.commands || null,
-            tipo: slide.type === 'pause' ? 'Pausa' : 'Conteudo',
-          };
-
-          if (slide._apiId) {
-            await fetchJson(`/api/card/slides/${slide._apiId}`, {
-              method: 'PUT',
-              body: JSON.stringify(body),
-            });
-          } else {
-            const postPath =
-              cardId > 0
-                ? `/api/card/${cardId}/slides`
-                : `/api/card/${encodeURIComponent(editSlidesSlug)}/slides`;
-            const criado = await fetchJson(postPath, {
-              method: 'POST',
-              body: JSON.stringify(body),
-            });
-            slide._apiId = criado?.id ?? criado?.Id ?? null;
+        const existingSlides = meta?.slides ?? meta?.Slides;
+        if (Array.isArray(existingSlides) && existingSlides.length > 0) {
+          const ids = [...existingSlides]
+            .map((s) => Number(s.id ?? s.Id))
+            .filter((x) => Number.isFinite(x) && x > 0)
+            .sort((a, b) => b - a);
+          for (const sid of ids) {
+            try {
+              await fetchJson(`/api/card/slides/${sid}`, { method: 'DELETE' });
+            } catch (_) {
+              /* slide já removido ou conflito — segue */
+            }
           }
+        }
+
+        slidesParaSalvar.forEach((s) => {
+          delete s._apiId;
+        });
+
+        for (const [idx, slide] of slidesParaSalvar.entries()) {
+          const body = dashSlideToApiBody(slide, idx);
+          body.cardId = postCardId;
+
+          const criado = await fetchJson(`/api/card/${postCardId}/slides`, {
+            method: 'POST',
+            body: JSON.stringify(body),
+          });
+          slide._apiId = criado?.id ?? criado?.Id ?? null;
         }
 
         try {
           localStorage.setItem(dashSlidesStorageKey(editSlidesSlug), JSON.stringify(editSlides));
         } catch (_) { /* ignore */ }
+
+        setSlidesSaveStatus('Slides guardados na API com sucesso.', 'ok');
 
         const btn = document.getElementById('dash-slides-save');
         if (btn) {
@@ -2436,9 +3590,12 @@ function initDashboard() {
           e?.status === 401
             ? ' Faça login com o utilizador admin (JWT).'
             : e?.message
-              ? ` (${e.message})`
+              ? ` ${e.message}`
               : '';
-        alert('Erro ao salvar na API. Salvo apenas localmente.' + extra);
+        setSlidesSaveStatus(
+          `Erro ao salvar na API.${extra} Os slides foram gravados só no navegador (localStorage).`,
+          'bad',
+        );
       }
     });
 
@@ -2488,11 +3645,21 @@ function initDashboard() {
     function resetCardWizard() {
       wizSlides = [];
       wizIconDataUrl = '';
-      const ids = ['dash-wiz-title', 'dash-wiz-badge', 'dash-wiz-class', 'dash-wiz-desc', 'dash-wiz-xpc', 'dash-wiz-xpm'];
+      const ids = [
+        'dash-wiz-slug',
+        'dash-wiz-theme',
+        'dash-wiz-title',
+        'dash-wiz-badge',
+        'dash-wiz-class',
+        'dash-wiz-desc',
+        'dash-wiz-xpc',
+        'dash-wiz-xpm',
+      ];
       ids.forEach((id) => {
         const el = document.getElementById(id);
         if (!el) return;
         if (el.type === 'number') el.value = id === 'dash-wiz-xpm' ? '3000' : '0';
+        else if (id === 'dash-wiz-theme') el.value = 'git';
         else el.value = '';
       });
       const file = document.getElementById('dash-wiz-icon-file');
@@ -2552,6 +3719,9 @@ function initDashboard() {
               <span class="ref-section-title" style="margin:0;">SLIDE ${slideIndex + 1}</span>
               <button type="button" class="term-btn ghost danger dash-wiz-remove" data-rid="${slide.id}">REMOVER</button>
             </div>
+            <label class="fb-label">Título do slide (cabeçalho na página pública)
+              <input type="text" class="fb-input dash-wiz-title-inp" maxlength="200" placeholder="Ex.: Instalar o SDK" />
+            </label>
             <div class="dash-wiz-inner-tabs" role="tablist">
               <button type="button" class="dash-wiz-inner-tab active" data-itab="text">TEXTO</button>
               <button type="button" class="dash-wiz-inner-tab" data-itab="cmd">COMANDOS</button>
@@ -2576,6 +3746,13 @@ function initDashboard() {
           wrap.querySelector('[data-f="text"]').value = slide.text || '';
           wrap.querySelector('[data-f="commands"]').value = slide.commands || '';
           wrap.querySelector('[data-f="observation"]').value = slide.observation || '';
+          const wTitle = wrap.querySelector('.dash-wiz-title-inp');
+          if (wTitle) {
+            wTitle.value = slide.title || '';
+            wTitle.addEventListener('input', () => {
+              slide.title = wTitle.value;
+            });
+          }
         }
 
         wrap.querySelectorAll('.dash-wiz-ta').forEach((ta) => {
@@ -2635,7 +3812,14 @@ function initDashboard() {
       if (metaEl) metaEl.hidden = true;
       if (slidesEl) slidesEl.hidden = false;
       if (!wizSlides.length) {
-        wizSlides.push({ id: dashNewSlideId(), type: 'content', text: '', commands: '', observation: '' });
+        wizSlides.push({
+          id: dashNewSlideId(),
+          type: 'content',
+          title: '',
+          text: '',
+          commands: '',
+          observation: '',
+        });
       }
       renderWizSlides();
     });
@@ -2648,13 +3832,134 @@ function initDashboard() {
     });
 
     document.getElementById('dash-wiz-add-content')?.addEventListener('click', () => {
-      wizSlides.push({ id: dashNewSlideId(), type: 'content', text: '', commands: '', observation: '' });
+      wizSlides.push({
+        id: dashNewSlideId(),
+        type: 'content',
+        title: '',
+        text: '',
+        commands: '',
+        observation: '',
+      });
       renderWizSlides();
     });
 
     document.getElementById('dash-wiz-add-pause')?.addEventListener('click', () => {
       wizSlides.push({ id: dashNewSlideId(), type: 'pause', text: '', observation: '' });
       renderWizSlides();
+    });
+
+    async function dashWizardPublishToApi() {
+      const st = document.getElementById('dash-wiz-status');
+      if (st) {
+        st.classList.remove('ok', 'bad');
+      }
+      const slugNorm = (document.getElementById('dash-wiz-slug')?.value || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, '');
+      if (!slugNorm) {
+        if (st) {
+          st.textContent = 'Preencha o slug do card (minúsculas, números e hífen).';
+          st.classList.add('bad');
+        }
+        return;
+      }
+      const slugEl = document.getElementById('dash-wiz-slug');
+      if (slugEl) slugEl.value = slugNorm;
+
+      const meta = buildWizMeta();
+      if (!meta.title || !meta.badge || !meta.cardClass) {
+        if (st) {
+          st.textContent = 'Complete título, badge e classe no passo 1.';
+          st.classList.add('bad');
+        }
+        return;
+      }
+      if (!wizSlides.length) {
+        if (st) {
+          st.textContent = 'Adicione pelo menos um slide.';
+          st.classList.add('bad');
+        }
+        return;
+      }
+
+      const theme = document.getElementById('dash-wiz-theme')?.value || 'git';
+      const body = buildWizCardPayloadForApi(slugNorm, meta, theme);
+
+      try {
+        let cardId = 0;
+        try {
+          const existing = await fetchJson(`/api/card/${encodeURIComponent(slugNorm)}`);
+          cardId = Number(existing?.id ?? existing?.Id ?? 0);
+          await fetchJson(`/api/card/${encodeURIComponent(slugNorm)}`, {
+            method: 'PUT',
+            body: JSON.stringify(body),
+          });
+        } catch (err) {
+          if (err.status !== 404) throw err;
+          const created = await fetchJson('/api/card', {
+            method: 'POST',
+            body: JSON.stringify({ ...body, slug: slugNorm }),
+          });
+          cardId = Number(created?.id ?? created?.Id ?? 0);
+        }
+
+        if (!cardId) {
+          const again = await fetchJson(`/api/card/${encodeURIComponent(slugNorm)}`);
+          cardId = Number(again?.id ?? again?.Id ?? 0);
+        }
+        if (!cardId) throw new Error('Sem id do card após criar/atualizar.');
+
+        const full = await fetchJson(`/api/card/${encodeURIComponent(slugNorm)}`);
+        const slideList = full.slides ?? full.Slides ?? [];
+        const sortedDel = [...slideList].sort(
+          (a, b) => (Number(b.id ?? b.Id) || 0) - (Number(a.id ?? a.Id) || 0),
+        );
+        for (const s of sortedDel) {
+          const sid = Number(s.id ?? s.Id ?? 0);
+          if (sid > 0) {
+            try {
+              await fetchJson(`/api/card/slides/${sid}`, { method: 'DELETE' });
+            } catch (_) {
+              /* ignorado */
+            }
+          }
+        }
+
+        for (const [idx, slide] of wizSlides.entries()) {
+          const slideBody = dashSlideToApiBody(slide, idx);
+          slideBody.cardId = cardId;
+          await fetchJson(`/api/card/${cardId}/slides`, {
+            method: 'POST',
+            body: JSON.stringify(slideBody),
+          });
+        }
+
+        try {
+          localStorage.setItem(dashSlidesStorageKey(slugNorm), JSON.stringify(wizSlides));
+        } catch (_) {
+          /* ignorado */
+        }
+
+        if (st) {
+          st.textContent =
+            `Publicado na API (slug «${slugNorm}»). As páginas «${slugNorm}.html» continuam a precisar existir no site para abrir o treino; os slides da aba Iniciante vêm deste card se a API responder.`;
+          st.classList.add('ok');
+          st.classList.remove('bad');
+        }
+        await loadCards();
+      } catch (e) {
+        if (st) {
+          st.textContent =
+            (e && e.message) ||
+            'Erro ao publicar. Confirme JWT (admin/colaborador) e que o slug não colida com outro erro do servidor.';
+          st.classList.add('bad');
+        }
+      }
+    }
+
+    document.getElementById('dash-wiz-publish-api')?.addEventListener('click', () => {
+      void dashWizardPublishToApi();
     });
 
     document.getElementById('dash-wiz-save-draft')?.addEventListener('click', () => {
@@ -2670,6 +3975,7 @@ function initDashboard() {
         }
         return {
           type: 'content',
+          title: s.title || '',
           text: s.text || '',
           commands: s.commands || '',
           observation: (s.observation || '').trim() || null,
@@ -2698,7 +4004,11 @@ function initDashboard() {
         arr.push(bundle);
         localStorage.setItem(BUILDXP_WIZ_DRAFT_KEY, JSON.stringify(arr));
         const st = document.getElementById('dash-wiz-status');
-        if (st) st.textContent = '';
+        if (st) {
+          st.textContent = 'Rascunho guardado só neste navegador.';
+          st.classList.remove('bad');
+          st.classList.add('ok');
+        }
       } catch (_) { /* ignore */ }
     });
 
@@ -2907,18 +4217,13 @@ function initDashboard() {
     cardFormStatus.classList.toggle('bad', type === 'bad');
   }
 
-  function setSlugLocked(locked) {
-    const s = document.getElementById('dash-card-slug');
-    if (s) s.readOnly = !!locked;
-  }
-
   async function loadCardForEdit(slug) {
     setCardFormStatus('', '');
+    setSlidesSaveStatus('', '');
     try {
       const raw = await fetchJson(`/api/card/${encodeURIComponent(slug)}`);
       editingCardSlug = slug;
       dashApplyCardToForm(raw);
-      setSlugLocked(true);
       setCardFormStatus('', '');
       await loadCardEditorSlidesData(slug);
       setDashView('card-editor');
@@ -2926,9 +4231,10 @@ function initDashboard() {
       setCardEditorScreenTitles(`Editar · ${disp}`, `slug: ${slug}`);
       cardEditorStepIndex = getEditSlidesContentOnly().length ? 1 : 0;
       renderCardEditorChrome();
+      resetDashCardIconFileUi();
+      syncDashCardIconPreviewFromInput();
     } catch (e) {
       editingCardSlug = null;
-      setSlugLocked(false);
       setCardFormStatus('', '');
       await loadCardEditorSlidesData(null);
     }
@@ -2950,15 +4256,34 @@ function initDashboard() {
       setCardFormStatus('Selecione um card (FORM + SLIDES na grade ou na lista «CARDS NO INDEX»). Criar card novo é só na aba «Criar card».', 'bad');
       return;
     }
-    const slugInput = document.getElementById('dash-card-slug').value.trim();
-    const slug = editingCardSlug || slugInput;
-    if (!slug) {
-      setCardFormStatus('', '');
+    const slugNorm = document
+      .getElementById('dash-card-slug')
+      .value.trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '');
+    if (!slugNorm || slugNorm.length > 48) {
+      setCardFormStatus('Slug inválido: só minúsculas, números e hífen; máximo 48 caracteres.', 'bad');
+      return;
+    }
+    document.getElementById('dash-card-slug').value = slugNorm;
+
+    const priRaw = document.getElementById('dash-card-icon-pri').value.trim();
+    const iconPri = priRaw || 'imagens/logo2buildxpret.png';
+    if (iconPri.length > 512) {
+      setCardFormStatus(
+        'Ícone primário: máximo 512 caracteres (limite da BD). Guarde o PNG/SVG em wwwroot/imagens/ e use um caminho curto.',
+        'bad',
+      );
       return;
     }
     const secondary = document.getElementById('dash-card-icon-sec').value.trim();
+    if (secondary.length > 512) {
+      setCardFormStatus('Ícone secundário: máximo 512 caracteres.', 'bad');
+      return;
+    }
+
     const body = {
-      slug,
+      slug: slugNorm,
       theme: document.getElementById('dash-card-theme').value,
       rarity_label: document.getElementById('dash-card-rarity').value.trim(),
       card_class: document.getElementById('dash-card-class').value.trim(),
@@ -2972,7 +4297,7 @@ function initDashboard() {
       btn_primary_label: document.getElementById('dash-card-btn1').value.trim() || '▶ COMEÇAR',
       btn_secondary_label: document.getElementById('dash-card-btn2').value.trim() || '🎮 CHEAT CODES',
       icon_layout: document.getElementById('dash-card-icon-layout').value || 'single',
-      icon_primary_src: document.getElementById('dash-card-icon-pri').value.trim() || 'imagens/logo2buildxpret.png',
+      icon_primary_src: iconPri,
       icon_primary_alt: document.getElementById('dash-card-icon-pri-alt').value.trim(),
       icon_secondary_src: secondary || null,
       icon_secondary_alt: document.getElementById('dash-card-icon-sec-alt').value.trim(),
@@ -2980,12 +4305,18 @@ function initDashboard() {
     };
     setCardFormStatus('', '');
     try {
-      // Rotas corretas: singular /api/card; PUT para atualizar (backend).
       if (editingCardSlug) {
-        await fetchJson(`/api/card/${encodeURIComponent(editingCardSlug)}`, {
-          method: 'PUT', // backend usa PUT para editar
+        const urlSlug = editingCardSlug;
+        await fetchJson(`/api/card/${encodeURIComponent(urlSlug)}`, {
+          method: 'PUT',
           body: JSON.stringify(body),
         });
+        if (slugNorm !== urlSlug) {
+          editingCardSlug = slugNorm;
+          editSlidesSlug = slugNorm;
+          const disp = document.getElementById('dash-card-display')?.value?.trim() || slugNorm;
+          setCardEditorScreenTitles(`Editar · ${disp}`, `slug: ${slugNorm}`);
+        }
       } else if (!isCardsEditViewActive() && !isCardEditorViewActive()) {
         await fetchJson('/api/card', {
           method: 'POST',
@@ -2995,13 +4326,18 @@ function initDashboard() {
         setCardFormStatus('Não é possível criar card nesta aba.', 'bad');
         return;
       }
-      setCardFormStatus('', '');
+      setCardFormStatus('Card guardado na API com sucesso.', 'ok');
       await loadCards();
     } catch (err) {
-      setCardFormStatus(
-        (err && err.message) || 'Não foi possível salvar. Verifique o login e a consola do servidor.',
-        'bad',
-      );
+      let msg =
+        (err && err.message) || 'Não foi possível salvar. Verifique o login e a consola do servidor.';
+      const b = err?.body;
+      if (b && typeof b === 'object' && !Array.isArray(b)) {
+        msg = String(b.detail || b.title || b.message || msg);
+      } else if (typeof b === 'string' && b.trim()) {
+        msg = b.trim();
+      }
+      setCardFormStatus(msg, 'bad');
     }
   });
 
@@ -3073,7 +4409,10 @@ function initDashboard() {
 }
 
 /* ── INIT ───────────────────────────────────────────────────*/
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  ensureDashPasswordToggleDelegation();
+  initCopy();
+  await buildxpHydrateTrainingSlidesFromApi();
   initCopy();
   initStepsSlider();
   initTabs();
@@ -3083,5 +4422,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initFeedback();
   initTrainingTerminal();
   initDashboard();
+  await buildxpHydrateIndexCardsFromApi();
   applyIndexCardOrder();
+  initIndexCardsHomeMarquee();
+  initCopy();
 });

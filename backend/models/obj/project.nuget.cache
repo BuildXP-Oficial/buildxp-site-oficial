@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "8GBZSv3U4Zs=",
+  "dgSpecHash": "EMmgif3rjZI=",
   "success": true,
-  "projectFilePath": "c:\\Users\\gisla\\Documents\\buildxp-site-oficial\\backend\\models\\models.csproj",
+  "projectFilePath": "C:\\Users\\gisla\\Documents\\buildxp-site-oficial\\backend\\models\\models.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\gisla\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\gisla\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\10.0.7\\microsoft.aspnetcore.authentication.jwtbearer.10.0.7.nupkg.sha512",

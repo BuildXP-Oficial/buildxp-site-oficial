@@ -20,9 +20,9 @@ public class AuthController : ControllerBase
 
     // POST api/auth/login
     [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
-        var token = _service.Login(request.Usuario, request.Senha);
+        var token = await _service.LoginAsync(request.Usuario, request.Senha, ct);
         if (token is null) return Unauthorized(new { message = "Credenciais inválidas." });
         return Ok(new { token });
     }
@@ -36,7 +36,7 @@ public class AuthController : ControllerBase
 
         var email = request.Email.Trim();
 
-        string codigo;
+        string? codigo;
         try
         {
             codigo = await _service.GerarCodigoRecuperacaoAsync(email);
@@ -45,6 +45,14 @@ public class AuthController : ControllerBase
         {
             _logger.LogError(ex, "Falha ao gerar código de recuperação para {Email}", email);
             return StatusCode(500, new { message = "Não foi possível processar o pedido. Tente novamente." });
+        }
+
+        if (codigo is null)
+        {
+            return Ok(new
+            {
+                message = "Se existir conta com este e-mail, receberá um código em instantes.",
+            });
         }
 
         try
@@ -80,11 +88,15 @@ public class AuthController : ControllerBase
     [HttpPost("redefinir-senha")]
     public async Task<IActionResult> RedefinirSenha([FromBody] RedefinicaoRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request?.NovaSenha) || request.NovaSenha.Length < 6)
+            return BadRequest(new { message = "A nova senha deve ter pelo menos 6 caracteres." });
+
         var resultado = await _service.RedefinirSenhaAsync(
             request.Email, request.Codigo, request.NovaSenha);
 
-        if (!resultado) return BadRequest("Código inválido ou expirado.");
-        return Ok("Senha redefinida com sucesso.");
+        if (!resultado)
+            return BadRequest(new { message = "Código inválido ou expirado. Peça um novo código ou confira o e-mail." });
+        return Ok(new { message = "Senha redefinida com sucesso." });
     }
 }
 

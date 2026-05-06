@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>.NET / dotnet — BuildXP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
   <link rel="stylesheet" href="style.css" />
   <style>:root { --accent: var(--dotnet); --accent-glow: var(--dotnet-glow); }</style>
 </head>
@@ -210,10 +213,310 @@ dotnet publish -c Release -r linux-x64 --self-contained true -o ./publish
       </div>
 
       <div class="step">
+        <div class="step-num">09</div>
+        <div>
+          <div class="step-title">Primeiros passos em C#</div>
+          <div class="step-desc">
+            C# é a linguagem mais comum no ecossistema .NET: sintaxe clara, forte tipagem e ótimo suporte a ferramentas. Você escreve código em arquivos <code>.cs</code>; num projeto console, o arquivo <code>Program.cs</code> costuma ser o ponto de partida. O runtime executa a partir do método <code>Main</code>.
+          </div>
+          <div class="callout callout-tip">💡 O terminal BuildXP tem dois treinos para .NET: <strong>comandos dotnet</strong> (CLI) e <strong>código C#</strong> — você pode usar nomes diferentes de classe e variáveis nos exercícios de código, desde que a estrutura e a lógica estejam certas.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">10</div>
+        <div>
+          <div class="step-title">Como um programa “monta”: namespace, classe e Main</div>
+          <div class="step-desc">
+            <p><strong>namespace</strong> — agrupa nomes para não colidir com bibliotecas (como uma “pasta lógica”). Pode omitir em projetos pequenos.</p>
+            <p><strong>class</strong> — molde de um tipo: campos, métodos e propriedades. É onde você organiza comportamento e dados.</p>
+            <p><strong>static void Main</strong> — porta de entrada do programa. O runtime procura esse método para começar.</p>
+            <p><strong>Console.WriteLine</strong> — imprime texto no terminal; <strong>Console.ReadLine</strong> — lê uma linha que o usuário digitou.</p>
+          </div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code>using System;
+
+namespace MeuNamespace
+{
+    class MinhaClasse
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("Olá!");
+        }
+    }
+}</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">11</div>
+        <div>
+          <div class="step-title">Exemplo: área do retângulo</div>
+          <div class="step-desc">
+            Variáveis guardam valores (<code>double</code>, <code>int</code>, etc.). O operador <code>*</code> multiplica. A interpolação <code>$"…{variável}…"</code> monta texto com valores dentro da string.
+          </div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code>using System;
+
+namespace ExemploArea
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            double largura = 4;
+            double altura = 5;
+            double area = largura * altura;
+            Console.WriteLine($"Área = {area}");
+        }
+    }
+}</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">12</div>
+        <div>
+          <div class="step-title">Classes, objetos e herança (básico)</div>
+          <div class="step-desc">
+            <p>Uma <strong>classe</strong> define o “contrato” de um tipo; um <strong>objeto</strong> é uma instância criada com <code>new</code>. Métodos podem <strong>retornar</strong> valores com <code>return</code>.</p>
+            <p><strong>Herança</strong> (<code>class Filha : Mae</code>) diz que a filha <em>é um tipo especializado</em> da mãe: reaproveita membros e pode adicionar ou substituir comportamento (<code>override</code> quando o método base é <code>virtual</code>).</p>
+          </div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code>using System;
+
+namespace Animais
+{
+    class Animal
+    {
+        public virtual void Falar() => Console.WriteLine("som genérico");
+    }
+
+    class Cachorro : Animal
+    {
+        public override void Falar() => Console.WriteLine("Au!");
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Animal a = new Cachorro();
+            a.Falar();
+        }
+    }
+}</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">13</div>
+        <div>
+          <div class="step-title">Menu no terminal: visão geral</div>
+          <div class="step-desc">
+            <p>O programa mostra opções (A, B, C, S). O usuário digita uma letra; você trata no <code>switch</code> e <strong>repete</strong> com <code>do … while (opcao != "S")</code> até sair.</p>
+            <ol style="margin:0.75rem 0 0 1.1rem;line-height:1.55;">
+              <li><strong>Cartaz</strong> — <code>Console.WriteLine</code> descreve cada opção.</li>
+              <li><strong><code>ReadLine</code> + <code>Trim().ToUpper()</code></strong> — lê a escolha e compara em maiúsculas (<code>"A"</code>, <code>"B"</code>…).</li>
+              <li><strong><code>switch</code></strong> — um <code>case</code> por opção; <code>break</code>; <code>default</code> para entrada inválida.</li>
+              <li><strong><code>case "C"</code></strong> usa chaves <code>{ }</code> em volta do <code>while</code> para delimitar o <code>int contador</code> (escopo claro no <code>switch</code>).</li>
+            </ol>
+          </div>
+          <div class="callout callout-tip">💡 Slides <strong>14–16</strong>: o código em <strong>três partes</strong> (didático — cada parte sozinha não precisa compilar). Slide <strong>17</strong>: copie o programa inteiro para testar; foi conferido com <code>dotnet build</code>.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">14</div>
+        <div>
+          <div class="step-title">Menu — parte 1 do código</div>
+          <div class="step-desc">
+            <p>Início do arquivo até o fim do <code>case "B"</code>: estrutura do projeto, cartaz do menu, variável <code>opcao</code>, laço <code>do</code>, leitura do usuário, abertura do <code>switch</code>, opções <strong>A</strong> (mensagem) e <strong>B</strong> (<code>for</code> 1…5).</p>
+          </div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code>using System;
+
+namespace BuildCSharp
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("4) SWITCH: Menu de comandos (A, B, C, S)");
+            Console.WriteLine("A - Mostrar mensagem");
+            Console.WriteLine("B - Contar de 1 a 5 (for)");
+            Console.WriteLine("C - Contagem regressiva (while)");
+            Console.WriteLine("S - Sair");
+
+            string opcao;
+            do
+            {
+                Console.Write("\nEscolha uma opção (A/B/C/S): ");
+                opcao = (Console.ReadLine() ?? "").Trim().ToUpper();
+
+                switch (opcao)
+                {
+                    case "A":
+                        Console.WriteLine("Você escolheu A: Mensagem exibida com sucesso!");
+                        break;
+
+                    case "B":
+                        Console.WriteLine("Você escolheu B: Contagem com FOR:");
+                        for (int i = 1; i &lt;= 5; i++)
+                        {
+                            Console.WriteLine($"i = {i}");
+                        }
+                        break;</code>
+          </div>
+          <div class="callout callout-info">ℹ️ Para no meio do <code>switch</code>. Siga na <strong>parte 2</strong> ou use só o slide <strong>17</strong> para colar e rodar.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">15</div>
+        <div>
+          <div class="step-title">Menu — parte 2 do código</div>
+          <div class="step-desc">
+            <p>Continuação do <code>switch</code> logo após o <code>case "B"</code>: <strong>C</strong> com <code>while</code> regressivo (variável <code>contador</code> dentro de <code>{ }</code>), <strong>S</strong>, <strong>default</strong>, fechamento do <code>switch</code> e condição do <code>do … while</code>.</p>
+          </div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code>                    case "C":
+                    {
+                        Console.WriteLine("Você escolheu C: Contagem regressiva com WHILE:");
+                        int contador = 5;
+                        while (contador >= 1)
+                        {
+                            Console.WriteLine($"contador = {contador}");
+                            contador--;
+                        }
+                        break;
+                    }
+
+                    case "S":
+                        Console.WriteLine("Saindo do menu...");
+                        break;
+
+                    default:
+                        Console.WriteLine("Opção inválida. Tente novamente.");
+                        break;
+                }
+
+            } while (opcao != "S");</code>
+          </div>
+          <div class="callout callout-info">ℹ️ Trecho didático; sozinho não compila. Depois venha a <strong>parte 3</strong> ou o slide <strong>17</strong>.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">16</div>
+        <div>
+          <div class="step-title">Menu — parte 3 do código</div>
+          <div class="step-desc">
+            <p>Dentro do mesmo <code>Main</code>, depois do <code>} while</code>: mensagens finais e <code>ReadKey()</code>. Fecha método, classe e <code>namespace</code>.</p>
+          </div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code>            Console.WriteLine("\nPrograma finalizado.");
+            Console.WriteLine("Pressione qualquer tecla para fechar...");
+            Console.ReadKey();
+        }
+    }
+}</code>
+          </div>
+          <div class="callout callout-info">ℹ️ Trecho didático; sozinho não compila. Para testar de verdade, use o próximo slide.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">17</div>
+        <div>
+          <div class="step-title">Copiar e testar — programa completo</div>
+          <div class="step-desc">
+            <p>Cole no <code>Program.cs</code> de um projeto console (<code>dotnet new console</code>) e rode <code>dotnet run</code>. Este código foi conferido com <code>dotnet build</code> (0 erros e 0 avisos neste ambiente).</p>
+          </div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code>using System;
+
+namespace BuildCSharp
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("4) SWITCH: Menu de comandos (A, B, C, S)");
+            Console.WriteLine("A - Mostrar mensagem");
+            Console.WriteLine("B - Contar de 1 a 5 (for)");
+            Console.WriteLine("C - Contagem regressiva (while)");
+            Console.WriteLine("S - Sair");
+
+            string opcao;
+            do
+            {
+                Console.Write("\nEscolha uma opção (A/B/C/S): ");
+                opcao = (Console.ReadLine() ?? "").Trim().ToUpper();
+
+                switch (opcao)
+                {
+                    case "A":
+                        Console.WriteLine("Você escolheu A: Mensagem exibida com sucesso!");
+                        break;
+
+                    case "B":
+                        Console.WriteLine("Você escolheu B: Contagem com FOR:");
+                        for (int i = 1; i &lt;= 5; i++)
+                        {
+                            Console.WriteLine($"i = {i}");
+                        }
+                        break;
+
+                    case "C":
+                    {
+                        Console.WriteLine("Você escolheu C: Contagem regressiva com WHILE:");
+                        int contador = 5;
+                        while (contador >= 1)
+                        {
+                            Console.WriteLine($"contador = {contador}");
+                            contador--;
+                        }
+                        break;
+                    }
+
+                    case "S":
+                        Console.WriteLine("Saindo do menu...");
+                        break;
+
+                    default:
+                        Console.WriteLine("Opção inválida. Tente novamente.");
+                        break;
+                }
+
+            } while (opcao != "S");
+
+            Console.WriteLine("\nPrograma finalizado.");
+            Console.WriteLine("Pressione qualquer tecla para fechar...");
+            Console.ReadKey();
+        }
+    }
+}</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
         <div class="step-num">FIM</div>
         <div>
           <div class="step-title">Você chegou ao final.</div>
-          <div class="step-desc">Espero que tenha entendido como funciona.</div>
+          <div class="step-desc">Revise a referência rápida para comandos e treine no terminal: escolha .NET → <strong>CLI</strong> ou <strong>Código C#</strong>.</div>
           <div class="term-actions">
             <button class="term-btn ghost" type="button" data-steps-restart>← VOLTAR AO INÍCIO</button>
             <a class="term-btn primary" href="index.html#terminal">INICIAR TREINAMENTO</a>
@@ -313,6 +616,6 @@ dotnet publish -c Release -r linux-x64 --self-contained true -o ./publish
 </div>
 
 <footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="main.js"></script>
+<script src="main.js?v=train-api-1"></script>
 </body>
 </html>

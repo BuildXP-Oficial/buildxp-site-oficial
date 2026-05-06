@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BuildXP — Build Skills. Gain XP. Ship Code.</title>
   <meta name="description" content="Guia rápido para devs. Cards de referência, trilhas de aprendizado e treino de terminal para Git, Docker, NPM e .NET." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -61,7 +64,12 @@
     <div class="section-label">// SKILL CARDS</div>
     <h2 class="section-title">ESCOLHA SEU CAMINHO</h2>
 
-    <div class="cards-grid" id="index-cards-grid">
+    <div class="cards-strip-wrap">
+      <div class="cards-strip-viewport-shell">
+      <button type="button" id="index-cards-strip-prev" class="cards-strip-btn cards-strip-btn--prev cards-strip-floater cards-strip-floater--prev" aria-label="Ver cards anteriores">‹</button>
+      <div class="cards-marquee-viewport cards-strip-viewport" id="index-cards-viewport" aria-label="Cards em rolagem horizontal">
+      <div class="cards-marquee-track" id="index-cards-marquee-track">
+        <div class="cards-marquee-group cards-grid" id="index-cards-grid">
 
       <!-- GIT -->
       <div class="card c-git" data-card-slug="git">
@@ -91,7 +99,7 @@
 
       <!-- DOCKER -->
       <div class="card c-docker" data-card-slug="docker">
-        <span class="card-rarity">ADVANCED</span>
+        <span class="card-rarity">CORE</span>
         <div class="card-icon"><img src="imagens/dockerlogo.png" alt="Docker" /></div>
         <div>
           <div class="card-class">CONTAINERIZATION</div>
@@ -125,7 +133,7 @@
           <div class="xp-track"><div class="xp-fill" style="width:40%"></div></div>
         </div>
         <p class="card-desc">
-          Gerencie pacotes, scripts e dependências de projetos Node.js. Do <code>npm init</code> ao publish no registry.
+          Gerencie pacotes, scripts e dependências de projetos Node.js. Do <code>npm init</code> ao publish no registry. Também Prisma pelo npm e <code>npx prisma</code> (generate e migrations).
           <br>
           Clique no botão para começar a aprender NPM e para o que ele serve.
         </p>
@@ -158,6 +166,11 @@
         </div>
       </div>
 
+        </div>
+      </div>
+      </div>
+      <button type="button" id="index-cards-strip-next" class="cards-strip-btn cards-strip-btn--next cards-strip-floater cards-strip-floater--next" aria-label="Ver cards seguintes">›</button>
+      </div>
     </div>
   </div>
 </section>
@@ -203,6 +216,6 @@
   <span>BUILD</span>XP — Feito com 💻 e muito café. De dev pra dev.
 </footer>
 
-<script src="main.js"></script>
+<script src="main.js?v=train-api-5"></script>
 </body>
 </html>

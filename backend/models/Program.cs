@@ -6,7 +6,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using BuildXP.API.Data;
 using BuildXP.API.Services;
-using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +19,7 @@ builder.Services.AddScoped<FeedbackService>();
 builder.Services.AddScoped<CardService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ColaboradorService>();
+builder.Services.AddScoped<PerfilService>();
 
 // ── JWT — autenticação ───────────────────────────────────────
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -40,14 +40,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// ── RESEND — e-mail (pacote Resend: HttpClient + IResend)
-builder.Services.AddOptions();
-builder.Services.AddHttpClient<ResendClient>();
-builder.Services.Configure<ResendClientOptions>(o =>
-{
-    o.ApiToken = builder.Configuration["Resend:ApiKey"]!;
-});
-builder.Services.AddTransient<IResend, ResendClient>();
+// ── EMAIL ────────────────────────────────────────────────────
 builder.Services.AddScoped<EmailService>();
 
 // ── CORS — libera o frontend HTML ───────────────────────────
@@ -73,6 +66,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(o =>
     {
         o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        o.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
         o.JsonSerializerOptions.Converters.Add(
             new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: true));
     });
