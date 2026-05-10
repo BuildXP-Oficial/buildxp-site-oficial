@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="imagens/xpbrowser.png" />
   <title>NPM — BuildXP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
   <link rel="stylesheet" href="style.css" />
   <style>:root { --accent: var(--npm); --accent-glow: var(--npm-glow); }</style>
 </head>
@@ -198,6 +202,50 @@ build/
       </div>
 
       <div class="step">
+        <div class="step-num">09</div>
+        <div>
+          <div class="step-title">Prisma e o NPM: o que é de cada um</div>
+          <div class="step-desc"><strong>Prisma</strong> é uma ferramenta de banco (schema, cliente tipado, CLI). No dia a dia ela <strong>entra no projeto como pacote npm</strong>: você usa <code>npm install prisma --save-dev</code> para a CLI e modelagem, e <code>npm install @prisma/client</code> para o cliente que seu código importa em tempo de execução.</div>
+          <div class="step-desc">O <strong>registry npm</strong> só guarda e baixa esses pacotes. Ele <strong>não</strong> guarda as linhas da sua tabela nem aplica migration na base. Quem cria pastas como <code>prisma/migrations</code> e fala com Postgres ou MySQL é o <strong>motor do Prisma</strong>, através dos comandos que você roda no terminal (geralmente com <code>npx prisma ...</code>).</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code># Exemplo de instalação típica em projeto Node
+npm install prisma --save-dev
+npm install @prisma/client</code>
+          </div>
+          <div class="callout callout-tip">💡 <code>npx</code> vem com o npm e serve para rodar a CLI do pacote <code>prisma</code> sem instalar globalmente.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">10</div>
+        <div>
+          <div class="step-title"><code>npx prisma</code>: generate e migrations</div>
+          <div class="step-desc">Depois de editar o arquivo <code>schema.prisma</code>, você precisa alinhar <strong>cliente gerado</strong> e <strong>banco de dados</strong>. Não existe comando npm chamado <code>regenerate</code>: no Prisma o fluxo usual é <code>migrate</code> (evoluir o banco com histórico) e <code>generate</code> (gerar de novo o <code>@prisma/client</code> a partir do schema).</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code># Primeira configuração na pasta do projeto
+npx prisma init
+
+# Criar migration em desenvolvimento e aplicar no banco (SQLite/Postgres/etc.)
+npx prisma migrate dev --name descricao_curta
+
+# Só regenerar o cliente após mudanças no schema (sem nova migration)
+npx prisma generate</code>
+          </div>
+          <div class="step-desc">Em prototipagem rápida algumas pessoas usam <code>npx prisma db push</code>, que empurra o schema para o banco <strong>sem</strong> criar arquivo de migration formal. Para time e produção o caminho recomendado costuma ser <code>migrate dev</code> no desenvolvimento e <code>migrate deploy</code> no servidor ou CI.</div>
+          <div class="cmd-block" style="margin-top:0.5rem">
+            <button class="copy-btn">copy</button>
+            <code># Scripts úteis no package.json (você escolhe o nome)
+# "db:migrate": "prisma migrate dev"
+# "db:generate": "prisma generate"
+# "db:deploy": "prisma migrate deploy"</code>
+          </div>
+          <div class="callout callout-info">ℹ️ Colocar no <code>package.json</code> só automatiza o comando; quem entende de migration continua sendo o Prisma, não o npm sozinho.</div>
+        </div>
+      </div>
+
+      <div class="step">
         <div class="step-num">FIM</div>
         <div>
           <div class="step-title">Você chegou ao final.</div>
@@ -219,7 +267,7 @@ build/
   <div class="tab-pane" id="ref">
     <div class="ref-search-wrap">
       <span class="search-icon">🔍</span>
-      <input class="ref-search" id="ref-search" type="text" placeholder="Buscar comando... ex: install, update, run" />
+      <input class="ref-search" id="ref-search" type="text" placeholder="Buscar comando... ex: install, prisma, migrate" />
     </div>
 
     <div class="ref-section">
@@ -252,6 +300,18 @@ build/
         <div class="cmd-item"><span class="cmd-text">npm outdated</span><span class="cmd-desc">Ver pacotes desatualizados</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">npm list</span><span class="cmd-desc">Listar pacotes instalados</span><button class="cmd-copy">copy</button></div>
         <div class="cmd-item"><span class="cmd-text">npm list -g --depth=0</span><span class="cmd-desc">Listar pacotes globais</span><button class="cmd-copy">copy</button></div>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-title">PRISMA (via npx)</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">npm i prisma -D &amp;&amp; npm i @prisma/client</span><span class="cmd-desc">Instalar CLI (dev) e cliente no projeto</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npx prisma init</span><span class="cmd-desc">Criar prisma/schema.prisma e .env de exemplo</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npx prisma migrate dev</span><span class="cmd-desc">Gerar migration e aplicar no banco (dev)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npx prisma generate</span><span class="cmd-desc">Regenerar Prisma Client após mudar o schema</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npx prisma db push</span><span class="cmd-desc">Sincronizar schema sem arquivo de migration (protótipo)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npx prisma migrate deploy</span><span class="cmd-desc">Aplicar migrations pendentes (CI/produção)</span><button class="cmd-copy">copy</button></div>
       </div>
     </div>
 
@@ -290,6 +350,6 @@ build/
 </div>
 
 <footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="main.js"></script>
+<script src="main.js?v=train-api-6"></script>
 </body>
 </html>

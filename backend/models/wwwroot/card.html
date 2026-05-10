@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="imagens/xpbrowser.png" />
+  <title>BuildXP — Carregando...</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── LOADING STATE ─────────────────────────────────────── */
+    .card-loading {
+      min-height: 60vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 1.25rem; text-align: center;
+    }
+    .card-loading-icon {
+      font-size: 2.5rem;
+      animation: pulse-glow 1.5s ease-in-out infinite;
+    }
+    .card-loading-text {
+      font-family: var(--f-mono); font-size: 0.75rem;
+      color: var(--text-muted); letter-spacing: 4px;
+    }
+    .card-loading-bar {
+      width: 180px; height: 2px;
+      background: var(--surface-3); border-radius: 99px; overflow: hidden;
+    }
+    .card-loading-fill {
+      height: 100%; width: 0%;
+      background: var(--accent, var(--git));
+      border-radius: 99px;
+      animation: loading-progress 1.8s var(--ease) infinite;
+    }
+    @keyframes loading-progress {
+      0%   { width: 0%;   transform: translateX(0); }
+      50%  { width: 70%;  }
+      100% { width: 100%; }
+    }
+
+    /* ── ERROR STATE ───────────────────────────────────────── */
+    .card-error {
+      min-height: 50vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 1rem; text-align: center;
+    }
+    .card-error-code {
+      font-family: var(--f-display); font-size: 4rem;
+      font-weight: 900; color: var(--npm);
+      text-shadow: 0 0 30px rgba(255,79,79,0.4);
+    }
+    .card-error-msg {
+      font-family: var(--f-heading); font-size: 1rem;
+      color: var(--text-dim); max-width: 360px;
+    }
+    .card-error-back {
+      font-family: var(--f-display); font-size: 0.72rem;
+      letter-spacing: 3px; padding: 0.85rem 2rem;
+      background: transparent; border: 1.5px solid var(--text-muted);
+      color: var(--text-muted); border-radius: var(--radius-sm);
+      text-decoration: none; margin-top: 0.5rem;
+      transition: border-color var(--t-fast), color var(--t-fast);
+    }
+    .card-error-back:hover { border-color: var(--text); color: var(--text); }
+
+    /* ── SLIDE RENDERER ────────────────────────────────────── */
+    .slide-desc { 
+      font-size: 0.91rem; color: var(--text-dim); 
+      line-height: 1.8; margin-bottom: 0.75rem; 
+    }
+    .slide-desc strong { color: var(--text); }
+    .slide-desc code {
+      font-family: var(--f-mono); font-size: 0.82em;
+      color: var(--accent, var(--git));
+      background: rgba(255,255,255,0.05);
+      padding: 0.1em 0.35em; border-radius: 4px;
+    }
+    .slide-desc a { color: var(--accent, var(--git)); text-decoration: underline; text-underline-offset: 3px; }
+
+    /* Pause slide (paridade com git.html: step-pause + PAUSA) */
+    .step.step-pause,
+    .step.step--pause {
+      border-color: rgba(255,214,10,0.2);
+      background: rgba(255,214,10,0.03);
+    }
+    .step.step-pause .step-num,
+    .step.step--pause .step-num {
+      color: var(--yellow);
+      font-size: 0.62rem;
+      letter-spacing: 2px;
+    }
+    .step.step-pause::before,
+    .step.step--pause::before {
+      background: var(--yellow);
+    }
+
+    /* Fim slide */
+    .step.step--fim {
+      border-color: rgba(var(--accent-rgb, 57,211,83), 0.3);
+      text-align: center;
+    }
+    .step-fim-actions {
+      display: flex; gap: 0.75rem; justify-content: center;
+      margin-top: 1.25rem; flex-wrap: wrap;
+    }
+    .step-fim-btn {
+      font-family: var(--f-display); font-size: 0.72rem;
+      letter-spacing: 2.5px; padding: 0.85rem 2rem;
+      border-radius: var(--radius-sm); border: 1.5px solid;
+      cursor: pointer; text-decoration: none; transition: var(--t-fast);
+    }
+    .step-fim-btn--ghost {
+      border-color: var(--border-b); color: var(--text-dim);
+      background: transparent;
+    }
+    .step-fim-btn--ghost:hover { border-color: var(--text); color: var(--text); }
+    .step-fim-btn--primary {
+      border-color: var(--accent, var(--git));
+      color: var(--bg); background: var(--accent, var(--git));
+    }
+    .step-fim-btn--primary:hover { filter: brightness(1.12); }
+
+    /* normal: pre-line tornava cada \n no HTML (ex.: após &lt;/b&gt;) quebra de linha visível */
+    .card-dynamic-slide .step-desc { white-space: normal; }
+    .card-dynamic-slide .step-desc b,
+    .card-dynamic-slide .step-desc strong {
+      font-weight: 700;
+      color: var(--text);
+      display: inline;
+    }
+    .card-dynamic-slide .step-desc a {
+      display: inline;
+    }
+    .slide-field-label {
+      font-family: var(--f-mono);
+      font-size: 0.58rem;
+      letter-spacing: 3px;
+      color: var(--text-muted);
+      margin: 1rem 0 0.35rem;
+      text-transform: uppercase;
+    }
+    .slide-field-label:first-child { margin-top: 0; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="nav-logo" aria-label="BuildXP — Início">
+    <img class="nav-logo-img" src="imagens/logo2buildxpret.png" alt="BuildXP" />
+  </a>
+  <button class="hamburger" id="hamburger" aria-label="Menu">☰</button>
+  <ul class="nav-links" id="nav-links">
+    <li><a href="index.html#cards">Cards</a></li>
+    <li><a href="index.html#terminal">Terminal</a></li>
+    <li><a href="feedback.html">Feedback</a></li>
+    <li><a href="index.html#contact">Contato</a></li>
+  </ul>
+</nav>
+
+<div class="page-container" id="page-root">
+  <!-- conteúdo renderizado dinamicamente -->
+  <div class="card-loading" id="loading-state">
+    <div class="card-loading-icon">⚡</div>
+    <div class="card-loading-text">CARREGANDO CARD...</div>
+    <div class="card-loading-bar">
+      <div class="card-loading-fill"></div>
+    </div>
+  </div>
+</div>
+
+<footer><span>BUILD</span>XP — De dev pra dev.</footer>
+<script src="main.js?v=card-6"></script>
+<script>
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/** Caminho relativo ou URL de imagem (não emoji/HTML curto). */
+function cardHtmlIsImageSrc(s) {
+  const t = String(s || '').trim();
+  if (!t || t.length > 512) return false;
+  if (/^https?:\/\//i.test(t)) return true;
+  if (/\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(t)) return true;
+  return t.startsWith('imagens/') || t.startsWith('/imagens/');
+}
+
+function slideConteudos(slide) {
+  return slide.conteudos || slide.Conteudos || [];
+}
+
+const BXP_SLIDE_PAUSE_TITULO = '__buildxp_pause__';
+
+function slideHasApiBody(s) {
+  const d = String(s?.descricao ?? s?.Descricao ?? '').trim();
+  if (d) return true;
+  return slideConteudos(s).length > 0;
+}
+
+/** Slides da aba iniciante a partir do HTML estático (git.html, docker.html, …). */
+async function cardFetchStaticBeginnerStepsOuterHtml(slug) {
+  const s = String(slug || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '');
+  if (!s) return '';
+  try {
+    const res = await fetch(`${encodeURI(s)}.html`, { credentials: 'same-origin', cache: 'no-store' });
+    if (!res.ok) return '';
+    const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+    const track =
+      doc.querySelector('#beginner .steps.steps-track')
+      || doc.querySelector('#beginner .steps-track')
+      || doc.querySelector('.tab-pane#beginner .steps.steps-track')
+      || doc.querySelector('.tab-pane#beginner .steps-track');
+    if (!track) return '';
+    const steps = [...track.querySelectorAll(':scope > .step')];
+    if (!steps.length) return '';
+    return steps.map((el) => el.outerHTML).join('');
+  } catch (_) {
+    return '';
+  }
+}
+
+/** Secções de referência rápida a partir do HTML estático. */
+async function cardFetchStaticRefSectionsOuterHtml(slug) {
+  const s = String(slug || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '');
+  if (!s) return '';
+  try {
+    const res = await fetch(`${encodeURI(s)}.html`, { credentials: 'same-origin', cache: 'no-store' });
+    if (!res.ok) return '';
+    const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+    const ref = doc.querySelector('#ref') || doc.querySelector('.tab-pane#ref');
+    if (!ref) return '';
+    const sections = [...ref.querySelectorAll('.ref-section')];
+    if (!sections.length) return '';
+    return sections.map((el) => el.outerHTML).join('');
+  } catch (_) {
+    return '';
+  }
+}
+
+/** Hero: só imagens/caminhos válidos; emoji ou lixo na API → fallback pelo slug. */
+function buildCardPageIconHtml(card) {
+  const layout = String(card.icon_layout || card.IconLayout || 'single').toLowerCase();
+  const pri = String(card.icon_primary_src || card.IconPrimarySrc || '').trim();
+  const sec = String(card.icon_secondary_src || card.IconSecondarySrc || '').trim();
+  const altPri = escapeHtml(card.icon_primary_alt || card.IconPrimaryAlt || card.display_name || card.slug || '');
+  const altSec = escapeHtml(card.icon_secondary_alt || card.IconSecondaryAlt || '');
+  const slug = String(card.slug || '').trim().toLowerCase();
+
+  if (layout === 'dual' && cardHtmlIsImageSrc(pri) && cardHtmlIsImageSrc(sec)) {
+    return `<div class="page-icon dual"><img class="icon-git" src="${escapeHtml(pri)}" alt="${altPri}" /><img src="${escapeHtml(sec)}" alt="${altSec}" /></div>`;
+  }
+  if (cardHtmlIsImageSrc(pri)) {
+    return `<div class="page-icon"><img src="${escapeHtml(pri)}" alt="${altPri}" /></div>`;
+  }
+  const fallbacks = {
+    git: { dual: true, a: 'imagens/gitlogobr.png', b: 'imagens/githublogo.png', altA: 'Git', altB: 'GitHub' },
+    docker: { dual: false, a: 'imagens/dockerlogo.png', b: '', altA: 'Docker', altB: '' },
+    npm: { dual: false, a: 'imagens/npmlogo.png', b: '', altA: 'NPM', altB: '' },
+    dotnet: { dual: false, a: 'imagens/csharplogo.png', b: '', altA: '.NET', altB: '' },
+  };
+  const fb = fallbacks[slug];
+  if (fb?.dual && fb.b) {
+    return `<div class="page-icon dual"><img class="icon-git" src="${escapeHtml(fb.a)}" alt="${escapeHtml(fb.altA)}" /><img src="${escapeHtml(fb.b)}" alt="${escapeHtml(fb.altB)}" /></div>`;
+  }
+  if (fb?.a) {
+    return `<div class="page-icon"><img src="${escapeHtml(fb.a)}" alt="${escapeHtml(fb.altA)}" /></div>`;
+  }
+  return '<div class="page-icon"><img src="imagens/logo2buildxpret.png" alt="BuildXP" /></div>';
+}
+
+/**
+ * Separa observação final "(Obs.: …)" colada no mesmo bloco; promove .step-desc que só explicam Obs.;
+ * normaliza \n nas áreas de texto.
+ */
+function cardPromoteObservationsAndSplit(html) {
+  let h = String(html || '').trim();
+  if (!h) return '';
+
+  const obsParenIdx = h.lastIndexOf('(Obs.:');
+  if (obsParenIdx >= 0) {
+    const before = h.slice(0, obsParenIdx).trimEnd();
+    let obsTail = h.slice(obsParenIdx).trim();
+    const closeIdx = obsTail.lastIndexOf(')');
+    if (closeIdx > 0) obsTail = obsTail.slice(0, closeIdx + 1);
+    const tailLooksObs = /^\(\s*Obs\.:/i.test(obsTail.replace(/^[\s\uFEFF]+/, ''));
+    if (tailLooksObs && before.length > 0) {
+      const obsEsc = escapeHtml(obsTail).replace(/\n/g, '<br>');
+      h = `${before}<div class="callout callout-tip">💡 ${obsEsc}</div>`;
+    }
+  }
+
+  try {
+    const doc = new DOMParser().parseFromString(`<div id="card-parse">${h}</div>`, 'text/html');
+    const root = doc.getElementById('card-parse');
+    if (!root) return h;
+    root.querySelectorAll('.step-desc').forEach((el) => {
+      const raw = el.innerHTML.trim();
+      const t = el.textContent.trim();
+      if (
+        /^\(?\s*Obs\.:/i.test(t) ||
+        /^Observação\b/i.test(t) ||
+        /<strong>\s*Obs\.:/i.test(raw)
+      ) {
+        const callout = doc.createElement('div');
+        callout.className = 'callout callout-tip';
+        callout.innerHTML = `💡 ${el.innerHTML}`;
+        el.replaceWith(callout);
+      }
+    });
+    /* Sem HTML (<tags>): quebras \\n úteis. Com HTML: \\n já colapsam em espaço; forçar <br> fazia forte/código partir linha só por formatação do editor */
+    root.querySelectorAll('.step-desc').forEach((el) => {
+      const inner = el.innerHTML;
+      if (!/<[a-z][\s\S]*>/i.test(inner)) el.innerHTML = inner.replace(/\r\n|\r|\n/g, '<br>');
+    });
+    h = root.innerHTML;
+  } catch (_) {
+    /* keep string h */
+  }
+
+  return h;
+}
+
+/** Agrupa corpo do slide com rótulos TEXTO / COMANDOS / OBSERVAÇÃO (ordem preservada). */
+function cardWrapSlideBodySections(innerHtml) {
+  const x = String(innerHtml || '').trim();
+  if (!x) return '';
+  const doc = new DOMParser().parseFromString(`<div id="card-sec">${x}</div>`, 'text/html');
+  const root = doc.getElementById('card-sec');
+  if (!root) return `<div class="card-dynamic-slide">${x}</div>`;
+
+  let container = root;
+  if (
+    root.children.length === 1 &&
+    root.firstElementChild &&
+    root.firstElementChild.tagName === 'DIV' &&
+    !root.firstElementChild.classList.contains('cmd-block') &&
+    !root.firstElementChild.classList.contains('callout')
+  ) {
+    const only = root.firstElementChild;
+    if (only.querySelector('.cmd-block') || only.querySelector('.callout')) container = only;
+  }
+
+  /**
+   * Junta texto + &lt;strong&gt;, &lt;code&gt;, &lt;a&gt;, etc. num único .step-desc.
+   * Partir por cada elemento no 1.º nível criava vários blocos e “partia linha” após cada strong.
+   */
+  const parts = [];
+  let textHtmlBuf = '';
+
+  function flushTextHtmlBuf(partsOut) {
+    const trimmed = textHtmlBuf.trim();
+    textHtmlBuf = '';
+    if (!trimmed) return;
+    const div = doc.createElement('div');
+    div.className = 'step-desc';
+    const looksPlain =
+      trimmed.indexOf('<') < 0 || !/<[a-z][\s\S]*>/i.test(trimmed);
+    if (looksPlain) {
+      trimmed.split(/\r\n|\r|\n/).forEach((line, i) => {
+        if (i > 0) div.appendChild(doc.createElement('br'));
+        div.appendChild(doc.createTextNode(line));
+      });
+    } else {
+      /* Quebras vindas só da formatação do textarea (entre strong/code) → espaço (HTML colapsável). Para parágrafos usa <br> ou <p>. */
+      div.innerHTML = trimmed.replace(/\r\n|\r|\n/g, ' ');
+    }
+    partsOut.push({ type: 'text', el: div });
+  }
+
+  for (const node of [...container.childNodes]) {
+    if (node.nodeType === Node.TEXT_NODE || node.nodeType === Node.CDATA_SECTION_NODE) {
+      textHtmlBuf += node.textContent;
+      continue;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) continue;
+
+    const el = /** @type {Element} */ (node);
+    if (el.classList.contains('cmd-block') || el.classList.contains('callout')) {
+      flushTextHtmlBuf(parts);
+      const type = el.classList.contains('cmd-block') ? 'cmd' : 'obs';
+      parts.push({ type, el: el.cloneNode(true) });
+    } else {
+      textHtmlBuf += el.outerHTML;
+    }
+  }
+  flushTextHtmlBuf(parts);
+
+  if (!parts.length) return `<div class="card-dynamic-slide">${x}</div>`;
+
+  const wrap = doc.createElement('div');
+  wrap.className = 'card-dynamic-slide';
+  let lastType = '';
+  parts.forEach(({ type, el }) => {
+    if (type !== lastType) {
+      const lab = doc.createElement('div');
+      lab.className = 'slide-field-label';
+      lab.textContent = type === 'cmd' ? 'COMANDOS' : type === 'obs' ? 'OBSERVAÇÃO' : 'TEXTO';
+      wrap.appendChild(lab);
+      lastType = type;
+    }
+    wrap.appendChild(el.cloneNode(true));
+  });
+  return wrap.outerHTML;
+}
+
+/** Pausa sem título reservado na API (dados antigos / import). */
+function cardIsLikelyPauseSlide(slide) {
+  const tituloRaw = String(slide.titulo ?? slide.Titulo ?? '').trim();
+  const desc = String(slide.descricao ?? slide.Descricao ?? '');
+  if (tituloRaw) return false;
+  if (/<div class="cmd-block"/i.test(desc)) return false;
+  if (/<div class="step-title"/i.test(desc)) return false;
+  return /respira|relaxa|alongar|Muita coisa de uma vez|baixa a bola|Cheat Codes|Referência rápida|👏|🎯|☕|\bkk\b/i.test(
+    desc,
+  );
+}
+
+/** Texto plano → fragmentos (step-desc / callout), sem wrapper de secções. */
+function cardPlainSlideBodyInner(desc) {
+  const raw = String(desc || '');
+  let main = raw;
+  let obs = '';
+  const idx = raw.lastIndexOf('(Obs.:');
+  if (idx >= 0) {
+    main = raw.slice(0, idx).trimEnd();
+    obs = raw.slice(idx).trim();
+    const ci = obs.lastIndexOf(')');
+    if (ci > 0) obs = obs.slice(0, ci + 1);
+  }
+  let html = `<div class="step-desc">${escapeHtml(main).replace(/\n/g, '<br>')}</div>`;
+  if (obs && /^\(\s*Obs\.:/i.test(obs)) {
+    html += `<div class="callout callout-tip">💡 ${escapeHtml(obs).replace(/\n/g, '<br>')}</div>`;
+  }
+  return html;
+}
+
+/** Texto plano do dashboard → HTML com observação destacada e secções. */
+function cardPlainSlideBodyToHtml(desc) {
+  return cardWrapSlideBodySections(cardPlainSlideBodyInner(desc));
+}
+
+function renderError(code, msg, root) {
+  root.innerHTML = `
+    <div class="card-error">
+      <div class="card-error-code">${escapeHtml(code)}</div>
+      <p class="card-error-msg">${escapeHtml(msg)}</p>
+      <a href="index.html" class="card-error-back">← VOLTAR AO INÍCIO</a>
+    </div>`;
+}
+
+(async function () {
+  // ── 1. LÊ PARÂMETROS DA URL ──────────────────────────────
+  const params = new URLSearchParams(window.location.search);
+  const slug   = params.get('slug');
+  const tabParam = params.get('tab'); // 'beginner' ou 'ref'
+
+  const root = document.getElementById('page-root');
+
+  /** Slugs cujo HTML estático não existe com o mesmo nome (evita 404 / loop com links antigos). */
+  const STATIC_PAGE_FALLBACK_BY_SLUG = { integrandoumaapi: 'api' };
+
+  function staticPageFallbackUrl(rawSlug, tab) {
+    const s = String(rawSlug || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, '');
+    if (!s) return null;
+    const t = tab === 'ref' ? 'ref' : 'beginner';
+    const fileSlug = STATIC_PAGE_FALLBACK_BY_SLUG[s] || s;
+    return `${encodeURI(fileSlug)}.html?tab=${encodeURIComponent(t)}`;
+  }
+
+  // ── 2. VALIDA SLUG ───────────────────────────────────────
+  if (!slug) {
+    renderError('400', 'Nenhum card foi especificado na URL.', root);
+    return;
+  }
+
+  // ── 3. BUSCA DADOS NA API · fallback página estática legacy ──
+  let card;
+  try {
+    const apiBase =
+      typeof getBuildXpApiBase === 'function'
+        ? String(getBuildXpApiBase()).replace(/\/$/, '')
+        : '';
+    const res = await fetch(`${apiBase}/api/card/${encodeURIComponent(slug)}`, {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    });
+    if (res.status === 404) {
+      const fb = staticPageFallbackUrl(slug, tabParam);
+      if (fb) {
+        window.location.replace(fb);
+        return;
+      }
+      throw new Error('404');
+    }
+    if (!res.ok) throw new Error(res.status);
+    card = await res.json();
+  } catch (e) {
+    const fb = staticPageFallbackUrl(slug, tabParam);
+    if (fb) {
+      window.location.replace(fb);
+      return;
+    }
+    renderError('404', `Card "${slug}" não encontrado ou API indisponível.`, root);
+    return;
+  }
+
+  // ── 4. ACCENT: border_color da API ou fallback por tema ───
+  function hexToRgbTuple(hex) {
+    const n = String(hex || '').replace('#', '').trim();
+    if (!/^[0-9a-fA-F]{6}$/.test(n)) return '57,211,83';
+    const r = parseInt(n.slice(0, 2), 16);
+    const g = parseInt(n.slice(2, 4), 16);
+    const b = parseInt(n.slice(4, 6), 16);
+    return `${r},${g},${b}`;
+  }
+  const themePresetAccent = {
+    git: '#39d353',
+    docker: '#2496ed',
+    npm: '#cb3837',
+    dotnet: '#512bd4',
+    api: '#22d3ee',
+  };
+  const rawBorder = card.border_color ?? card.BorderColor ?? '';
+  let accent = typeof rawBorder === 'string' && /^#[0-9a-fA-F]{6}$/.test(rawBorder.trim())
+    ? rawBorder.trim().toLowerCase()
+    : (themePresetAccent[card.theme] || themePresetAccent.git);
+  const glow = hexToRgbTuple(accent);
+  document.documentElement.style.setProperty('--accent', accent);
+  document.documentElement.style.setProperty('--accent-glow',
+    `0 0 24px rgba(${glow},0.4), 0 0 60px rgba(${glow},0.12)`);
+  document.documentElement.style.setProperty('--accent-rgb', glow);
+
+  try {
+  // ── 5. ATUALIZA TÍTULO DA PÁGINA ─────────────────────────
+  document.title = `${String(card.display_name ?? card.DisplayName ?? slug)} — BuildXP`;
+
+  // ── 6. CALCULA XP ────────────────────────────────────────
+  const xpAtual = Number(card.xp_current ?? card.XpCurrent ?? 0) || 0;
+  const xpMaxRaw = Number(card.xp_max ?? card.XpMax ?? 3000);
+  const xpMax = xpMaxRaw > 0 ? xpMaxRaw : 3000;
+  const xpPct = Math.min(Math.round((xpAtual / xpMax) * 100), 100);
+
+  // ── 7. SEPARA SLIDES POR TIPO ────────────────────────────
+  const slides = (card.slides || card.Slides || []).sort(
+    (a, b) => (Number(a.ordem ?? a.Ordem) || 0) - (Number(b.ordem ?? b.Ordem) || 0),
+  );
+  const refsRaw = card.referencias || card.Referencias || [];
+  const referencias = [...refsRaw].sort((a, b) => {
+    const oca = a.ordem_categoria ?? a.OrdemCategoria ?? 0;
+    const ocb = b.ordem_categoria ?? b.OrdemCategoria ?? 0;
+    if (oca !== ocb) return oca - ocb;
+    return (a.ordem_item ?? a.OrdemItem ?? 0) - (b.ordem_item ?? b.OrdemItem ?? 0);
+  });
+
+  const [staticStepsHtml, staticRefsHtml] = await Promise.all([
+    cardFetchStaticBeginnerStepsOuterHtml(slug),
+    cardFetchStaticRefSectionsOuterHtml(slug),
+  ]);
+
+  let slidesInner = renderSlides(slides);
+  if (!slides.length || slides.every((s) => !slideHasApiBody(s))) {
+    if (staticStepsHtml) slidesInner = staticStepsHtml;
+  }
+
+  let refsInner = renderReferencias(referencias);
+  if (!referencias.length && staticRefsHtml) refsInner = staticRefsHtml;
+
+  // ── 8. RENDERIZA HTML ────────────────────────────────────
+  root.innerHTML = `
+    <a href="index.html" class="back-link">← VOLTAR AOS CARDS</a>
+
+    <div class="page-hero">
+      <div class="page-hero-glow"></div>
+      ${buildCardPageIconHtml(card)}
+      <div>
+        <div class="page-class">${card.card_class ?? card.CardClass ?? ''}</div>
+        <div class="page-title">${card.display_name ?? card.DisplayName ?? ''}</div>
+        <div class="page-meta">
+          <span class="lvl-badge">${card.rarity_label ?? card.RarityLabel ?? 'CARD'}</span>
+          <div class="xp-mini">
+            <div class="xp-mini-fill" style="width:${xpPct}%"></div>
+          </div>
+          <span class="xp-mini-label">${xpAtual} XP</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn ${tabParam !== 'ref' ? 'active' : ''}" data-tab="beginner">▶ INICIANTE</button>
+      <button class="tab-btn ${tabParam === 'ref' ? 'active' : ''}" data-tab="ref">🎮 CHEAT CODES</button>
+    </div>
+
+    <div class="tab-pane ${tabParam !== 'ref' ? 'active' : ''}" id="beginner">
+      <div class="steps-slider" data-steps-slider>
+        <button class="steps-nav" type="button" aria-label="Anterior" data-slide-prev>‹</button>
+        <div class="steps steps-track" id="steps-root">
+        ${slidesInner}
+        </div>
+        <button class="steps-nav" type="button" aria-label="Próximo" data-slide-next>›</button>
+        <div class="steps-index" data-steps-index aria-label="Índice clicável dos slides"></div>
+      </div>
+    </div>
+
+    <div class="tab-pane ${tabParam === 'ref' ? 'active' : ''}" id="ref">
+      <div class="ref-search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="ref-search" id="ref-search" type="text"
+               placeholder="Buscar comando..." />
+      </div>
+      ${refsInner}
+      <div class="ref-empty" id="ref-empty" hidden>// NENHUM COMANDO ENCONTRADO</div>
+    </div>
+  `;
+
+  // ── 9. INICIALIZA INTERATIVIDADE ─────────────────────────
+  initTabs();
+  initCopy();
+  initSearch();
+  initMenu();
+  initScroll();
+  if (typeof initStepsSlider === 'function') initStepsSlider();
+  } catch (err) {
+    console.error(err);
+    renderError(
+      '500',
+      'Erro ao montar este card. Recarrega com Ctrl+F5 ou abre a consola (F12) para ver o detalhe.',
+      root,
+    );
+  }
+
+})();
+
+// ── RENDERIZA SLIDES ──────────────────────────────────────────
+function renderSlides(slides) {
+  if (!slides.length) {
+    return `<div style="font-family:var(--f-mono);font-size:0.8rem;
+                        color:var(--text-muted);padding:2rem;text-align:center;">
+              // Nenhum conteúdo adicionado ainda.
+            </div>`;
+  }
+
+  return slides.map((slide, idx) => {
+    const tipo = detectTipo(slide);
+
+    // Slide de PAUSA
+    if (tipo === 'pausa') {
+      const tRaw = String(slide.titulo ?? slide.Titulo ?? '').trim();
+      const showPauseTitle = tRaw && tRaw !== BXP_SLIDE_PAUSE_TITULO && !/^pausa$/i.test(tRaw);
+      const pd = String(slide.descricao ?? slide.Descricao ?? '');
+      const pauseBody =
+        pd && /<[a-z][\s\S]*>/i.test(pd)
+          ? cardPromoteObservationsAndSplit(pd)
+          : pd
+            ? `<div class="step-desc">${escapeHtml(pd).replace(/\n/g, '<br>')}</div>`
+            : '';
+      return `
+        <div class="step step-pause">
+          <div class="step-num">PAUSA</div>
+          <div>
+            ${showPauseTitle ? `<div class="step-title">${escapeHtml(slide.titulo ?? slide.Titulo)}</div>` : ''}
+            ${pauseBody}
+          </div>
+        </div>`;
+    }
+
+    // Slide de FIM
+    if (tipo === 'fim') {
+      const fd = String(slide.descricao ?? slide.Descricao ?? '');
+      const fimTitulo = String(slide.titulo ?? slide.Titulo ?? '').trim();
+      const fimBody =
+        fd && /<[a-z][\s\S]*>/i.test(fd)
+          ? fd
+          : fd
+            ? `<div class="step-desc">${escapeHtml(fd).replace(/\n/g, '<br>')}</div>`
+            : '';
+      return `
+        <div class="step step--fim">
+          <div class="step-num">🏆</div>
+          <div style="width:100%">
+            ${fimTitulo ? `<div class="step-title">${escapeHtml(fimTitulo)}</div>` : ''}
+            ${fimBody}
+            <div class="step-fim-actions">
+              <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;"
+                 class="step-fim-btn step-fim-btn--ghost">← VOLTAR AO INÍCIO</a>
+              <a href="index.html#cards"
+                 class="step-fim-btn step-fim-btn--primary">EXPLORAR OUTROS CARDS</a>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // Slide de CONTEÚDO normal
+    const num = String(idx + 1).padStart(2, '0');
+    const conts = slideConteudos(slide);
+    const desc = String(slide.descricao ?? slide.Descricao ?? '');
+    const descIsHtml = /<[a-z][\s\S]*>/i.test(desc);
+    const tituloSlide = String(slide.titulo ?? slide.Titulo ?? '').trim();
+    const titleHtml = tituloSlide ? `<div class="step-title">${escapeHtml(tituloSlide)}</div>` : '';
+
+    // Dashboard grava texto + cmd-block + callout num único HTML em `descricao` (sem linhas em ConteudosSlide).
+    if (conts.length === 0) {
+      if (!desc.trim()) {
+        return `
+      <div class="step">
+        <div class="step-num">${num}</div>
+        <div>${titleHtml}</div>
+      </div>`;
+      }
+      if (descIsHtml) {
+        const bodyHtml = cardWrapSlideBodySections(cardPromoteObservationsAndSplit(desc));
+        return `
+      <div class="step">
+        <div class="step-num">${num}</div>
+        <div>${titleHtml}${bodyHtml}</div>
+      </div>`;
+      }
+      return `
+      <div class="step">
+        <div class="step-num">${num}</div>
+        <div>${titleHtml}${cardPlainSlideBodyToHtml(desc)}</div>
+      </div>`;
+    }
+
+    let descPart = '';
+    if (desc.trim()) {
+      if (descIsHtml) descPart = cardPromoteObservationsAndSplit(desc);
+      else descPart = cardPlainSlideBodyInner(desc);
+    }
+
+    const codigoHTML = conts
+      .filter((c) => c.tipo === 0 || c.tipo === 'Comando' || c.tipo === 'comando')
+      .map((c) => `
+        <div class="cmd-block">
+          <button class="copy-btn">copy</button>
+          <code>${escapeHtml(c.texto || c.Texto || '')}</code>
+          ${c.descricao || c.Descricao ? `<div style="font-family:var(--f-body);font-size:0.82rem;
+                                       color:var(--text-muted);margin-top:0.5rem;">
+                             ${c.descricao || c.Descricao}
+                           </div>` : ''}
+        </div>`).join('');
+
+    const obsHTML = conts
+      .filter((c) => c.tipo === 1 || c.tipo === 'Observacao' || c.tipo === 'observacao')
+      .map((c) => `
+        <div class="callout callout-tip">
+          💡 ${c.texto || c.Texto || ''}
+        </div>`).join('');
+
+    const mergedBody = cardWrapSlideBodySections(`${descPart}${codigoHTML}${obsHTML}`);
+
+    return `
+      <div class="step">
+        <div class="step-num">${num}</div>
+        <div>
+          ${titleHtml}
+          ${mergedBody}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── RENDERIZA REFERÊNCIAS ─────────────────────────────────────
+function renderReferencias(refs) {
+  if (!refs.length) {
+    return '';
+  }
+
+  // Agrupa por categoria
+  const grupos = {};
+  refs.forEach((r) => {
+    const cat = (r.categoria || r.Categoria || 'GERAL').trim() || 'GERAL';
+    if (!grupos[cat]) grupos[cat] = [];
+    grupos[cat].push(r);
+  });
+
+  return Object.entries(grupos).map(([cat, cmds]) => `
+    <div class="ref-section">
+      <div class="ref-section-title">${escapeHtml(cat)}</div>
+      <div class="cmd-grid">
+        ${cmds.map((c) => {
+          const cmd = c.comando ?? c.Comando ?? '';
+          const desc = c.descricao ?? c.Descricao ?? '';
+          return `
+          <div class="cmd-item">
+            <span class="cmd-text">${escapeHtml(cmd)}</span>
+            <span class="cmd-desc">${escapeHtml(String(desc))}</span>
+            <button class="cmd-copy">copy</button>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+}
+
+// ── DETECTA TIPO DO SLIDE ─────────────────────────────────────
+function detectTipo(slide) {
+  const tituloRaw = String(slide.titulo ?? slide.Titulo ?? '').trim();
+  const titulo = tituloRaw.toLowerCase();
+  const desc = String(slide.descricao ?? slide.Descricao ?? '').toLowerCase();
+  const tipo = String(slide.tipo ?? slide.Tipo ?? '').toLowerCase();
+
+  if (tituloRaw === BXP_SLIDE_PAUSE_TITULO || /^pausa$/i.test(tituloRaw)) return 'pausa';
+  if (tipo === 'pausa' || tipo === '2') return 'pausa';
+  if (cardIsLikelyPauseSlide(slide)) return 'pausa';
+
+  if (tipo === 'fim' || tipo === '3') return 'fim';
+  if (titulo === '' && desc.match(/chegou|chegaste|voando|reflexo|🏆/)) return 'fim';
+
+  return 'conteudo';
+}
+
+</script>
+</body>
+</html>

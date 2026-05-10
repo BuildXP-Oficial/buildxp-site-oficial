@@ -7,7 +7,9 @@ public class Feedback // Classe do Modelo de Feedback
     public string Mensagem { get; set; } = string.Empty; // Mensagem do Feedback
     public StatusFeedback Status {get; set;} = StatusFeedback.Pendente; // Status começa sempre pendente
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow; // Data de Criação do Feedback - gerada automaticamente 
-    public DateTime? AvaliadoEm { get; set; } // Só preenchido quando o feedback é atualizado 
+    public DateTime? AvaliadoEm { get; set; } // Só preenchido quando o feedback é atualizado
+    /// <summary>Utilizador do painel que aprovou ou rejeitou (nome do JWT ou campo do moderador).</summary>
+    public string? ModeradoPor { get; set; }
 }
 
 public enum StatusFeedback // Enum dos Status do Feedback

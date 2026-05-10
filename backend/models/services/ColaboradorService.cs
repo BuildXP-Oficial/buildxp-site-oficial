@@ -18,8 +18,9 @@ public class ColaboradorService
     // null = sucesso; senão mensagem (já convidado ou falha ao enviar e-mail)
     public async Task<string?> ConvidarAsync(string emailColaborador)
     {
+        var emailNorm = emailColaborador.Trim().ToLowerInvariant();
         var existe = await _context.Colaboradores
-            .AnyAsync(c => c.Email == emailColaborador);
+            .AnyAsync(c => c.Email.ToLower() == emailNorm);
 
         if (existe)
             return "Este e-mail já foi convidado.";
@@ -28,7 +29,7 @@ public class ColaboradorService
 
         var colaborador = new Colaborador
         {
-            Email = emailColaborador,
+            Email = emailNorm,
             TokenConvite = token,
             TokenExpiraEm = DateTime.UtcNow.AddHours(24),
             Ativo = false
@@ -39,7 +40,7 @@ public class ColaboradorService
 
         try
         {
-            await _email.EnviarConviteColaboradorAsync(emailColaborador, token);
+            await _email.EnviarConviteColaboradorAsync(emailNorm, token);
         }
         catch
         {
@@ -71,4 +72,31 @@ public class ColaboradorService
         await _context.SaveChangesAsync();
         return true;
     }
+
+    public async Task<List<ColaboradorResumoDto>> ListarResumoAsync(CancellationToken ct = default) =>
+        await _context.Colaboradores.AsNoTracking()
+            .OrderByDescending(c => c.CriadoEm)
+            .Select(c => new ColaboradorResumoDto(
+                c.Id,
+                c.Email,
+                c.Usuario,
+                c.Ativo,
+                c.AcessoAdministrador))
+            .ToListAsync(ct);
+
+    public async Task<(bool Ok, string? Erro)> DefinirAcessoAdministradorAsync(
+        int id,
+        bool acessoAdministrador,
+        CancellationToken ct = default)
+    {
+        var c = await _context.Colaboradores.FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (c is null)
+            return (false, "Colaborador não encontrado.");
+
+        c.AcessoAdministrador = acessoAdministrador;
+        await _context.SaveChangesAsync(ct);
+        return (true, null);
+    }
 }
+
+public record ColaboradorResumoDto(int Id, string Email, string? Usuario, bool Ativo, bool AcessoAdministrador);

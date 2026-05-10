@@ -3,18 +3,82 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="imagens/xpbrowser.png" />
   <title>Admin — BuildXP</title>
   <meta name="robots" content="noindex,nofollow" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
+  <link rel="stylesheet" href="style.css?v=dash-ui-6" />
   <style>
     :root {
       --accent: #4db5ff;
       --accent-glow: 0 0 28px rgba(77, 181, 255, 0.45);
+      --dash-pw-toggle-pressed-bg: rgba(18, 52, 108, 0.92);
+    }
+    body.dash-body .dash-pw-wrap {
+      position: relative;
+      display: block;
+      width: 100%;
+    }
+    body.dash-body .dash-pw-wrap .fb-input {
+      width: 100%;
+      padding-right: 5.35rem;
+      box-sizing: border-box;
+    }
+    /* Edge/Chromium: ícone nativo à direita do campo pode roubar o clique do «Mostrar» */
+    body.dash-body input[type='password']::-ms-reveal,
+    body.dash-body input[type='password']::-ms-clear {
+      display: none;
+    }
+    body.dash-body button.dash-pw-toggle {
+      position: absolute;
+      right: 0.42rem;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 5;
+      pointer-events: auto;
+      margin: 0;
+      padding: 0.38rem 0.55rem;
+      font-family: var(--f-mono, 'JetBrains Mono', ui-monospace, monospace);
+      font-size: 0.62rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-decoration: none !important;
+      color: var(--accent) !important;
+      background-color: transparent !important;
+      background-image: none !important;
+      border: none !important;
+      border-radius: 6px;
+      box-shadow: none !important;
+      cursor: pointer;
+      transition: background-color 0.18s ease, filter 0.18s ease;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    body.dash-body button.dash-pw-toggle:hover {
+      filter: brightness(1.12);
+    }
+    body.dash-body button.dash-pw-toggle[aria-pressed='true'] {
+      background-color: var(--dash-pw-toggle-pressed-bg) !important;
+      filter: none;
+    }
+    body.dash-body button.dash-pw-toggle[aria-pressed='true']:hover {
+      background-color: rgba(24, 62, 118, 0.98) !important;
+      filter: brightness(1.08);
+    }
+    body.dash-body button.term-btn.dash-linkish {
+      text-decoration: none !important;
+      color: var(--accent) !important;
+    }
+    body.dash-body button.term-btn.dash-linkish:hover {
+      color: var(--accent) !important;
+      filter: brightness(1.15);
     }
   </style>
   <script>
-    window.BUILDXP_DASH_TEST_USER = 'GislaneSenaa';
-    window.BUILDXP_DASH_TEST_EMAIL = 'gislane@buildxp.local';
+    window.BUILDXP_DASH_TEST_USER = 'gislanesenaa';
+    window.BUILDXP_DASH_TEST_EMAIL = 'gislanesenaa@gmail.com';
     window.BUILDXP_DASH_TEST_PASSWORD = '20010109Gi@';
     window.BUILDXP_ADMIN_DEV_PIN = '20010109Gi@';
     window.BUILDXP_API_BASE = '';
@@ -27,6 +91,8 @@
         validateRecoveryCode: '/api/auth/validar-codigo-recuperacao',
         resetPassword: '/api/auth/redefinir-senha',
         inviteCollaborator: '/api/Colaborador/convidar',
+        colaboradorList: '/api/Colaborador',
+        uploadCardIcon: '/api/Card/upload-icon',
       },
       window.BUILDXP_API_PATHS || {},
     );
@@ -42,16 +108,19 @@
 
 <section id="dash-login" class="dash-login-wrap" aria-labelledby="dash-login-title">
   <div class="fb-card dash-login-card">
-    <div class="ref-section-title" id="dash-login-title">ACESSO ADMIN</div>
+    <div class="ref-section-title" id="dash-login-title">ACESSO</div>
     <form id="dash-login-form" class="fb-form" autocomplete="off">
       <label class="fb-label">
-        Usuário
-        <input class="fb-input" id="dash-login-username" type="text" required maxlength="80" autocomplete="username" />
+        Username ou e-mail
+        <input class="fb-input" id="dash-login-username" type="text" required maxlength="120" autocomplete="username" placeholder="Username ou e-mail" />
       </label>
-      <label class="fb-label">
-        Senha
-        <input class="fb-input" id="dash-login-password" type="password" required autocomplete="current-password" />
-      </label>
+      <div class="fb-field">
+        <label class="fb-label" for="dash-login-password">Senha</label>
+        <span class="dash-pw-wrap">
+          <input class="fb-input" id="dash-login-password" type="password" required autocomplete="current-password" />
+          <button type="button" class="dash-pw-toggle" aria-pressed="false" aria-label="Mostrar senha">Mostrar</button>
+        </span>
+      </div>
       <div class="dash-login-row">
         <button type="button" class="term-btn ghost dash-linkish" id="dash-open-forgot">Esqueci a senha / Criar senha</button>
       </div>
@@ -107,14 +176,25 @@
     <div id="dash-forgot-panel-password" class="dash-forgot-panel" hidden>
       <form id="dash-forgot-step-password" class="fb-form">
         <p class="dash-muted" style="margin:0 0 0.75rem;">Código confirmado. Defina a nova senha.</p>
-        <label class="fb-label">
-          Nova senha
-          <input class="fb-input" id="dash-forgot-newpw" type="password" autocomplete="new-password" />
-        </label>
-        <label class="fb-label">
-          Confirmar nova senha
+        <div class="fb-field">
+          <label class="fb-label" for="dash-forgot-newpw">Nova senha</label>
+          <span class="dash-pw-wrap">
+            <input class="fb-input" id="dash-forgot-newpw" type="password" autocomplete="new-password" />
+            <button
+              type="button"
+              class="dash-pw-toggle"
+              aria-pressed="false"
+              aria-label="Mostrar senha"
+              data-dash-pw-peer="#dash-forgot-newpw2"
+            >
+              Mostrar
+            </button>
+          </span>
+        </div>
+        <div class="fb-field">
+          <label class="fb-label" for="dash-forgot-newpw2">Confirmar nova senha</label>
           <input class="fb-input" id="dash-forgot-newpw2" type="password" autocomplete="new-password" />
-        </label>
+        </div>
         <div class="dash-login-actions">
           <button type="submit" class="term-btn primary" id="dash-forgot-save">Definir nova senha</button>
           <button type="button" class="term-btn ghost" id="dash-forgot-back-to-code">← Voltar</button>
@@ -125,6 +205,64 @@
   </div>
 </div>
 
+<div id="dash-profile-sheet" class="dash-profile-sheet" hidden aria-hidden="true">
+  <div class="dash-profile-sheet-backdrop" id="dash-profile-sheet-backdrop" tabindex="-1"></div>
+  <div class="dash-profile-sheet-card fb-card" role="dialog" aria-modal="true" aria-labelledby="dash-profile-title">
+    <div class="dash-modal-head">
+      <div class="ref-section-title" id="dash-profile-title">Dados pessoais</div>
+      <button type="button" class="dash-modal-close" id="dash-profile-close" aria-label="Fechar">×</button>
+    </div>
+    <div id="dash-profile-admin-msg" class="fb-form" hidden>
+      <p class="dash-muted">Conta de <strong>administrador</strong>: a tabela <code>AdminPerfis</code> ainda não existe nesta base de dados. Executa o script SQL do projeto (<code>create_admin_perfis.sql</code>), reinicia a API e volta a abrir o painel.</p>
+    </div>
+    <form id="dash-profile-form" class="fb-form" hidden>
+      <div id="dash-profile-email-admin-block" class="fb-form" hidden style="margin-bottom:0.75rem;">
+        <label class="fb-label" for="dash-profile-email-input">E-mail</label>
+        <input class="fb-input" id="dash-profile-email-input" type="email" maxlength="320" autocomplete="email" />
+      </div>
+      <div id="dash-profile-email-collab-block">
+        <p class="dash-muted" style="margin:0 0 0.75rem;">E-mail de cadastro: <strong id="dash-profile-email-display"></strong></p>
+      </div>
+      <label class="fb-label" for="dash-profile-usuario">Username</label>
+      <input class="fb-input" id="dash-profile-usuario" maxlength="80" placeholder="Username — letras, números, . _ ou - (2–80)" autocomplete="username" />
+      <p class="dash-muted" style="margin:0.35rem 0 0;font-size:0.78rem;">Deve ser único. Deixe vazio para iniciar só com o e-mail (até definir).</p>
+      <label class="fb-label dash-check" style="margin-top:0.75rem;">
+        <input type="checkbox" id="dash-profile-alterar-senha" />
+        Alterar palavra-passe
+      </label>
+      <div id="dash-profile-senha-fields" class="dash-profile-senha-fields" hidden>
+        <div class="fb-field">
+          <label class="fb-label" for="dash-profile-senha-atual">Senha atual</label>
+          <span class="dash-pw-wrap">
+            <input class="fb-input" id="dash-profile-senha-atual" type="password" autocomplete="current-password" />
+            <button type="button" class="dash-pw-toggle" aria-pressed="false" aria-label="Mostrar senha">Mostrar</button>
+          </span>
+        </div>
+        <div class="fb-field">
+          <label class="fb-label" for="dash-profile-nova-senha">Nova senha</label>
+          <span class="dash-pw-wrap">
+            <input class="fb-input" id="dash-profile-nova-senha" type="password" autocomplete="new-password" />
+            <button type="button" class="dash-pw-toggle" aria-pressed="false" aria-label="Mostrar senha" data-dash-pw-peer="#dash-profile-confirm-senha">Mostrar</button>
+          </span>
+        </div>
+        <div class="fb-field">
+          <label class="fb-label" for="dash-profile-confirm-senha">Confirmar nova senha</label>
+          <input class="fb-input" id="dash-profile-confirm-senha" type="password" autocomplete="new-password" />
+        </div>
+      </div>
+      <label class="fb-label" for="dash-profile-foto-file" style="margin-top:0.75rem;">Foto do perfil (JPEG, PNG ou WebP, máx. 256 KB)</label>
+      <input class="fb-input" id="dash-profile-foto-file" type="file" accept="image/jpeg,image/png,image/webp" />
+      <div class="dash-login-actions" style="margin-top:0.5rem;">
+        <button type="button" class="term-btn ghost" id="dash-profile-remover-foto">Remover foto</button>
+      </div>
+      <div class="dash-login-actions" style="margin-top:1rem;">
+        <button type="submit" class="term-btn primary" id="dash-profile-save">Guardar</button>
+      </div>
+      <div id="dash-profile-status" class="fb-status" aria-live="polite"></div>
+    </form>
+  </div>
+</div>
+
 <div id="dash-shell" class="dash-shell" hidden>
   <main id="dash-app" class="page-container dash-page">
     <header class="dash-topbar fb-card">
@@ -132,7 +270,11 @@
         <div class="page-class" style="margin-bottom:0.25rem;">PAINEL</div>
         <div class="dash-topbar-title">Dashboard</div>
       </div>
-      <div class="dash-topbar-actions">
+      <div class="dash-topbar-actions dash-topbar-actions--profile">
+        <button type="button" class="dash-profile-avatar-btn" id="dash-profile-open" aria-label="Dados pessoais" title="Dados pessoais">
+          <img id="dash-profile-avatar-img" alt="" class="dash-profile-avatar-img" width="40" height="40" hidden />
+          <span class="dash-profile-avatar-placeholder" id="dash-profile-avatar-placeholder" aria-hidden="true"></span>
+        </button>
         <button type="button" class="term-btn danger outline" id="dash-logout">SAIR</button>
       </div>
     </header>
@@ -161,11 +303,11 @@
         <div class="ref-section-title" style="margin-bottom:0.75rem;">FEEDBACK</div>
         <div class="dash-subtabs" role="tablist">
           <button type="button" class="dash-subtab active" data-dash-fb-scope="pending">RECEBIDOS</button>
-          <button type="button" class="dash-subtab" data-dash-fb-scope="history">APROVADOS / REPROVADOS</button>
+          <button type="button" class="dash-subtab" data-dash-fb-scope="history">HISTÓRICO</button>
         </div>
         <label class="fb-label">
-          Moderador (registro ao decidir)
-          <input class="fb-input" id="dash-moderator" type="text" maxlength="80" placeholder="nome ou equipe" />
+          Nome no histórico (opcional)
+          <input class="fb-input" id="dash-moderator" type="text" maxlength="80" placeholder="vazio = utilizador da sessão" />
         </label>
         <div id="dash-fb-status" class="fb-status" aria-live="polite"></div>
         <div id="dash-fb-list" class="dash-queue"></div>
@@ -224,6 +366,7 @@
           <button type="button" class="term-btn primary" id="dash-slides-save">SALVAR SLIDES</button>
         </div>
       </div>
+      <div id="dash-card-editor-slides-status" class="fb-status dash-editor-feedback" aria-live="polite"></div>
 
       <div id="dash-card-editor-theme-host" class="fb-card dash-panel-inner dash-card-editor-shell">
         <div class="dash-card-editor-stepbar">
@@ -231,7 +374,7 @@
           <div class="dash-card-editor-step-label mono" id="dash-card-editor-step-label">1 / 1 · Card</div>
           <button type="button" class="term-btn ghost" id="dash-card-editor-next">SEGUINTE ›</button>
         </div>
-        <p class="dash-muted dash-card-editor-hint">Os slides são guardados neste navegador até copiar para o <code>.html</code> do treino. O slide final com botões já existe na página publicada — aqui edita-se só o conteúdo da trilha.</p>
+        <p class="dash-muted dash-card-editor-hint"><strong>SALVAR SLIDES</strong> envia título, texto, comandos e observação para a API (comandos e observação são incorporados no HTML guardado). O slide FIM continua no <code>.html</code>. Sem login JWT os dados ficam só no navegador.</p>
         <div id="dash-card-editor-addbar" class="dash-card-editor-addbar" hidden>
           <button type="button" class="term-btn ghost" id="dash-edit-add-content">+ SLIDE DE CONTEÚDO</button>
           <button type="button" class="term-btn ghost" id="dash-edit-add-pause">+ PAUSA</button>
@@ -241,24 +384,40 @@
           <div class="ref-section-title" style="margin-bottom:0.75rem;">1 · CARD (METADADOS · API)</div>
           <form id="dash-card-form" class="dash-card-form">
             <label class="fb-label">Slug <span class="dash-req">*</span>
-              <input class="fb-input" id="dash-card-slug" name="slug" required maxlength="80" placeholder="git" />
+              <input class="fb-input" id="dash-card-slug" name="slug" maxlength="48" placeholder="git (opcional — gera automaticamente)" autocomplete="off" spellcheck="false" autocapitalize="off" />
+              <span class="dash-muted" style="font-size:0.78rem;display:block;margin-top:0.35rem;line-height:1.35;">
+                Identificador estável do card na API (<code>/api/card/seu-slug</code>) e na URL pública (<code>card.html?slug=…</code>). Use só <strong>minúsculas</strong>, números e <strong>hífen</strong> (máx. 48). Os links dos botões devem apontar para <code>card.html?slug=…&amp;tab=…</code> (preenchidos por defeito ao gravar).
+              </span>
             </label>
             <label class="fb-label">Tema <span class="dash-req">*</span>
-              <select class="fb-input" id="dash-card-theme" required>
+              <select class="fb-input" id="dash-card-theme">
                 <option value="git">git</option>
                 <option value="docker">docker</option>
                 <option value="npm">npm</option>
                 <option value="dotnet">dotnet</option>
+                <option value="api">api</option>
               </select>
+              <span class="dash-muted" style="font-size:0.78rem;display:block;margin-top:0.35rem;line-height:1.35;">
+                Presets sugerem uma cor; você pode definir <strong>qualquer cor</strong> abaixo (hex).
+              </span>
+            </label>
+            <label class="fb-label">Cor do card (accent)
+              <div class="dash-form-row" style="align-items:center;flex-wrap:wrap;gap:0.65rem;">
+                <input type="color" id="dash-card-border-picker" value="#39d353" aria-label="Escolher cor" style="width:3rem;height:2rem;padding:0;border:1px solid var(--border);border-radius:6px;cursor:pointer;background:transparent;" />
+                <input class="fb-input" id="dash-card-border-hex" maxlength="7" placeholder="#ff8800" autocomplete="off" spellcheck="false" style="max-width:9rem;font-family:var(--f-mono,monospace);" />
+              </div>
+              <span class="dash-muted" style="font-size:0.78rem;display:block;margin-top:0.35rem;line-height:1.35;">
+                Formato <code>#rrggbb</code> ou <code>#rgb</code> (ex.: laranja <code>#ff8800</code>). É gravada na API como <code>border_color</code>.
+              </span>
             </label>
             <label class="fb-label">Nome exibido <span class="dash-req">*</span>
-              <input class="fb-input" id="dash-card-display" required maxlength="120" />
+              <input class="fb-input" id="dash-card-display" maxlength="120" />
             </label>
             <label class="fb-label">Badge raridade <span class="dash-req">*</span>
-              <input class="fb-input" id="dash-card-rarity" required maxlength="40" placeholder="ESSENTIAL" />
+              <input class="fb-input" id="dash-card-rarity" maxlength="40" placeholder="ESSENTIAL" />
             </label>
             <label class="fb-label">Classe / subtítulo <span class="dash-req">*</span>
-              <input class="fb-input" id="dash-card-class" required maxlength="80" placeholder="VERSION CONTROL" />
+              <input class="fb-input" id="dash-card-class" maxlength="80" placeholder="VERSION CONTROL" />
             </label>
             <div class="dash-form-row">
               <label class="fb-label">XP atual
@@ -272,10 +431,10 @@
               </label>
             </div>
             <label class="fb-label">Link iniciante <span class="dash-req">*</span>
-              <input class="fb-input" id="dash-card-link-b" required maxlength="200" placeholder="git.html?tab=beginner" />
+              <input class="fb-input" id="dash-card-link-b" maxlength="512" placeholder="card.html?slug=git&amp;tab=beginner (opcional)" />
             </label>
             <label class="fb-label">Link referência <span class="dash-req">*</span>
-              <input class="fb-input" id="dash-card-link-r" required maxlength="200" placeholder="git.html?tab=ref" />
+              <input class="fb-input" id="dash-card-link-r" maxlength="512" placeholder="card.html?slug=git&amp;tab=ref (opcional)" />
             </label>
             <label class="fb-label">Botão primário
               <input class="fb-input" id="dash-card-btn1" maxlength="80" placeholder="▶ COMEÇAR" />
@@ -286,22 +445,30 @@
             <label class="fb-label">Descrição (HTML)
               <textarea class="fb-input fb-textarea" id="dash-card-desc" rows="5" placeholder="<p>…</p>"></textarea>
             </label>
-            <details class="dash-details">
-              <summary>Ícones (opcional)</summary>
+            <details class="dash-details" open>
+              <summary>Ícones</summary>
+              <p class="dash-muted" style="font-size:0.78rem;margin:0 0 0.6rem;line-height:1.35;">
+                Ícone primário: escolha um ficheiro — a API grava em <code>wwwroot/imagens/</code> e preenche o caminho no card (máx. <strong>512 caracteres</strong> na base de dados). Secundário (dual): continue a usar caminho curto em <code>imagens/…</code>.
+              </p>
               <label class="fb-label">Layout ícone
                 <select class="fb-input" id="dash-card-icon-layout">
                   <option value="single">single</option>
                   <option value="dual">dual</option>
                 </select>
               </label>
-              <label class="fb-label">Icone primário (URL/caminho)
-                <input class="fb-input" id="dash-card-icon-pri" maxlength="300" placeholder="imagens/gitlogobr.png" />
+              <label class="fb-label">Ícone primário — escolher ficheiro
+                <input type="file" class="fb-input" id="dash-card-icon-file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" />
               </label>
+              <div class="dash-edit-icon-preview-row" style="margin-bottom:0.75rem;">
+                <img id="dash-card-icon-preview" alt="" width="56" height="56" style="object-fit:contain;border-radius:8px;border:1px solid var(--border);background:var(--surface);display:none;" />
+              </div>
+              <input type="hidden" id="dash-card-icon-pri" value="" />
+              <p id="dash-card-icon-path-readout" class="dash-muted" style="font-size:0.78rem;margin:0 0 0.75rem;line-height:1.35;" aria-live="polite"></p>
               <label class="fb-label">Alt primário
                 <input class="fb-input" id="dash-card-icon-pri-alt" maxlength="120" />
               </label>
-              <label class="fb-label">Icone secundário (dual)
-                <input class="fb-input" id="dash-card-icon-sec" maxlength="300" />
+              <label class="fb-label">Ícone secundário (dual, até 512 caracteres)
+                <input class="fb-input" id="dash-card-icon-sec" maxlength="512" />
               </label>
               <label class="fb-label">Alt secundário
                 <input class="fb-input" id="dash-card-icon-sec-alt" maxlength="120" />
@@ -331,12 +498,30 @@
 
       <div id="dash-create-step-meta" class="fb-card dash-panel-inner dash-create-panel">
         <div class="ref-section-title">1 · METADADOS DO CARD</div>
-        <p class="dash-muted">Ícone com o mesmo tamanho padrão dos cards do index (referência NPM).</p>
+        <p class="dash-muted">Ícone com o mesmo tamanho padrão dos cards do index (referência NPM). O <strong>slug</strong> identifica o card na API e em <code>card.html?slug=…</code> (conteúdo na BD; páginas <code>*.html</code> antigas só como fallback).</p>
+        <label class="fb-label">Slug (API / URL, só minúsculas, números e hífen)
+          <input class="fb-input" id="dash-wiz-slug" maxlength="80" placeholder="ex.: prisma" autocapitalize="off" autocomplete="off" spellcheck="false" />
+        </label>
+        <label class="fb-label">Tema visual (preset de cor)
+          <select class="fb-input" id="dash-wiz-theme">
+            <option value="git">git</option>
+            <option value="docker">docker</option>
+            <option value="npm">npm</option>
+            <option value="dotnet">dotnet</option>
+            <option value="api">api</option>
+          </select>
+        </label>
+        <label class="fb-label">Cor do card (qualquer hex)
+          <div class="dash-form-row" style="align-items:center;flex-wrap:wrap;gap:0.65rem;">
+            <input type="color" id="dash-wiz-border-picker" value="#39d353" aria-label="Escolher cor" style="width:3rem;height:2rem;padding:0;border:1px solid var(--border);border-radius:6px;cursor:pointer;background:transparent;" />
+            <input class="fb-input" id="dash-wiz-border-hex" maxlength="7" placeholder="#ff8800" autocomplete="off" spellcheck="false" style="max-width:9rem;font-family:var(--f-mono,monospace);" />
+          </div>
+        </label>
         <label class="fb-label">Título (nome do card)
           <input class="fb-input" id="dash-wiz-title" maxlength="120" />
         </label>
-        <label class="fb-label">Imagem do ícone
-          <input class="fb-input" id="dash-wiz-icon-file" type="file" accept="image/*" />
+        <label class="fb-label">Imagem do ícone (grava em <code>wwwroot/imagens/</code> via API)
+          <input class="fb-input" id="dash-wiz-icon-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" />
         </label>
         <div class="dash-wiz-icon-frame" aria-hidden="true">
           <span class="dash-wiz-icon-label">Preview (tamanho card NPM)</span>
@@ -369,7 +554,7 @@
       <div id="dash-create-step-slides" class="dash-create-slides-wrap" hidden>
         <div class="fb-card dash-panel-inner">
           <div class="ref-section-title">2 · SLIDES DO TREINAMENTO</div>
-          <p class="dash-muted">Cada slide de conteúdo: abas Texto, Comandos (terminal verde) e Observação (borda verde). Pausa: só texto e observação opcional. O slide final com os botões é sempre incluído ao publicar.</p>
+          <p class="dash-muted">Cada slide de <strong>conteúdo</strong> tem <strong>título</strong> (cabeçalho na página pública), abas Texto, Comandos e Observação — tudo é guardado na API num único bloco HTML visível no site. Pausa: corpo + observação. O slide final (FIM) continua no ficheiro <code>.html</code>. Use <strong>PUBLICAR</strong> para gravar no servidor; «Rascunho» fica só no navegador.</p>
           <div id="dash-wiz-slides-root"></div>
           <div class="dash-wiz-slide-actions">
             <button type="button" class="term-btn ghost" id="dash-wiz-add-content">+ SLIDE DE CONTEÚDO</button>
@@ -385,7 +570,8 @@
           </div>
           <div class="dash-form-actions" style="margin-top:1.25rem;">
             <button type="button" class="term-btn ghost" id="dash-wiz-back-meta">← METADADOS</button>
-            <button type="button" class="term-btn primary" id="dash-wiz-save-draft">SALVAR RASCUNHO (NAVEGADOR)</button>
+            <button type="button" class="term-btn ghost" id="dash-wiz-save-draft">SALVAR RASCUNHO (NAVEGADOR)</button>
+            <button type="button" class="term-btn primary" id="dash-wiz-publish-api">PUBLICAR</button>
           </div>
           <div id="dash-wiz-status" class="fb-status" aria-live="polite"></div>
         </div>
@@ -394,19 +580,28 @@
 
     <section class="fb-card dash-collab dash-view-collab" id="dash-collab-section" aria-labelledby="dash-collab-title">
       <div class="ref-section-title" id="dash-collab-title">COLABORADORES</div>
-      <label class="fb-label">
-        E-mail do colaborador
-        <input class="fb-input" id="dash-collab-email" type="email" maxlength="120" placeholder="nome@empresa.com" />
-      </label>
-      <div class="dash-login-actions" style="margin-top:0.75rem;">
-        <button type="button" class="term-btn primary" id="dash-collab-submit">Adicionar colaborador</button>
+      <div id="dash-collab-invite-block">
+        <label class="fb-label">
+          E-mail do colaborador
+          <input class="fb-input" id="dash-collab-email" type="email" maxlength="120" placeholder="nome@empresa.com" />
+        </label>
+        <div class="dash-login-actions" style="margin-top:0.75rem;">
+          <button type="button" class="term-btn primary" id="dash-collab-submit">Adicionar colaborador</button>
+        </div>
+        <div id="dash-collab-status" class="fb-status" aria-live="polite"></div>
       </div>
-      <div id="dash-collab-status" class="fb-status" aria-live="polite"></div>
+      <div id="dash-collab-list-block" style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);">
+        <p class="dash-muted dash-collab-list-intro">
+          Contas convidadas ou ativas. A coluna <strong>Estado da conta</strong> indica se já iniciou sessão; <strong>Permissão no painel</strong> define se pode convidar e gerir acessos (só administrador da plataforma altera aqui).
+        </p>
+        <div id="dash-collab-list-status" class="fb-status" aria-live="polite"></div>
+        <div id="dash-collab-table-wrap" class="dash-collab-table-wrap dash-collab-table-wrap--elevated"></div>
+      </div>
     </section>
   </main>
 </div>
 
 <footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="main.js"></script>
+<script src="main.js?v=train-api-7"></script>
 </body>
 </html>

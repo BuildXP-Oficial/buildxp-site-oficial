@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using BuildXP.API.Services;
@@ -13,6 +14,36 @@ public class ColaboradorController : ControllerBase
     public ColaboradorController(ColaboradorService service)
     {
         _service = service;
+    }
+
+    /// <summary>Conta de administrador da plataforma (JWT <c>nameidentifier</c> fixo <c>admin</c>), não colaborador elevado.</summary>
+    private static bool IsPlataformaAdmin(ClaimsPrincipal user) =>
+        string.Equals(user.FindFirstValue(ClaimTypes.NameIdentifier), "admin", StringComparison.Ordinal);
+
+    // GET api/colaborador — lista só para admin da plataforma (não expõe quem tem acesso elevado a colaboradores).
+    [HttpGet]
+    [Authorize(Roles = "admin,colaborador")]
+    public async Task<IActionResult> Listar(CancellationToken ct)
+    {
+        if (!IsPlataformaAdmin(User))
+            return Forbid();
+        var list = await _service.ListarResumoAsync(ct);
+        return Ok(list);
+    }
+
+    // PUT api/colaborador/{id}/acesso-administrador — só plataforma.
+    [HttpPut("{id:int}/acesso-administrador")]
+    [Authorize(Roles = "admin,colaborador")]
+    public async Task<IActionResult> DefinirAcessoAdministrador(
+        int id,
+        [FromBody] AcessoAdministradorRequest body,
+        CancellationToken ct)
+    {
+        if (!IsPlataformaAdmin(User))
+            return Forbid();
+        var (ok, erro) = await _service.DefinirAcessoAdministradorAsync(id, body.AcessoAdministrador, ct);
+        if (!ok) return BadRequest(new { message = erro });
+        return Ok(new { message = "Acesso atualizado." });
     }
 
     // POST api/colaborador/convidar — privado — só admin
@@ -49,3 +80,4 @@ public class ColaboradorController : ControllerBase
 
 public record ConviteRequest(string Email);
 public record AtivacaoRequest(string Token, string Senha);
+public record AcessoAdministradorRequest(bool AcessoAdministrador);

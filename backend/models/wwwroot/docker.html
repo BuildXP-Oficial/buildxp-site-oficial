@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="imagens/xpbrowser.png" />
   <title>Docker — BuildXP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
   <link rel="stylesheet" href="style.css" />
   <style>:root { --accent: var(--docker); --accent-glow: var(--docker-glow); }</style>
 </head>
@@ -31,7 +35,7 @@
       <div class="page-class">CONTAINERIZATION</div>
       <div class="page-title">Docker</div>
       <div class="page-meta">
-        <span class="lvl-badge">LVL 6 · ADVANCED</span>
+        <span class="lvl-badge">LVL 5 · CORE</span>
         <div class="xp-mini"><div class="xp-mini-fill" style="width:60%"></div></div>
         <span style="font-family:var(--f-mono);font-size:0.65rem;color:var(--text-muted)">1800 XP</span>
       </div>
@@ -53,8 +57,9 @@
         <div class="step-num">01</div>
         <div>
           <div class="step-title">O que é Docker?</div>
-          <div class="step-desc">Docker empacota sua aplicação e todas as suas dependências dentro de um container — um ambiente isolado e portável. Não importa se o servidor é Linux, Windows ou Mac: o container roda igual em qualquer lugar.</div>
-          <div class="callout callout-tip">💡 Pense num container como uma "caixa" com tudo que sua app precisa para rodar, incluindo o sistema operacional mínimo.</div>
+          <div class="step-desc">Docker empacota sua aplicação e o que ela precisa para rodar dentro de um <strong>container</strong>, um ambiente isolado e repetível. Em outro computador ou servidor, o mesmo container tende a se comportar igual, o que ajuda muito em time e em produção.</div>
+          <div class="step-desc">Com Docker fica mais fácil rodar seu projeto <strong>sem</strong> precisar instalar no Windows Local cada coisa separada que o banco ou a stack pedem. Por exemplo, você quer PostgreSQL, SQL Server ou outro motor: em vez de montar tudo manualmente na máquina, você pode subir uma <strong>imagem</strong> pronta que já traz o serviço configurado e só expõe a porta que você precisa.</div>
+          <div class="callout callout-tip">💡 Pensa no container como uma caixa fechada com um processo principal (ex.: servidor web ou base de dados).</div>
         </div>
       </div>
 
@@ -62,19 +67,21 @@
         <div class="step-num">02</div>
         <div>
           <div class="step-title">Instalar o Docker</div>
-          <div class="step-desc">Baixe o Docker Desktop — ele inclui tudo que você precisa: engine, CLI e interface gráfica.</div>
+          <div class="step-desc">O Docker precisa estar <strong>instalado e rodando</strong> para os comandos <code>docker ...</code> e para os seus containers funcionarem. No Windows e macOS isso costuma ser o <strong>Docker Desktop</strong> (abra o app e espere ficar “running”). No Linux, o serviço do Docker precisa estar ativo.</div>
+          <div class="step-desc">Baixe o Docker Desktop no site oficial se você usa Windows ou macOS: engine, terminal <code>docker</code> e interface na mesma instalação.</div>
           <div class="cmd-block">
             <button class="copy-btn">copy</button>
-            <code># Windows / macOS → https://www.docker.com/products/docker-desktop
+            <code># Windows / macOS: https://www.docker.com/products/docker-desktop
 
-# Linux (Ubuntu)
+# Linux (Ubuntu, exemplo)
 sudo apt update
 sudo apt install docker.io
 sudo systemctl start docker
 sudo systemctl enable docker
 
-# Verificar instalação
-docker --version</code>
+# Conferir se o cliente responde
+docker --version
+docker run hello-world</code>
           </div>
         </div>
       </div>
@@ -82,17 +89,16 @@ docker --version</code>
       <div class="step">
         <div class="step-num">03</div>
         <div>
-          <div class="step-title">Imagens vs Containers</div>
-          <div class="step-desc">
-            Uma <strong>imagem</strong> é o modelo/template — como uma classe em POO. Um <strong>container</strong> é uma instância rodando dessa imagem. Você pode ter vários containers rodando da mesma imagem.
-          </div>
-          <div class="callout callout-info">ℹ️ Imagem = receita. Container = o prato pronto.</div>
+          <div class="step-title">Imagem e container</div>
+          <div class="step-desc">Uma <strong>imagem</strong> é o modelo, como uma receita fixa. Um <strong>container</strong> é uma instância <strong>rodando</strong> criada a partir dessa imagem. Você pode ter vários containers da mesma imagem, cada um com nome e portas diferentes.</div>
+          <div class="step-desc">Se você quer testar algo do Docker Hub, você puxa a imagem com <code>docker pull</code>. Para ver o que já baixou na máquina, use <code>docker images</code>.</div>
+          <div class="callout callout-info">ℹ️ Imagem é a receita. Container é o prato servido.</div>
           <div class="cmd-block">
             <button class="copy-btn">copy</button>
             <code># Baixar uma imagem do Docker Hub
 docker pull nginx
 
-# Listar imagens baixadas
+# Listar imagens locais
 docker images</code>
           </div>
         </div>
@@ -102,29 +108,114 @@ docker images</code>
         <div class="step-num">04</div>
         <div>
           <div class="step-title">Rodar seu primeiro container</div>
-          <div class="step-desc">O comando <code>docker run</code> baixa a imagem (se necessário) e inicia o container.</div>
+          <div class="step-desc">O comando <code>docker run</code> usa uma imagem (baixa se ainda não existir) e <strong>cria e inicia</strong> um container. É o comando que você mais vai repetir.</div>
+          <div class="step-desc"><code>--name</code> dá um nome fácil para parar e ver logs. <code>-p portaDoPc:portaNoContainer</code> libera um serviço para o navegador ou para um cliente na sua máquina. <code>-d</code> roda em segundo plano. <code>--rm</code> apaga o container quando ele para, ótimo para testes rápidos.</div>
           <div class="cmd-block">
             <button class="copy-btn">copy</button>
-            <code># Hello World do Docker
-docker run hello-world
+            <code># Teste oficial do Docker
+docker run --rm hello-world
 
-# Rodar nginx em background na porta 8080
-docker run -d -p 8080:80 --name meu-nginx nginx
+# Nginx em segundo plano na porta 8080 do seu PC
+docker run -d --name meu-nginx -p 8080:80 nginx
 
-# Acessar: http://localhost:8080</code>
+# Abra no navegador: http://localhost:8080</code>
           </div>
-          <div class="callout callout-tip">💡 <code>-d</code> = detached (background) | <code>-p host:container</code> = mapeamento de porta</div>
+          <div class="callout callout-tip">💡 <code>-d</code> é “detached” (segundo plano). <code>-p 8080:80</code> significa porta 8080 no seu computador apontando para a porta 80 dentro do container.</div>
+        </div>
+      </div>
+
+      <div class="step step-pause">
+        <div class="step-num">PAUSA</div>
+        <div>
+          <div class="step-desc">Até aqui você já viu o motor ligado, imagem, container e uma página web na porta. Respira um pouco antes de subir banco de dados de verdade.</div>
+          <div class="callout callout-tip">💡 Se algo falhar, anote a mensagem vermelha no terminal ou use <code>docker logs nomeDoContainer</code> depois que você souber o nome.</div>
         </div>
       </div>
 
       <div class="step">
         <div class="step-num">05</div>
         <div>
-          <div class="step-title">Criar seu próprio Dockerfile</div>
-          <div class="step-desc">O Dockerfile é o "script de receita" que define como sua imagem é construída.</div>
+          <div class="step-title">Só o banco no Docker (cenário comum)</div>
+          <div class="step-desc">Muita gente usa Docker para rodar <strong>só</strong> PostgreSQL ou MySQL no desenvolvimento, sem instalar o servidor completo no <strong>Windows Local</strong>. O container sobe rápido e você mata quando não precisa mais.</div>
+          <div class="step-desc">No exemplo abaixo você define senha com variável de ambiente e publica a porta padrão do Postgres no seu <code>localhost</code>. Os dados somem se você apagar o container sem volume, o que pode ser ok para aprender. Para projeto sério, depois você aprende volume no Compose.</div>
           <div class="cmd-block">
             <button class="copy-btn">copy</button>
-            <code># Dockerfile — exemplo Node.js
+            <code># Uma linha (PowerShell, bash ou CMD)
+docker run -d --name meu-pg -e POSTGRES_PASSWORD=minhasenha -p 5432:5432 postgres:15</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">06</div>
+        <div>
+          <div class="step-title">Banco de dados dentro do container</div>
+          <div class="step-desc">Aqui o objetivo é <strong>rodar SQL</strong> contra o Postgres que já está no container. Você não precisa instalar o cliente no Windows se não quiser: você entra no container e usa o <code>psql</code> que já veio na imagem.</div>
+          <div class="step-desc"><code>docker exec -it nomeDoContainer bash</code> abre um shell interativo dentro do container em execução. De lá você chama <code>psql</code> com usuário <code>postgres</code> e a senha que você passou em <code>POSTGRES_PASSWORD</code>.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code>docker exec -it meu-pg bash
+psql -U postgres -d postgres
+
+CREATE DATABASE teste;
+\c teste
+CREATE TABLE msg (id SERIAL PRIMARY KEY, texto TEXT);
+INSERT INTO msg (texto) VALUES ('Olá Docker');
+SELECT * FROM msg;
+\q
+exit</code>
+          </div>
+          <div class="step-desc">Se der erro, confira nesta ordem: o Docker Desktop ou serviço Linux está rodando? A porta <code>5432</code> no seu PC está livre ou já tem outro Postgres? O nome do container (<code>meu-pg</code>) é o mesmo do <code>docker run</code>? Rode <code>docker logs meu-pg</code> e leia a última mensagem. Usuário e senha batem com o que você passou em <code>-e</code>?</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">07</div>
+        <div>
+          <div class="step-title">Cliente SQL no seu computador</div>
+          <div class="step-desc">Se você prefere DBeaver, pgAdmin, extensão do VS Code ou outra ferramenta, desde que você tenha usado <code>-p 5432:5432</code>, você aponta para <strong>host</strong> <code>localhost</code>, <strong>porta</strong> <code>5432</code>, usuário <code>postgres</code> e a senha que você definiu em <code>POSTGRES_PASSWORD</code>.</div>
+          <div class="callout callout-tip">💡 A linguagem dentro do servidor continua sendo SQL; muda um pouco o dialeto entre Postgres, MySQL e SQL Server, mas o fluxo “subir container, abrir porta, conectar” é o mesmo.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">08</div>
+        <div>
+          <div class="step-title">MySQL em container (mesma ideia)</div>
+          <div class="step-desc">Se você quer MySQL ou MariaDB, a ideia é igual: imagem oficial, variável de ambiente para senha do root, porta publicada. O cliente dentro da imagem costuma ser <code>mysql</code>.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code>docker run -d --name meu-mysql -e MYSQL_ROOT_PASSWORD=rootpass -p 3306:3306 mysql:8
+
+docker exec -it meu-mysql mysql -uroot -prootpass -e "SHOW DATABASES;"</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">09</div>
+        <div>
+          <div class="step-title">Listar, parar, logs e remover</div>
+          <div class="step-desc"><code>docker ps</code> mostra o que está ligado. <code>docker logs</code> ajuda quando o container não sobe ou o banco recusa senha. <code>docker stop</code> desliga. <code>docker rm</code> remove o container parado e libera o nome para usar de novo.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code>docker ps
+docker ps -a
+docker logs meu-nginx
+docker stop meu-nginx
+docker rm meu-nginx</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">10</div>
+        <div>
+          <div class="step-title">Dockerfile da sua aplicação</div>
+          <div class="step-desc">Quando você quer empacotar <strong>sua</strong> API ou site e não só usar uma imagem pronta, você escreve um arquivo chamado <code>Dockerfile</code> na pasta do projeto. Ali você diz a imagem base, dependências, porta e o comando que inicia o processo.</div>
+          <div class="cmd-block">
+            <button class="copy-btn">copy</button>
+            <code># Dockerfile (exemplo Node)
 FROM node:20-alpine
 WORKDIR /app
 COPY package*.json ./
@@ -135,41 +226,20 @@ CMD ["node", "index.js"]</code>
           </div>
           <div class="cmd-block" style="margin-top:0.5rem">
             <button class="copy-btn">copy</button>
-            <code># Buildar a imagem
-docker build -t minha-app .
-
-# Rodar a imagem buildada
-docker run -d -p 3000:3000 minha-app</code>
+            <code>docker build -t minha-api .
+docker run -d -p 3000:3000 --name api minha-api</code>
           </div>
         </div>
       </div>
 
       <div class="step">
-        <div class="step-num">06</div>
+        <div class="step-num">11</div>
         <div>
-          <div class="step-title">Gerenciar containers</div>
-          <div class="step-desc">Comandos do dia a dia para controlar seus containers em execução.</div>
+          <div class="step-title">Docker Compose (vários serviços)</div>
+          <div class="step-desc">Quando você quer subir <strong>api + banco + cache</strong> sempre juntos, um arquivo <code>compose.yml</code> descreve cada serviço. Um comando sobe tudo, outro derruba.</div>
           <div class="cmd-block">
             <button class="copy-btn">copy</button>
-            <code>docker ps               # containers rodando
-docker ps -a            # todos os containers
-docker stop meu-nginx   # parar container
-docker start meu-nginx  # iniciar container parado
-docker rm meu-nginx     # remover container
-docker logs meu-nginx   # ver logs</code>
-          </div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num">07</div>
-        <div>
-          <div class="step-title">Docker Compose — múltiplos containers</div>
-          <div class="step-desc">O Compose permite orquestrar vários containers com um único arquivo. Perfeito para app + banco de dados + cache juntos.</div>
-          <div class="cmd-block">
-            <button class="copy-btn">copy</button>
-            <code># docker-compose.yml
-version: '3.8'
+            <code># Exemplo resumido compose.yml
 services:
   app:
     build: .
@@ -188,17 +258,24 @@ volumes:
           </div>
           <div class="cmd-block" style="margin-top:0.5rem">
             <button class="copy-btn">copy</button>
-            <code>docker compose up -d    # subir tudo em background
-docker compose down     # parar e remover tudo</code>
+            <code>docker compose up -d
+docker compose down</code>
           </div>
+        </div>
+      </div>
+
+      <div class="step step-pause">
+        <div class="step-num">PAUSA</div>
+        <div>
+          <div class="step-desc">Você já cobriu web na porta, Postgres e MySQL em container, cliente SQL, rotina de logs e Compose. O próximo passo é usar isso no seu projeto real.</div>
         </div>
       </div>
 
       <div class="step">
         <div class="step-num">FIM</div>
         <div>
-          <div class="step-title">Você chegou ao final.</div>
-          <div class="step-desc">Espero que tenha entendido como funciona.</div>
+          <div class="step-title">Base Docker para o dia a dia</div>
+          <div class="step-desc">Agora você sabe subir serviços isolados, conectar ao SQL e organizar app com banco usando Compose. Volte sempre à referência rápida ou ao terminal BuildXP para fixar comando.</div>
           <div class="term-actions">
             <button class="term-btn ghost" type="button" data-steps-restart>← VOLTAR AO INÍCIO</button>
             <a class="term-btn primary" href="index.html#terminal">INICIAR TREINAMENTO</a>
@@ -283,6 +360,6 @@ docker compose down     # parar e remover tudo</code>
 
 </div>
 <footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="main.js"></script>
+<script src="main.js?v=train-api-6"></script>
 </body>
 </html>
