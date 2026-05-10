@@ -3,12 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="imagens/xpbrowser.png" />
   <title>BuildXP — Build Skills. Gain XP. Ship Code.</title>
   <meta name="description" content="Guia rápido para devs. Cards de referência, trilhas de aprendizado e treino de terminal para Git, Docker, NPM e .NET." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
   <link rel="stylesheet" href="style.css" />
+  <!-- Se abrir o site pelo Live Server noutra porta, define a URL da API ASP.NET: ex. http://localhost:5021 -->
+  <script>window.BUILDXP_API_BASE = window.BUILDXP_API_BASE || '';</script>
 </head>
 <body>
 
@@ -92,8 +95,8 @@
           Clique no botão para começar a aprender Git e GitHub.
         </p>
         <div class="card-actions">
-          <a href="git.html?tab=beginner" class="card-btn btn-primary">▶ COMEÇAR</a>
-          <a href="git.html?tab=ref"      class="card-btn btn-secondary">🎮 CHEAT CODES</a>
+          <a href="card.html?slug=git&tab=beginner" class="card-btn btn-primary">▶ COMEÇAR</a>
+          <a href="card.html?slug=git&tab=ref"      class="card-btn btn-secondary">🎮 CHEAT CODES</a>
         </div>
       </div>
 
@@ -115,8 +118,8 @@
           Clique no botão para começar a aprender Docker.
         </p>
         <div class="card-actions">
-          <a href="docker.html?tab=beginner" class="card-btn btn-primary">▶ COMEÇAR</a>
-          <a href="docker.html?tab=ref"      class="card-btn btn-secondary">🎮 CHEAT CODES</a>
+          <a href="card.html?slug=docker&tab=beginner" class="card-btn btn-primary">▶ COMEÇAR</a>
+          <a href="card.html?slug=docker&tab=ref"      class="card-btn btn-secondary">🎮 CHEAT CODES</a>
         </div>
       </div>
 
@@ -138,8 +141,8 @@
           Clique no botão para começar a aprender NPM e para o que ele serve.
         </p>
         <div class="card-actions">
-          <a href="npm.html?tab=beginner" class="card-btn btn-primary">▶ COMEÇAR</a>
-          <a href="npm.html?tab=ref"      class="card-btn btn-secondary">🎮 CHEAT CODES</a>
+          <a href="card.html?slug=npm&tab=beginner" class="card-btn btn-primary">▶ COMEÇAR</a>
+          <a href="card.html?slug=npm&tab=ref"      class="card-btn btn-secondary">🎮 CHEAT CODES</a>
         </div>
       </div>
 
@@ -161,8 +164,8 @@
           Clique no botão para começar a aprender C# e .NET.
         </p>
         <div class="card-actions">
-          <a href="dotnet.html?tab=beginner" class="card-btn btn-primary">▶ COMEÇAR</a>
-          <a href="dotnet.html?tab=ref"      class="card-btn btn-secondary">🎮 CHEAT CODES</a>
+          <a href="card.html?slug=dotnet&tab=beginner" class="card-btn btn-primary">▶ COMEÇAR</a>
+          <a href="card.html?slug=dotnet&tab=ref"      class="card-btn btn-secondary">🎮 CHEAT CODES</a>
         </div>
       </div>
 
@@ -216,6 +219,6 @@
   <span>BUILD</span>XP — Feito com 💻 e muito café. De dev pra dev.
 </footer>
 
-<script src="main.js?v=train-api-5"></script>
+<script src="main.js?v=train-api-6"></script>
 </body>
 </html>

@@ -26,9 +26,10 @@ public class FeedbackService
             query = query.Where(f => f.Status == status.Value);
         }
 
-        // ordena do mais recente para o mais antigo e executa a query
+        // Mais recente primeiro: data da decisão (histórico) ou criação (pendentes)
         return await query
-            .OrderByDescending(f => f.CriadoEm)
+            .OrderByDescending(f => f.AvaliadoEm ?? f.CriadoEm)
+            .ThenByDescending(f => f.Id)
             .ToListAsync();
     }
 
@@ -40,7 +41,7 @@ public class FeedbackService
     }
 
     // aprova um feedback — torna visível no site
-    public async Task<bool> AprovarAsync(int id)
+    public async Task<bool> AprovarAsync(int id, string moderador)
     {
         // busca o feedback pelo ID
         var feedback = await BuscarPorIdAsync(id);
@@ -56,6 +57,7 @@ public class FeedbackService
         // atualiza o status e a data de avaliação
         feedback.Status = StatusFeedback.Aprovado;
         feedback.AvaliadoEm = DateTime.UtcNow;
+        feedback.ModeradoPor = moderador;
 
         // salva no banco
         await _context.SaveChangesAsync();
@@ -64,7 +66,7 @@ public class FeedbackService
     }
 
     // rejeita um feedback — não aparece no site
-    public async Task<bool> RejeitarAsync(int id)
+    public async Task<bool> RejeitarAsync(int id, string moderador)
     {
         var feedback = await BuscarPorIdAsync(id);
 
@@ -76,6 +78,7 @@ public class FeedbackService
 
         feedback.Status = StatusFeedback.Rejeitado;
         feedback.AvaliadoEm = DateTime.UtcNow;
+        feedback.ModeradoPor = moderador;
 
         await _context.SaveChangesAsync();
 

@@ -72,4 +72,31 @@ public class ColaboradorService
         await _context.SaveChangesAsync();
         return true;
     }
+
+    public async Task<List<ColaboradorResumoDto>> ListarResumoAsync(CancellationToken ct = default) =>
+        await _context.Colaboradores.AsNoTracking()
+            .OrderByDescending(c => c.CriadoEm)
+            .Select(c => new ColaboradorResumoDto(
+                c.Id,
+                c.Email,
+                c.Usuario,
+                c.Ativo,
+                c.AcessoAdministrador))
+            .ToListAsync(ct);
+
+    public async Task<(bool Ok, string? Erro)> DefinirAcessoAdministradorAsync(
+        int id,
+        bool acessoAdministrador,
+        CancellationToken ct = default)
+    {
+        var c = await _context.Colaboradores.FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (c is null)
+            return (false, "Colaborador não encontrado.");
+
+        c.AcessoAdministrador = acessoAdministrador;
+        await _context.SaveChangesAsync(ct);
+        return (true, null);
+    }
 }
+
+public record ColaboradorResumoDto(int Id, string Email, string? Usuario, bool Ativo, bool AcessoAdministrador);

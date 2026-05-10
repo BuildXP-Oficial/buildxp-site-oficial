@@ -19,48 +19,81 @@ public class PerfilController : ControllerBase
         _auth = auth;
     }
 
+    private static bool IsPlataformaAdmin(ClaimsPrincipal user) =>
+        string.Equals(user.FindFirstValue(ClaimTypes.NameIdentifier), "admin", StringComparison.Ordinal);
+
     [HttpGet("me")]
     public async Task<IActionResult> Me(CancellationToken ct)
     {
-        if (User.IsInRole("admin"))
+        if (IsPlataformaAdmin(User))
         {
-            var nome = User.FindFirstValue(ClaimTypes.Name) ?? "Admin";
+            var cfgNome = User.FindFirstValue(ClaimTypes.Name) ?? "Admin";
+            var admin = await _perfil.ObterAdminAsync(ct);
+            if (admin is null)
+            {
+                return Ok(new
+                {
+                    role = "admin",
+                    podeEditarPerfil = false,
+                    podeGerirColaboradores = true,
+                    usuario = cfgNome,
+                    email = (string?)null,
+                    fotoDataUrl = (string?)null,
+                });
+            }
+
             return Ok(new
             {
                 role = "admin",
-                podeEditarPerfil = false,
-                usuario = nome,
-                email = (string?)null,
-                fotoDataUrl = (string?)null,
+                podeEditarPerfil = true,
+                podeGerirColaboradores = true,
+                usuario = admin.Usuario,
+                email = admin.Email,
+                fotoDataUrl = admin.FotoDataUrl,
             });
         }
 
         var id = ColaboradorId;
         if (id is null) return Unauthorized();
 
-        var dto = await _perfil.ObterColaboradorAsync(id.Value, ct);
-        if (dto is null) return NotFound();
+        var colab = await _perfil.ObterColaboradorAsync(id.Value, ct);
+        if (colab is null) return NotFound();
 
         return Ok(new
         {
             role = "colaborador",
             podeEditarPerfil = true,
-            usuario = dto.Usuario,
-            email = dto.Email,
-            fotoDataUrl = dto.FotoDataUrl,
+            podeGerirColaboradores = colab.AcessoAdministrador,
+            acessoAdministrador = colab.AcessoAdministrador,
+            usuario = colab.Usuario,
+            email = colab.Email,
+            fotoDataUrl = colab.FotoDataUrl,
         });
     }
 
     [HttpPut("me")]
     public async Task<IActionResult> Atualizar([FromBody] AtualizarPerfilRequest body, CancellationToken ct)
     {
-        if (User.IsInRole("admin"))
-            return BadRequest(new { message = "Conta de administrador não pode ser alterada aqui." });
+        if (IsPlataformaAdmin(User))
+        {
+            var adminDto = new AtualizarPerfilAdminDto(
+                body.Usuario,
+                body.Email,
+                body.SenhaAtual,
+                body.NovaSenha,
+                body.ConfirmarSenha,
+                body.RemoverFoto,
+                body.FotoBase64,
+                body.FotoMimeType);
+            var (adminOk, adminErro) = await _perfil.AtualizarAdminAsync(adminDto, ct);
+            if (!adminOk) return BadRequest(new { message = adminErro });
+            return Ok(new { message = "Perfil atualizado." });
+        }
 
         var id = ColaboradorId;
         if (id is null) return Unauthorized();
 
-        var dto = new AtualizarPerfilColaboradorDto(
+        var colabDto = new AtualizarPerfilColaboradorDto(
             body.Usuario,
             body.SenhaAtual,
             body.NovaSenha,
@@ -69,8 +102,8 @@ public class PerfilController : ControllerBase
             body.FotoBase64,
             body.FotoMimeType);
 
-        var (ok, erro) = await _perfil.AtualizarColaboradorAsync(id.Value, dto, ct);
-        if (!ok) return BadRequest(new { message = erro });
+        var (colabOk, colabErro) = await _perfil.AtualizarColaboradorAsync(id.Value, colabDto, ct);
+        if (!colabOk) return BadRequest(new { message = colabErro });
 
         var token = await _auth.GerarTokenColaboradorPorIdAsync(id.Value, ct);
         return Ok(new { message = "Perfil atualizado.", token });
@@ -89,6 +122,7 @@ public class PerfilController : ControllerBase
 
 public record AtualizarPerfilRequest(
     string? Usuario,
+    string? Email,
     string? SenhaAtual,
     string? NovaSenha,
     string? ConfirmarSenha,

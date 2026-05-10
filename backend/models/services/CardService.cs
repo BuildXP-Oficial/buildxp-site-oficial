@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using BuildXP.API.Data;
 using BuildXP.API.Models;
 using Microsoft.EntityFrameworkCore;
@@ -22,15 +23,92 @@ public class CardService
             "docker" => "#2496ed",
             "npm" => "#cb3837",
             "dotnet" => "#512bd4",
+            "api" => "#22d3ee",
             _ => "#39d353",
         };
+    }
+
+    /// <summary>Normaliza #rgb ou #rrggbb para #rrggbb minúsculo (limite BD: 7 caracteres).</summary>
+    private static bool TryNormalizeHexColor(string? input, out string normalized)
+    {
+        normalized = string.Empty;
+        if (string.IsNullOrWhiteSpace(input)) return false;
+        var s = input.Trim();
+        if (s.StartsWith("#", StringComparison.Ordinal))
+            s = s[1..];
+        if (s.Length == 3 && Regex.IsMatch(s, "^[0-9a-fA-F]{3}$"))
+        {
+            normalized = $"#{s[0]}{s[0]}{s[1]}{s[1]}{s[2]}{s[2]}".ToLowerInvariant();
+            return true;
+        }
+
+        if (s.Length == 6 && Regex.IsMatch(s, "^[0-9a-fA-F]{6}$"))
+        {
+            normalized = "#" + s.ToLowerInvariant();
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// PostgreSQL / EF aplicam HasMaxLength — URLs longas ou data URLs de ícone quebravam SaveChanges (500).
+    /// Data URL em ícone: não cabe em 512 chars → fallback para logo curto (gravar PNG em wwwroot/imagens/).
+    /// </summary>
+    private static void AplicarLimitesColunasSkillCard(SkillCard card)
+    {
+        static string Clamp(string? s, int maxLen)
+        {
+            if (string.IsNullOrEmpty(s)) return string.Empty;
+            var t = s.Trim();
+            return t.Length <= maxLen ? t : t[..maxLen];
+        }
+
+        static string IconSrcParaBd(string? s)
+        {
+            const int max = 512;
+            const string fallback = "imagens/logo2buildxpret.png";
+            if (string.IsNullOrWhiteSpace(s)) return string.Empty;
+            var t = s.Trim();
+            if (t.StartsWith("data:", StringComparison.OrdinalIgnoreCase) && t.Length > max)
+                return fallback;
+            return t.Length <= max ? t : t[..max];
+        }
+
+        const int maxLen = 512;
+
+        card.Slug = Clamp(card.Slug, 48);
+        card.Theme = string.IsNullOrWhiteSpace(card.Theme) ? "git" : Clamp(card.Theme, 32);
+        card.Titulo = Clamp(card.Titulo, 120);
+        card.Raridade = Clamp(card.Raridade, 32);
+        card.Classe = Clamp(card.Classe, 60);
+        var cb = Clamp(card.CorBorda, 7);
+        card.CorBorda = cb.Length == 7 && cb.StartsWith("#", StringComparison.Ordinal) ? cb : "#39d353";
+        card.LinkBeginner = Clamp(card.LinkBeginner, maxLen);
+        card.LinkRef = Clamp(card.LinkRef, maxLen);
+        card.BtnPrimaryLabel = Clamp(card.BtnPrimaryLabel, 80);
+        card.BtnSecondaryLabel = Clamp(card.BtnSecondaryLabel, 80);
+        card.IconLayout = string.IsNullOrWhiteSpace(card.IconLayout) ? "single" : Clamp(card.IconLayout, 16);
+        card.IconPrimarySrc = IconSrcParaBd(card.IconPrimarySrc);
+        card.IconSecondarySrc = IconSrcParaBd(card.IconSecondarySrc);
+        card.IconPrimaryAlt = Clamp(card.IconPrimaryAlt, 200);
+        card.IconSecondaryAlt = Clamp(card.IconSecondaryAlt, 200);
+        card.Icone = !string.IsNullOrEmpty(card.IconPrimarySrc)
+            ? card.IconPrimarySrc
+            : Clamp(card.Icone, maxLen);
     }
 
     public void AplicarPayload(SkillCard card, CardDashboardPayload p)
     {
         var theme = string.IsNullOrWhiteSpace(p.Theme) ? "git" : p.Theme!.Trim();
         if (!string.IsNullOrWhiteSpace(p.Slug))
-            card.Slug = p.Slug!.Trim().ToLowerInvariant();
+        {
+            var rawSlug = p.Slug.Trim().ToLowerInvariant();
+            if (Regex.IsMatch(rawSlug, @"^\d+$"))
+                throw new InvalidOperationException(
+                    "Slug não pode ser apenas números (colide com a rota /api/card/{id}). Use letras, hífen ou underscore.");
+            card.Slug = rawSlug;
+        }
         card.Theme = theme;
         card.Titulo = (p.DisplayName ?? card.Titulo).Trim();
         if (string.IsNullOrEmpty(card.Titulo) && !string.IsNullOrEmpty(card.Slug))
@@ -54,7 +132,33 @@ public class CardService
         if (p.XpMax is int xpm) card.XpMaximo = xpm;
         if (p.SortOrder is int so) card.Ordem = so;
         if (p.IsPublished is bool pub) card.Ativo = pub;
-        card.CorBorda = CorParaTema(theme);
+        if (TryNormalizeHexColor(p.BorderColor, out var hex))
+            card.CorBorda = hex;
+        else
+            card.CorBorda = CorParaTema(theme);
+
+        // Página pública única (card.html); links vazios ou legado *.html → card.html?slug=…&tab=…
+        if (!string.IsNullOrWhiteSpace(card.Slug))
+        {
+            var sl = card.Slug.Trim().ToLowerInvariant();
+            card.LinkBeginner = CardClientDto.NormalizePublicListLink(card.LinkBeginner, sl, "beginner");
+            card.LinkRef = CardClientDto.NormalizePublicListLink(card.LinkRef, sl, "ref");
+        }
+
+        AplicarLimitesColunasSkillCard(card);
+    }
+
+    private async Task<string> GerarSlugUnicoAsync()
+    {
+        for (var i = 0; i < 40; i++)
+        {
+            var g = Guid.NewGuid().ToString("n");
+            var candidate = $"card-{g}".Length <= 48 ? $"card-{g}" : $"card-{g}"[..48];
+            var taken = await _context.SkillCards.AsNoTracking().AnyAsync(c => c.Slug == candidate);
+            if (!taken) return candidate;
+        }
+
+        throw new InvalidOperationException("Não foi possível gerar um slug único.");
     }
 
     private async Task AssertSlugDisponivelAsync(SkillCard card, CardDashboardPayload payload)
@@ -131,10 +235,13 @@ public class CardService
 
     public async Task<SkillCard> CriarDoPayloadAsync(CardDashboardPayload payload)
     {
+        if (string.IsNullOrWhiteSpace(payload.Slug))
+            payload.Slug = await GerarSlugUnicoAsync();
+
         var card = new SkillCard();
         AplicarPayload(card, payload);
         if (string.IsNullOrWhiteSpace(card.Slug))
-            throw new InvalidOperationException("Slug é obrigatório.");
+            card.Slug = await GerarSlugUnicoAsync();
         card.CriadoEm = DateTime.UtcNow;
         card.AtualizadoEm = DateTime.UtcNow;
         if (card.XpMaximo <= 0) card.XpMaximo = 3000;

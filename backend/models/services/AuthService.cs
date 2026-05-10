@@ -8,18 +8,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BuildXP.API.Services;
 
+public record LoginResult(string Token, bool PodeGerirColaboradores);
+
 public class AuthService
 {
     private readonly IConfiguration _config;
     private readonly AppDbContext _context;
+    private readonly PerfilService _perfil;
 
-    public AuthService(IConfiguration config, AppDbContext context)
+    public AuthService(IConfiguration config, AppDbContext context, PerfilService perfil)
     {
         _config = config;
         _context = context;
+        _perfil = perfil;
     }
 
-    public async Task<string?> LoginAsync(string loginId, string senha, CancellationToken ct = default)
+    public async Task<LoginResult?> LoginAsync(string loginId, string senha, CancellationToken ct = default)
     {
         var lid = loginId.Trim();
         if (string.IsNullOrEmpty(lid) || string.IsNullOrEmpty(senha))
@@ -29,13 +33,35 @@ public class AuthService
         var adminPass = _config["Admin:Senha"] ?? "";
         var adminEmail = (_config["Admin:Email"] ?? "").Trim();
 
-        var passwordMatchesAdmin = senha == adminPass;
-        var loginMatchesAdminUser = string.Equals(lid, adminUser, StringComparison.OrdinalIgnoreCase);
-        var loginMatchesAdminEmail = !string.IsNullOrEmpty(adminEmail) &&
-                                     string.Equals(lid, adminEmail, StringComparison.OrdinalIgnoreCase);
+        // Se existir perfil admin persistido no banco, a senha/username devem vir daí (permite troca de senha/foto no dashboard).
+        AdminPerfil? dbAdmin = null;
+        try
+        {
+            if (await _perfil.EnsureAdminPerfisTableReadyAsync(ct))
+            {
+                dbAdmin = await _context.AdminPerfis.AsNoTracking().OrderBy(x => x.Id).FirstOrDefaultAsync(ct);
+                if (dbAdmin is null)
+                    await TryCriarPerfilAdminInicialAsync(lid, senha, adminUser, adminEmail, adminPass, ct);
+                dbAdmin = await _context.AdminPerfis.AsNoTracking().OrderBy(x => x.Id).FirstOrDefaultAsync(ct);
+            }
+        }
+        catch
+        {
+            dbAdmin = null;
+        }
+
+        var effectiveAdminUser = (dbAdmin?.Usuario ?? adminUser).Trim();
+        var effectiveAdminEmail = (dbAdmin?.Email ?? adminEmail).Trim();
+        var effectiveAdminPass = dbAdmin?.Senha ?? adminPass;
+
+        var passwordMatchesAdmin = senha == effectiveAdminPass;
+        var loginMatchesAdminUser = !string.IsNullOrEmpty(effectiveAdminUser) &&
+                                    string.Equals(lid, effectiveAdminUser, StringComparison.OrdinalIgnoreCase);
+        var loginMatchesAdminEmail = !string.IsNullOrEmpty(effectiveAdminEmail) &&
+                                     string.Equals(lid, effectiveAdminEmail, StringComparison.OrdinalIgnoreCase);
 
         if (passwordMatchesAdmin && (loginMatchesAdminUser || loginMatchesAdminEmail))
-            return GerarTokenAdmin();
+            return new LoginResult(GerarTokenAdmin(effectiveAdminUser), PodeGerirColaboradores: true);
 
         var lower = lid.ToLowerInvariant();
         var colaborador = await _context.Colaboradores
@@ -48,10 +74,57 @@ public class AuthService
         if (colaborador is null || colaborador.Senha != senha)
             return null;
 
-        return GerarTokenColaborador(colaborador);
+        return new LoginResult(
+            GerarTokenColaborador(colaborador),
+            PodeGerirColaboradores: colaborador.AcessoAdministrador);
     }
 
-    private string GerarTokenAdmin()
+    /// <summary>
+    /// Primeiro login com credenciais do appsettings: grava uma linha em AdminPerfis (tabela vazia).
+    /// Colaboradores continuam só por convite (fluxo existente).
+    /// </summary>
+    private async Task TryCriarPerfilAdminInicialAsync(
+        string loginId,
+        string senha,
+        string adminUser,
+        string adminEmail,
+        string adminPass,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(adminUser) || string.IsNullOrEmpty(adminPass))
+            return;
+
+        if (await _context.AdminPerfis.AnyAsync(ct))
+            return;
+
+        var loginOkUser = string.Equals(loginId, adminUser, StringComparison.OrdinalIgnoreCase);
+        var loginOkEmail = !string.IsNullOrEmpty(adminEmail) &&
+                           string.Equals(loginId, adminEmail, StringComparison.OrdinalIgnoreCase);
+        if (!loginOkUser && !loginOkEmail)
+            return;
+
+        if (senha != adminPass)
+            return;
+
+        _context.AdminPerfis.Add(new AdminPerfil
+        {
+            Usuario = adminUser,
+            Email = string.IsNullOrEmpty(adminEmail) ? null : adminEmail,
+            Senha = adminPass,
+            AtualizadoEm = DateTime.UtcNow,
+        });
+
+        try
+        {
+            await _context.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            // corrida: outro pedido já inseriu
+        }
+    }
+
+    private string GerarTokenAdmin(string nomeExibicao)
     {
         var chave = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(_config["Jwt:Chave"]!));
@@ -59,7 +132,9 @@ public class AuthService
         var credenciais = new SigningCredentials(
             chave, SecurityAlgorithms.HmacSha256);
 
-        var nomeAdmin = _config["Admin:Usuario"]!;
+        var nomeAdmin = string.IsNullOrWhiteSpace(nomeExibicao)
+            ? (_config["Admin:Usuario"] ?? "admin").Trim()
+            : nomeExibicao.Trim();
         var claims = new[]
         {
             new Claim(ClaimTypes.Role, "admin"),
@@ -87,13 +162,19 @@ public class AuthService
             chave, SecurityAlgorithms.HmacSha256);
 
         var display = string.IsNullOrWhiteSpace(c.Usuario) ? c.Email : c.Usuario!;
-        var claims = new[]
+        var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Role, "colaborador"),
             new Claim(ClaimTypes.NameIdentifier, c.Id.ToString()),
             new Claim(ClaimTypes.Email, c.Email),
             new Claim(ClaimTypes.Name, display),
         };
+        if (c.AcessoAdministrador)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, "admin"));
+            claims.Add(new Claim(ClaimTypes.Role, "colaborador"));
+        }
+        else
+            claims.Add(new Claim(ClaimTypes.Role, "colaborador"));
 
         var token = new JwtSecurityToken(
             issuer: _config["Jwt:Issuer"],

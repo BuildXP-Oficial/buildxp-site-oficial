@@ -10,6 +10,8 @@ public class Colaborador
     public string? TokenConvite { get; set; }
     public DateTime? TokenExpiraEm { get; set; }
     public bool Ativo { get; set; } = false;
+    /// <summary>Se true, o JWT inclui role <c>admin</c> (painel completo, convites, gestão de acessos).</summary>
+    public bool AcessoAdministrador { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 
     public string? FotoMimeType { get; set; }

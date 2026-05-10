@@ -22,9 +22,9 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
-        var token = await _service.LoginAsync(request.Usuario, request.Senha, ct);
-        if (token is null) return Unauthorized(new { message = "Credenciais inválidas." });
-        return Ok(new { token });
+        var login = await _service.LoginAsync(request.Usuario, request.Senha, ct);
+        if (login is null) return Unauthorized(new { message = "Credenciais inválidas." });
+        return Ok(new { token = login.Token, podeGerirColaboradores = login.PodeGerirColaboradores });
     }
 
     // POST api/auth/recuperar-senha

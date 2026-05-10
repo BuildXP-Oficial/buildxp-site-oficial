@@ -11,6 +11,10 @@ public class CardDashboardPayload
     [JsonPropertyName("theme")]
     public string? Theme { get; set; }
 
+    /// <summary>Cor de destaque (#rgb ou #rrggbb). Se inválida ou omitida, deriva do tema preset.</summary>
+    [JsonPropertyName("border_color")]
+    public string? BorderColor { get; set; }
+
     [JsonPropertyName("rarity_label")]
     public string? RarityLabel { get; set; }
 

@@ -18,6 +18,7 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
     public DbSet<ReferenciaRapida> ReferenciasRapidas { get; set; }
     public DbSet<RecuperacaoSenha> RecuperacoesSenha { get; set; }
     public DbSet<Colaborador> Colaboradores { get; set; }
+    public DbSet<AdminPerfil> AdminPerfis { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -28,6 +29,7 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
         {
             entity.Property(f => f.Nome).HasMaxLength(100);
             entity.Property(f => f.Mensagem).HasMaxLength(1000);
+            entity.Property(f => f.ModeradoPor).HasMaxLength(120);
         });
 
         // SkillCard
@@ -55,12 +57,17 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
                 .HasFilter("\"Slug\" <> ''");
         });
 
-        // ReferenciaRapida
+        // ReferenciaRapida — FK real na coluna CardId (SkillCardId na BD é legado / não usado pelo modelo)
         modelBuilder.Entity<ReferenciaRapida>(entity =>
         {
             entity.Property(r => r.Comando).HasMaxLength(200);
             entity.Property(r => r.Descricao).HasMaxLength(200);
             entity.Property(r => r.Categoria).HasMaxLength(50);
+            entity.HasOne<SkillCard>()
+                .WithMany(c => c.Referencias)
+                .HasForeignKey(r => r.CardId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(r => r.CardId);
         });
 
         modelBuilder.Entity<Colaborador>(entity =>
@@ -72,6 +79,16 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
             entity.HasIndex(c => c.Usuario)
                 .IsUnique()
                 .HasFilter("\"Usuario\" IS NOT NULL");
+        });
+
+        modelBuilder.Entity<AdminPerfil>(entity =>
+        {
+            entity.ToTable("AdminPerfis");
+            entity.Property(a => a.Usuario).HasMaxLength(80);
+            entity.Property(a => a.Email).HasMaxLength(320);
+            entity.Property(a => a.Senha).HasMaxLength(500);
+            entity.Property(a => a.FotoMimeType).HasMaxLength(64);
+            entity.HasIndex(a => a.Usuario).IsUnique();
         });
 
     }

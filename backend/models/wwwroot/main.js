@@ -346,6 +346,20 @@ function initSearch() {
     return score;
   };
 
+  const syncRefEmpty = () => {
+    const emptyEl = document.getElementById('ref-empty');
+    if (!emptyEl) return;
+    const root = emptyEl.closest('#ref') ?? document.getElementById('ref');
+    if (!root) return;
+    const total = root.querySelectorAll('.cmd-item').length;
+    if (total === 0) {
+      emptyEl.hidden = false;
+      return;
+    }
+    const anyShown = [...root.querySelectorAll('.cmd-item')].some((el) => el.style.display !== 'none');
+    emptyEl.hidden = anyShown;
+  };
+
   const apply = () => {
     const tokens = tokenize(search.value);
     items.forEach(it => {
@@ -357,6 +371,7 @@ function initSearch() {
       const visible = [...sec.querySelectorAll('.cmd-item')].some(i => i.style.display !== 'none');
       sec.style.display = visible ? '' : 'none';
     });
+    syncRefEmpty();
   };
 
   search.addEventListener('input', apply);
@@ -1387,15 +1402,19 @@ function getBuildXpApiBase() {
   return '';
 }
 
-/** Slug do card de treino (git, docker, …) a partir do URL ou `window.BUILDXP_TRAINING_CARD_SLUG`. */
+/** Slug do card de treino a partir de `{slug}.html` no URL ou `window.BUILDXP_TRAINING_CARD_SLUG`. */
 function buildxpTrainingSlugFromPath() {
   const custom =
     typeof window.BUILDXP_TRAINING_CARD_SLUG === 'string' ? window.BUILDXP_TRAINING_CARD_SLUG.trim() : '';
   if (custom) return custom.toLowerCase();
   try {
     const name = (window.location.pathname || '').split('/').pop() || '';
-    const m = name.match(/^(git|docker|npm|dotnet)\.html$/i);
-    return m ? m[1].toLowerCase() : '';
+    const m = name.match(/^([a-z0-9][a-z0-9-]{0,47})\.html$/i);
+    if (!m) return '';
+    const slug = m[1].toLowerCase();
+    const reserved = new Set(['index', 'dashboard', 'feedback']);
+    if (reserved.has(slug)) return '';
+    return slug;
   } catch (_) {
     return '';
   }
@@ -1519,6 +1538,58 @@ const BUILDXP_INDEX_CARD_DEFS = [
   { id: 4, slug: 'dotnet', theme: 'dotnet', label: '.NET / dotnet', page: 'dotnet.html' },
 ];
 const BUILDXP_INDEX_SLUGS = BUILDXP_INDEX_CARD_DEFS.map((c) => c.slug);
+/** Hex por tema preset — mesmo mapa que CardService.CorParaTema no backend. */
+const BUILDXP_THEME_PRESET_HEX = Object.freeze({
+  git: '#39d353',
+  docker: '#2496ed',
+  npm: '#cb3837',
+  dotnet: '#512bd4',
+  api: '#22d3ee',
+});
+
+function buildxpNormalizeHexColor(raw) {
+  if (raw == null || raw === '') return null;
+  let s = String(raw).trim();
+  if (!s.startsWith('#')) s = `#${s}`;
+  const h = s.slice(1);
+  if (/^[0-9a-fA-F]{3}$/.test(h)) {
+    const a = h[0];
+    const b = h[1];
+    const c = h[2];
+    return `#${a}${a}${b}${b}${c}${c}`.toLowerCase();
+  }
+  if (/^[0-9a-fA-F]{6}$/.test(h)) return `#${h.toLowerCase()}`;
+  return null;
+}
+
+function buildxpPresetHexForTheme(themeRaw) {
+  const t = String(themeRaw ?? 'git').trim().toLowerCase();
+  return BUILDXP_THEME_PRESET_HEX[t] || BUILDXP_THEME_PRESET_HEX.git;
+}
+
+/** URL dos botões do index / API — sempre card.html (conteúdo via API + fallback estático). */
+function buildxpPublicCardHref(slug, tab) {
+  const s = String(slug || '').trim().toLowerCase();
+  const t = tab === 'ref' ? 'ref' : 'beginner';
+  return `card.html?slug=${encodeURIComponent(s)}&tab=${t}`;
+}
+
+/** Migra links antigos tipo integrandoumaapi.html?tab=… para card.html?slug=… (slug do card é a fonte de verdade). */
+function buildxpNormalizeLegacyCardListHref(href, slug, tab) {
+  const sl = String(slug || '').trim().toLowerCase();
+  const t = tab === 'ref' ? 'ref' : 'beginner';
+  const fallback = sl ? `card.html?slug=${encodeURIComponent(sl)}&tab=${t}` : '';
+  let l = String(href || '').trim();
+  if (l.startsWith('./')) l = l.slice(2);
+  l = l.replace(/^\/+/, '');
+  if (!l) return fallback;
+  if (/^card\.html/i.test(l)) return String(href || '').trim();
+  if (l.includes('://')) return String(href || '').trim();
+  if (/^[a-z0-9][a-z0-9_-]*\.html([\?#][^\s]*)?$/i.test(l))
+    return sl ? `card.html?slug=${encodeURIComponent(sl)}&tab=${t}` : String(href || '').trim();
+  return String(href || '').trim();
+}
+
 const BUILDXP_WIZ_DRAFT_KEY = 'buildxp_card_wizard_drafts';
 
 function dashNewSlideId() {
@@ -1540,8 +1611,8 @@ const INDEX_CARD_STATIC_DEFAULTS = {
     xp_current: 2400,
     xp_max: 3000,
     sort_order: 0,
-    link_beginner: 'git.html?tab=beginner',
-    link_ref: 'git.html?tab=ref',
+    link_beginner: 'card.html?slug=git&tab=beginner',
+    link_ref: 'card.html?slug=git&tab=ref',
     btn_primary_label: '▶ COMEÇAR',
     btn_secondary_label: '🎮 CHEAT CODES',
     description_html:
@@ -1562,8 +1633,8 @@ const INDEX_CARD_STATIC_DEFAULTS = {
     xp_current: 1800,
     xp_max: 3000,
     sort_order: 1,
-    link_beginner: 'docker.html?tab=beginner',
-    link_ref: 'docker.html?tab=ref',
+    link_beginner: 'card.html?slug=docker&tab=beginner',
+    link_ref: 'card.html?slug=docker&tab=ref',
     btn_primary_label: '▶ COMEÇAR',
     btn_secondary_label: '🎮 CHEAT CODES',
     description_html:
@@ -1584,8 +1655,8 @@ const INDEX_CARD_STATIC_DEFAULTS = {
     xp_current: 1200,
     xp_max: 3000,
     sort_order: 2,
-    link_beginner: 'npm.html?tab=beginner',
-    link_ref: 'npm.html?tab=ref',
+    link_beginner: 'card.html?slug=npm&tab=beginner',
+    link_ref: 'card.html?slug=npm&tab=ref',
     btn_primary_label: '▶ COMEÇAR',
     btn_secondary_label: '🎮 CHEAT CODES',
     description_html:
@@ -1606,8 +1677,8 @@ const INDEX_CARD_STATIC_DEFAULTS = {
     xp_current: 900,
     xp_max: 3000,
     sort_order: 3,
-    link_beginner: 'dotnet.html?tab=beginner',
-    link_ref: 'dotnet.html?tab=ref',
+    link_beginner: 'card.html?slug=dotnet&tab=beginner',
+    link_ref: 'card.html?slug=dotnet&tab=ref',
     btn_primary_label: '▶ COMEÇAR',
     btn_secondary_label: '🎮 CHEAT CODES',
     description_html:
@@ -1714,12 +1785,13 @@ function dashResolveTrainingHtmlBase() {
 }
 
 async function dashFetchParsedSlidesOnly(slug) {
+  if (!slug || !/^[a-z0-9][a-z0-9-]{0,47}$/.test(String(slug))) return [];
   const def = BUILDXP_INDEX_CARD_DEFS.find((d) => d.slug === slug);
-  if (!def) return [];
+  const page = def ? def.page : `${slug}.html`;
   const base = dashResolveTrainingHtmlBase();
   if (!base) return [];
   try {
-    const pageUrl = new URL(def.page.replace(/^\//, ''), `${base}/`).href;
+    const pageUrl = new URL(page.replace(/^\//, ''), `${base}/`).href;
     const res = await fetch(pageUrl, {
       credentials: 'same-origin',
       cache: 'no-store',
@@ -1777,13 +1849,18 @@ async function dashTryLoadSlidesFromPublicCardApi(slug) {
       const titulo = String(s.titulo ?? s.Titulo ?? '');
       const desc = String(s.descricao ?? s.Descricao ?? '');
       if (titulo === BUILDXP_SLIDE_PAUSE_TITULO || titulo.trim() === '') {
-        return { id: dashNewSlideId(), type: 'pause', text: desc, observation: '' };
+        return {
+          id: dashNewSlideId(),
+          type: 'pause',
+          text: dashNormalizeSlideBoldTags(desc),
+          observation: '',
+        };
       }
       return {
         id: dashNewSlideId(),
         type: 'content',
         title: titulo.trim(),
-        text: desc,
+        text: dashNormalizeSlideBoldTags(desc),
         commands: '',
         observation: '',
       };
@@ -1835,19 +1912,29 @@ function buildxpNormalizeHomeCardFromDto(raw) {
   const published = raw.is_published ?? raw.IsPublished;
   if (published === false) return null;
   const themeRaw = String(raw.theme ?? 'git').toLowerCase();
-  const theme = ['docker', 'npm', 'dotnet'].includes(themeRaw) ? themeRaw : 'git';
+  const theme = ['docker', 'npm', 'dotnet', 'api'].includes(themeRaw) ? themeRaw : 'git';
   const xpMax = Math.max(1, Number(raw.xp_max ?? raw.xpMax ?? 3000));
   const xpCurrent = Math.max(0, Number(raw.xp_current ?? raw.xpCurrent ?? 0));
+  const border_color =
+    buildxpNormalizeHexColor(raw.border_color ?? raw.BorderColor ?? raw.cor_borda) ??
+    buildxpPresetHexForTheme(themeRaw);
   return {
     slug,
     theme,
+    border_color,
     display_name: String(raw.display_name ?? raw.DisplayName ?? slug),
     rarity_label: String(raw.rarity_label ?? raw.RarityLabel ?? ''),
     card_class: String(raw.card_class ?? raw.CardClass ?? ''),
     description_html: String(raw.description_html ?? raw.DescriptionHtml ?? ''),
     link_beginner:
-      String(raw.link_beginner ?? raw.LinkBeginner ?? '').trim() || `${slug}.html?tab=beginner`,
-    link_ref: String(raw.link_ref ?? raw.LinkRef ?? '').trim() || `${slug}.html?tab=ref`,
+      buildxpNormalizeLegacyCardListHref(
+        String(raw.link_beginner ?? raw.LinkBeginner ?? '').trim(),
+        slug,
+        'beginner',
+      ) || buildxpPublicCardHref(slug, 'beginner'),
+    link_ref:
+      buildxpNormalizeLegacyCardListHref(String(raw.link_ref ?? raw.LinkRef ?? '').trim(), slug, 'ref') ||
+      buildxpPublicCardHref(slug, 'ref'),
     btn_primary_label: String(raw.btn_primary_label ?? raw.BtnPrimaryLabel ?? '▶ COMEÇAR'),
     btn_secondary_label: String(raw.btn_secondary_label ?? raw.BtnSecondaryLabel ?? '🎮 CHEAT CODES'),
     icon_layout: String(raw.icon_layout ?? raw.IconLayout ?? 'single').toLowerCase(),
@@ -1879,6 +1966,7 @@ function buildxpRenderIndexCardEl(c) {
   const wrap = document.createElement('div');
   wrap.className = `card c-${tileTheme}`;
   wrap.dataset.cardSlug = c.slug;
+  if (c.border_color) wrap.style.setProperty('--cc', c.border_color);
   wrap.innerHTML = `
     <span class="card-rarity">${dashEscapeHtml(c.rarity_label || '—')}</span>
     ${iconHtml}
@@ -2132,10 +2220,62 @@ function dashEscapeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
+/** &lt;b&gt; → &lt;strong&gt; (execCommand / Word); negrito inline alinhado ao site estático. */
+function dashNormalizeSlideBoldTags(html) {
+  return String(html ?? '')
+    .replace(/<\/b>/gi, '</strong>')
+    .replace(/<b(\s[^>]*)?>/gi, '<strong$1>');
+}
+
+/** Em HTML de slide, newlines do editor entre tags viram quebra feia; colapsa só quando há tags. */
+function dashCollapseNewlinesInSlideHtmlIfTagged(s) {
+  const t = String(s ?? '').trim();
+  if (!t || !/<[a-z][\s\S]*>/i.test(t)) return t;
+  return t.replace(/\r\n|\r|\n/g, ' ');
+}
+
+/** Envolve a seleção do textarea com etiquetas (negrito &lt;strong&gt;, inline). */
+function dashTextareaWrapSelection(textarea, openTag, closeTag, placeholder) {
+  const ta = textarea;
+  if (!ta || ta.tagName !== 'TEXTAREA') return;
+  const ph = placeholder ?? 'texto';
+  const start = typeof ta.selectionStart === 'number' ? ta.selectionStart : 0;
+  const end = typeof ta.selectionEnd === 'number' ? ta.selectionEnd : start;
+  const v = ta.value;
+  const sel = v.slice(start, end);
+  const inner = sel || ph;
+  const insertion = openTag + inner + closeTag;
+  ta.value = v.slice(0, start) + insertion + v.slice(end);
+  const innerStart = start + openTag.length;
+  const innerEnd = innerStart + inner.length;
+  ta.selectionStart = innerStart;
+  ta.selectionEnd = innerEnd;
+  ta.focus();
+  ta.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function dashBindSlideStrongToolbar(wrapEl) {
+  if (!wrapEl) return;
+  wrapEl.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.dash-slide-fmt-strong');
+    if (!btn || !wrapEl.contains(btn)) return;
+    ev.preventDefault();
+    const pane = btn.closest('[data-ipane="text"]');
+    const ta = pane
+      ? pane.querySelector('textarea[data-f="text"]')
+      : wrapEl.querySelector('textarea[data-f="text"]');
+    if (ta) dashTextareaWrapSelection(ta, '<strong>', '</strong>', 'texto');
+  });
+}
+
 /** Junta texto, comandos e observação num único HTML guardado em `Slide.Descricao` (a BD só tem Titulo+Descricao). */
 function dashComposeContentSlideDescricaoForApi(slide) {
   const parts = [];
-  if (slide.text?.trim()) parts.push(slide.text.trim());
+  if (slide.text?.trim()) {
+    parts.push(
+      dashCollapseNewlinesInSlideHtmlIfTagged(dashNormalizeSlideBoldTags(slide.text.trim())),
+    );
+  }
   if (slide.commands?.trim()) {
     const codeEsc = dashEscapeHtml(slide.commands.trim());
     parts.push(
@@ -2143,21 +2283,26 @@ function dashComposeContentSlideDescricaoForApi(slide) {
     );
   }
   if (slide.observation?.trim()) {
-    parts.push(`<div class="callout callout-tip">${slide.observation.trim()}</div>`);
+    parts.push(
+      `<div class="callout callout-tip">${dashCollapseNewlinesInSlideHtmlIfTagged(dashNormalizeSlideBoldTags(slide.observation.trim()))}</div>`,
+    );
   }
-  return parts.join('\n');
+  /* '' evita texto final + cmd-block ficarem como nós texto \\n fictícios (quebras falsas na UI) */
+  return parts.join('');
 }
 
 function dashComposePauseDescricaoForApi(slide) {
   const parts = [];
   if (slide.text?.trim()) {
-    const t = slide.text.trim();
+    const t = dashCollapseNewlinesInSlideHtmlIfTagged(dashNormalizeSlideBoldTags(slide.text.trim()));
     parts.push(/<[a-z][\s\S]*>/i.test(t) ? t : `<div class="step-desc">${t}</div>`);
   }
   if (slide.observation?.trim()) {
-    parts.push(`<div class="callout callout-tip">${slide.observation.trim()}</div>`);
+    parts.push(
+      `<div class="callout callout-tip">${dashCollapseNewlinesInSlideHtmlIfTagged(dashNormalizeSlideBoldTags(slide.observation.trim()))}</div>`,
+    );
   }
-  return parts.join('\n') || '<div class="step-desc"></div>';
+  return parts.join('') || '<div class="step-desc"></div>';
 }
 
 /** Corpo JSON para POST slide na API (campos que o modelo `Slide` persiste). */
@@ -2188,19 +2333,37 @@ function buildWizCardPayloadForApi(slug, meta, themeRaw) {
       .trim()
       .toLowerCase()
       .replace(/[^a-z]/g, '') || 'git';
-  const iconPri = meta.iconDataUrl || 'imagens/logo2buildxpret.png';
+  const wizHex = buildxpNormalizeHexColor(document.getElementById('dash-wiz-border-hex')?.value);
+  const border_color = wizHex ?? buildxpPresetHexForTheme(themeRaw);
+  // BD: máx. 512 chars — priorizar caminho do upload; data URL longa não serve.
+  const fromPath = String(meta.iconPath || '').trim();
+  const rawIcon =
+    fromPath ||
+    (meta.iconDataUrl && String(meta.iconDataUrl).trim().startsWith('data:')
+      ? ''
+      : String(meta.iconDataUrl || '').trim());
+  const iconPri = String(rawIcon || '').trim() || 'imagens/logo2buildxpret.png';
   const desc = meta.desc || '';
   const description_html =
     !desc ? '<p></p>' : /<[a-z][\s\S]*>/i.test(desc) ? desc : `<p>${dashEscapeHtml(desc).replace(/\n/g, '<br>')}</p>`;
+  const slugNorm =
+    slug && String(slug).trim()
+      ? String(slug)
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9_-]/g, '')
+          .slice(0, 48)
+      : null;
   return {
-    slug,
+    slug: slugNorm,
     theme,
+    border_color,
     rarity_label: meta.badge,
     card_class: meta.cardClass,
     display_name: meta.title,
     description_html,
-    link_beginner: `${slug}.html?tab=beginner`,
-    link_ref: `${slug}.html?tab=ref`,
+    link_beginner: slugNorm ? buildxpPublicCardHref(slugNorm, 'beginner') : '',
+    link_ref: slugNorm ? buildxpPublicCardHref(slugNorm, 'ref') : '',
     xp_current: meta.xpCurrent,
     xp_max: meta.xpMax,
     sort_order: 10,
@@ -2208,7 +2371,7 @@ function buildWizCardPayloadForApi(slug, meta, themeRaw) {
     btn_secondary_label: '🎮 CHEAT CODES',
     icon_layout: 'single',
     icon_primary_src: iconPri,
-    icon_primary_alt: meta.title || slug,
+    icon_primary_alt: meta.title || slugNorm || 'Card',
     icon_secondary_src: null,
     icon_secondary_alt: '',
     is_published: true,
@@ -2229,6 +2392,18 @@ function dashNormalizeFeedbackStatus(raw) {
   return 'pending';
 }
 
+/** Data da decisão (<code>AvaliadoEm</code>) para <code>fmtDate</code>. */
+function dashFeedbackIsoDate(raw) {
+  const v = raw?.avaliadoEm ?? raw?.AvaliadoEm ?? '';
+  if (v == null || v === '') return '';
+  try {
+    const d = new Date(v);
+    return Number.isNaN(d.getTime()) ? String(v) : d.toISOString();
+  } catch (_) {
+    return String(v);
+  }
+}
+
 function dashNormalizePending(raw) {
   const id = raw.id ?? raw.Id ?? raw.uuid;
   if (id === undefined || id === null) return null;
@@ -2246,6 +2421,8 @@ function dashNormalizePending(raw) {
   }
   if (!kind) kind = '—';
   const createdAt = raw.created_at ?? raw.createdAt ?? raw.criadoEm ?? '';
+  const moderatedBy = status === 'pending' ? '' : String(raw.moderadoPor ?? raw.ModeradoPor ?? '').trim();
+  const moderatedAt = status === 'pending' ? '' : dashFeedbackIsoDate(raw);
   return {
     id: String(id),
     name,
@@ -2253,6 +2430,8 @@ function dashNormalizePending(raw) {
     msg,
     createdAt,
     status,
+    moderatedBy,
+    moderatedAt,
   };
 }
 
@@ -2269,6 +2448,9 @@ function dashNormalizeCard(raw) {
     display_name: display || '—',
     theme: raw.theme ?? '',
     rarity: raw.rarity_label ?? raw.rarity ?? '',
+    border_color:
+      buildxpNormalizeHexColor(raw.border_color ?? raw.BorderColor ?? raw.cor_borda) ??
+      buildxpPresetHexForTheme(raw.theme),
   };
 }
 
@@ -2277,14 +2459,28 @@ function dashApplyCardToForm(raw) {
   const el = (id) => document.getElementById(id);
   el('dash-card-slug').value = raw.slug ?? '';
   el('dash-card-theme').value = raw.theme ?? 'git';
+  const cardAccentHex =
+    buildxpNormalizeHexColor(raw.border_color ?? raw.BorderColor ?? raw.cor_borda) ??
+    buildxpPresetHexForTheme(raw.theme ?? el('dash-card-theme').value);
+  const cardPicker = el('dash-card-border-picker');
+  const cardHexInp = el('dash-card-border-hex');
+  if (cardPicker) cardPicker.value = cardAccentHex;
+  if (cardHexInp) cardHexInp.value = cardAccentHex;
   el('dash-card-display').value = raw.display_name ?? raw.displayName ?? '';
   el('dash-card-rarity').value = raw.rarity_label ?? raw.rarity ?? '';
   el('dash-card-class').value = raw.card_class ?? raw.cardClass ?? '';
   el('dash-card-xpc').value = raw.xp_current ?? raw.xpCurrent ?? 0;
   el('dash-card-xpm').value = raw.xp_max ?? raw.xpMax ?? 3000;
   el('dash-card-sort').value = raw.sort_order ?? raw.sortOrder ?? 0;
-  el('dash-card-link-b').value = raw.link_beginner ?? raw.linkBeginner ?? '';
-  el('dash-card-link-r').value = raw.link_ref ?? raw.linkRef ?? '';
+  const slugForLinks = String(el('dash-card-slug').value || raw.slug || '')
+    .trim()
+    .toLowerCase();
+  const lb = String(raw.link_beginner ?? raw.linkBeginner ?? '').trim();
+  const lr = String(raw.link_ref ?? raw.linkRef ?? '').trim();
+  el('dash-card-link-b').value =
+    lb || (slugForLinks ? buildxpPublicCardHref(slugForLinks, 'beginner') : '');
+  el('dash-card-link-r').value =
+    lr || (slugForLinks ? buildxpPublicCardHref(slugForLinks, 'ref') : '');
   el('dash-card-btn1').value = raw.btn_primary_label ?? raw.btnPrimaryLabel ?? '';
   el('dash-card-btn2').value = raw.btn_secondary_label ?? raw.btnSecondaryLabel ?? '';
   el('dash-card-desc').value = raw.description_html ?? raw.descriptionHtml ?? '';
@@ -2295,6 +2491,50 @@ function dashApplyCardToForm(raw) {
   el('dash-card-icon-sec-alt').value = raw.icon_secondary_alt ?? raw.iconSecondaryAlt ?? '';
   const pub = raw.is_published ?? raw.isPublished ?? true;
   el('dash-card-published').checked = pub !== false;
+  syncDashCardIconPreviewFromInput();
+}
+
+let dashCardIconObjectUrl = null;
+
+function revokeDashCardIconPreviewUrl() {
+  if (dashCardIconObjectUrl) {
+    URL.revokeObjectURL(dashCardIconObjectUrl);
+    dashCardIconObjectUrl = null;
+  }
+}
+
+function resetDashCardIconFileUi() {
+  revokeDashCardIconPreviewUrl();
+  const fi = document.getElementById('dash-card-icon-file');
+  if (fi) fi.value = '';
+}
+
+function dashSetCardIconPathReadout(text) {
+  const out = document.getElementById('dash-card-icon-path-readout');
+  if (!out) return;
+  const t = String(text || '').trim();
+  out.textContent = t ? `Guardado no servidor: ${t}` : '';
+}
+
+function syncDashCardIconPreviewFromInput() {
+  const img = document.getElementById('dash-card-icon-preview');
+  const pri = document.getElementById('dash-card-icon-pri')?.value?.trim();
+  if (!img) return;
+  revokeDashCardIconPreviewUrl();
+  img.onload = () => {
+    img.style.display = 'block';
+  };
+  img.onerror = () => {
+    img.style.display = 'none';
+  };
+  if (!pri) {
+    img.style.display = 'none';
+    img.removeAttribute('src');
+    dashSetCardIconPathReadout('');
+    return;
+  }
+  dashSetCardIconPathReadout(pri);
+  img.src = pri;
 }
 
 function getDashApiPath(key) {
@@ -2304,6 +2544,8 @@ function getDashApiPath(key) {
     validateRecoveryCode: '/api/auth/validar-codigo-recuperacao',
     resetPassword: '/api/auth/redefinir-senha',
     inviteCollaborator: '/api/Colaborador/convidar',
+    colaboradorList: '/api/Colaborador',
+    uploadCardIcon: '/api/Card/upload-icon',
     perfilMe: '/api/Perfil/me',
     perfilPut: '/api/Perfil/me',
   };
@@ -2311,17 +2553,118 @@ function getDashApiPath(key) {
   return p[key] || defaults[key] || '';
 }
 
+/** Envia imagem para <code>wwwroot/imagens/</code> e devolve caminho relativo (ex.: <code>imagens/foo.png</code>). */
+async function dashUploadCardIconFile(file) {
+  if (!file) return null;
+  const fd = new FormData();
+  fd.append('file', file);
+  const path = getDashApiPath('uploadCardIcon') || '/api/Card/upload-icon';
+  const r = await dashFetchNoThrow(path, { method: 'POST', body: fd });
+  if (!r.ok || !r.data || typeof r.data !== 'object') return null;
+  const p = r.data.path ?? r.data.Path;
+  return typeof p === 'string' && p.trim() ? p.trim() : null;
+}
+
+/** Lista colaboradores e controlos de acesso (só admin da plataforma; colaborador elevado convida mas não vê a tabela). */
+async function loadDashColaboradoresList() {
+  const wrap = document.getElementById('dash-collab-table-wrap');
+  const st = document.getElementById('dash-collab-list-status');
+  if (!wrap) return;
+  if (!getDashIsPlataformaAdmin()) {
+    wrap.innerHTML = '';
+    if (st) {
+      st.textContent = '';
+      st.classList.remove('ok', 'bad');
+    }
+    return;
+  }
+  if (st) {
+    st.textContent = '';
+    st.classList.remove('ok', 'bad');
+  }
+  const baseList = getDashApiPath('colaboradorList') || '/api/Colaborador';
+  const r = await dashFetchNoThrow(baseList, { method: 'GET' });
+  if (!r.ok) {
+    if (st) {
+      st.textContent =
+        r.status === 401
+          ? 'Sem autorização para listar colaboradores.'
+          : 'Não foi possível carregar a lista.';
+      st.classList.add('bad');
+    }
+    wrap.innerHTML = '';
+    return;
+  }
+  const rows = Array.isArray(r.data) ? r.data : [];
+  if (rows.length === 0) {
+    wrap.innerHTML = '<p class="dash-muted dash-collab-empty">Nenhum colaborador registado.</p>';
+    return;
+  }
+  let html =
+    '<table class="dash-collab-table dash-collab-table--usuarios" role="grid">' +
+    '<colgroup>' +
+    '<col class="dash-collab-col dash-collab-col--email" />' +
+    '<col class="dash-collab-col dash-collab-col--user" />' +
+    '<col class="dash-collab-col dash-collab-col--estado" />' +
+    '<col class="dash-collab-col dash-collab-col--acesso" />' +
+    '</colgroup>' +
+    '<thead><tr>' +
+    '<th scope="col">E-mail</th>' +
+    '<th scope="col">Username</th>' +
+    '<th scope="col">Estado da conta</th>' +
+    '<th scope="col">Permissão no painel</th>' +
+    '</tr></thead><tbody>';
+  for (const row of rows) {
+    const id = row.id ?? row.Id;
+    const email = row.email ?? row.Email ?? '';
+    const usuario = row.usuario ?? row.Usuario ?? '';
+    const ativo = !!(row.ativo ?? row.Ativo);
+    const adm = !!(row.acessoAdministrador ?? row.AcessoAdministrador);
+    const estado = ativo
+      ? '<span class="dash-badge dash-badge--ok">Ativo</span>'
+      : '<span class="dash-badge dash-badge--pending">Convite</span>';
+    const nivelTitulo = adm ? 'Administrador do painel' : 'Colaborador';
+    const toggleId = `dash-collab-acesso-${id}`;
+    html += `<tr class="dash-collab-row" data-dash-colab-id="${id}">
+      <td class="dash-collab-td dash-collab-td--email"><span class="dash-collab-email">${dashEscapeHtml(String(email))}</span></td>
+      <td class="dash-collab-td dash-collab-td--user">${usuario ? `<span class="dash-collab-user">${dashEscapeHtml(String(usuario))}</span>` : '<span class="dash-collab-dash">—</span>'}</td>
+      <td class="dash-collab-td dash-collab-td--estado"><span class="dash-collab-estado-cell">${estado}</span></td>
+      <td class="dash-collab-td dash-collab-td--acesso">
+        <div class="dash-collab-acesso-cell">
+          <div class="dash-collab-acesso-nivel">
+            <span class="dash-collab-role-chip ${adm ? 'dash-collab-role-chip--admin' : 'dash-collab-role-chip--colab'}">${dashEscapeHtml(nivelTitulo)}</span>
+          </div>
+          <div class="dash-collab-acesso-switchrow">
+            <div class="dash-collab-acesso-switchrow-text">
+              <span class="dash-collab-acesso-switchrow-title">Administrador do painel</span>
+            </div>
+            <label class="dash-switch dash-switch--table" for="${toggleId}" title="Ativar ou desativar administrador do painel para esta conta">
+              <input type="checkbox" class="dash-collab-acesso-toggle" id="${toggleId}" data-dash-colab-id="${id}" ${
+      adm ? 'checked' : ''
+    } aria-label="Administrador do painel para ${dashEscapeHtml(String(email))}" />
+              <span class="dash-switch-slider" aria-hidden="true"></span>
+            </label>
+          </div>
+        </div>
+      </td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
 async function dashFetchNoThrow(path, options = {}) {
   const base = getBuildXpApiBase();
   const url = `${base}${path}`;
   const token = getToken(); // pega o JWT salvo no login
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
 
   try {
     const res = await fetch(url, {
       credentials: 'include',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         // envia o token JWT em toda requisição
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(options.headers || {}),
@@ -2344,9 +2687,119 @@ async function dashFetchNoThrow(path, options = {}) {
 // ── TOKEN JWT ────────────────────────────────────────────────
 // guarda o token JWT na sessão para enviar em todas as requisições
 const BUILDXP_JWT_KEY = 'buildxp_jwt';
-function getToken()       { try { return sessionStorage.getItem(BUILDXP_JWT_KEY) || ''; } catch(_) { return ''; } }
-function saveToken(t)     { try { sessionStorage.setItem(BUILDXP_JWT_KEY, t); } catch(_) {} }
-function removeToken()    { try { sessionStorage.removeItem(BUILDXP_JWT_KEY); } catch(_) {} }
+const BUILDXP_DASH_PODE_GERIR_KEY = 'buildxp_dash_pode_gerir_colaboradores';
+const BUILDXP_DASH_IS_PLATAFORMA_ADMIN_KEY = 'buildxp_dash_is_plataforma_admin';
+
+function getToken() {
+  try {
+    return sessionStorage.getItem(BUILDXP_JWT_KEY) || '';
+  } catch (_) {
+    return '';
+  }
+}
+function saveToken(t) {
+  try {
+    sessionStorage.setItem(BUILDXP_JWT_KEY, t);
+  } catch (_) {}
+}
+function removeToken() {
+  try {
+    sessionStorage.removeItem(BUILDXP_JWT_KEY);
+    sessionStorage.removeItem(BUILDXP_DASH_PODE_GERIR_KEY);
+    sessionStorage.removeItem(BUILDXP_DASH_IS_PLATAFORMA_ADMIN_KEY);
+  } catch (_) {}
+}
+
+/** Payload JWT (sem validar assinatura — só para UI do dashboard). */
+function dashParseJwtPayload(token) {
+  try {
+    const parts = String(token || '').split('.');
+    if (parts.length !== 3) return null;
+    const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const pad = b64.length % 4 === 0 ? '' : '='.repeat(4 - (b64.length % 4));
+    const json = atob(b64 + pad);
+    const o = JSON.parse(json);
+    return o && typeof o === 'object' ? o : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function dashJwtPayloadHasAdminRole(payload) {
+  if (!payload) return false;
+  const roles = [];
+  for (const k of Object.keys(payload)) {
+    const lk = k.toLowerCase();
+    if (lk === 'role' || lk.endsWith('/role')) {
+      const v = payload[k];
+      if (Array.isArray(v)) roles.push(...v.map(String));
+      else if (typeof v === 'string') roles.push(...v.split(',').map((s) => s.trim()));
+    }
+  }
+  return roles.some((r) => String(r).toLowerCase() === 'admin');
+}
+
+/** Claim <code>nameidentifier</code> / <code>sub</code> no payload JWT (UI). */
+function dashJwtPayloadNameIdentifier(payload) {
+  if (!payload) return '';
+  for (const k of Object.keys(payload)) {
+    const lk = k.toLowerCase();
+    if (lk === 'sub' || lk.endsWith('/nameidentifier')) {
+      const v = payload[k];
+      if (v != null && typeof v !== 'object') return String(v).trim();
+    }
+  }
+  return '';
+}
+
+/** Conta admin da plataforma (mesmo critério do backend: id fixo <code>admin</code> no token). */
+function dashJwtPayloadIsPlataformaAdmin(payload) {
+  return dashJwtPayloadNameIdentifier(payload).toLowerCase() === 'admin';
+}
+
+function syncDashPodeGerirColaboradoresFromToken() {
+  try {
+    const t = getToken();
+    if (!t) {
+      sessionStorage.removeItem(BUILDXP_DASH_PODE_GERIR_KEY);
+      sessionStorage.removeItem(BUILDXP_DASH_IS_PLATAFORMA_ADMIN_KEY);
+      return;
+    }
+    const p = dashParseJwtPayload(t);
+    sessionStorage.setItem(BUILDXP_DASH_PODE_GERIR_KEY, dashJwtPayloadHasAdminRole(p) ? '1' : '0');
+    sessionStorage.setItem(BUILDXP_DASH_IS_PLATAFORMA_ADMIN_KEY, dashJwtPayloadIsPlataformaAdmin(p) ? '1' : '0');
+  } catch (_) {}
+}
+
+function getDashPodeGerirColaboradores() {
+  try {
+    return sessionStorage.getItem(BUILDXP_DASH_PODE_GERIR_KEY) === '1';
+  } catch (_) {
+    return false;
+  }
+}
+
+function getDashIsPlataformaAdmin() {
+  try {
+    return sessionStorage.getItem(BUILDXP_DASH_IS_PLATAFORMA_ADMIN_KEY) === '1';
+  } catch (_) {
+    return false;
+  }
+}
+
+/** Secção colaboradores (convite) vs bloco da tabela de acessos (só admin da plataforma). */
+function updateDashCollabSectionVisibility(viewName) {
+  const collabSection = document.getElementById('dash-collab-section');
+  const listBlock = document.getElementById('dash-collab-list-block');
+  const view = String(viewName || 'home').trim() || 'home';
+  const onHome = view === 'home';
+  if (collabSection) {
+    collabSection.hidden = !onHome || !getDashPodeGerirColaboradores();
+  }
+  if (listBlock) {
+    listBlock.hidden = !onHome || !getDashIsPlataformaAdmin();
+  }
+}
 
 /** Ex.: gislanesenaa@gmail.com → gis*********@gm*****com */
 function maskRecoveryEmailDisplay(email) {
@@ -2390,6 +2843,7 @@ async function tryAdminLogin(username, password) {
   // se o backend retornou token, salva e libera acesso
   if (r.ok && r.data?.token) {
     saveToken(r.data.token);
+    syncDashPodeGerirColaboradoresFromToken();
     return true;
   }
 
@@ -2406,6 +2860,7 @@ async function tryAdminLogin(username, password) {
       });
       if (r2.ok && r2.data?.token) {
         saveToken(r2.data.token);
+        syncDashPodeGerirColaboradoresFromToken();
         return true;
       }
     }
@@ -2826,7 +3281,7 @@ function initDashboard() {
     resetProfilePendingFiles();
     if (profileAdminMsg) {
       profileAdminMsg.innerHTML =
-        '<p class="dash-muted">Conta de <strong>administrador</strong>: alterações de Username e palavra-passe fazem-se na configuração do servidor (appsettings).</p>';
+        '<p class="dash-muted">Carregando perfil…</p>';
     }
     if (profileStatus) {
       profileStatus.textContent = '';
@@ -2849,15 +3304,33 @@ function initDashboard() {
       return;
     }
     const d = r.data;
-    if (d.role === 'admin') {
-      if (profileAdminMsg) profileAdminMsg.hidden = false;
+    const podeEditar = !!(d.podeEditarPerfil ?? d.pode_editar_perfil);
+    const adminEmailBlk = document.getElementById('dash-profile-email-admin-block');
+    const collabEmailBlk = document.getElementById('dash-profile-email-collab-block');
+    const emInput = document.getElementById('dash-profile-email-input');
+    if (d.role === 'admin' && !podeEditar) {
+      if (profileAdminMsg) {
+        profileAdminMsg.hidden = false;
+        profileAdminMsg.innerHTML =
+          '<p class="dash-muted">Conta de <strong>administrador</strong>: a tabela <code>AdminPerfis</code> ainda não existe nesta base de dados. Executa o script SQL do projeto (<code>create_admin_perfis.sql</code>), reinicia a API e volta a abrir o painel.</p>';
+      }
       if (profileForm) profileForm.hidden = true;
+      if (adminEmailBlk) adminEmailBlk.hidden = true;
+      if (collabEmailBlk) collabEmailBlk.hidden = true;
     } else {
       if (profileAdminMsg) profileAdminMsg.hidden = true;
       if (profileForm) profileForm.hidden = false;
+      const isAdminProfile = d.role === 'admin' && podeEditar;
+      if (profileForm) profileForm.dataset.profileMode = isAdminProfile ? 'admin' : 'colab';
+      if (adminEmailBlk) adminEmailBlk.hidden = !isAdminProfile;
+      if (collabEmailBlk) collabEmailBlk.hidden = !!isAdminProfile;
       const emEl = document.getElementById('dash-profile-email-display');
       const uEl = document.getElementById('dash-profile-usuario');
-      if (emEl) emEl.textContent = d.email || '';
+      if (isAdminProfile) {
+        if (emInput) emInput.value = d.email ? String(d.email) : '';
+      } else if (emEl) {
+        emEl.textContent = d.email || '';
+      }
       if (uEl) uEl.value = d.usuario ? String(d.usuario) : '';
       if (profileAlterarSenha) profileAlterarSenha.checked = false;
       if (profileSenhaFields) profileSenhaFields.hidden = true;
@@ -2938,8 +3411,14 @@ function initDashboard() {
     profileStatus.classList.remove('ok', 'bad');
     const alterar = !!(profileAlterarSenha && profileAlterarSenha.checked);
     const usuarioVal = document.getElementById('dash-profile-usuario')?.value?.trim() ?? '';
+    const profileMode = profileForm?.dataset.profileMode === 'admin' ? 'admin' : 'colab';
+    const emailVal =
+      profileMode === 'admin'
+        ? document.getElementById('dash-profile-email-input')?.value?.trim() ?? ''
+        : '';
     const body = {
       usuario: usuarioVal === '' ? null : usuarioVal,
+      email: profileMode === 'admin' ? (emailVal === '' ? null : emailVal) : null,
       senhaAtual: alterar ? document.getElementById('dash-profile-senha-atual')?.value ?? '' : null,
       novaSenha: alterar ? document.getElementById('dash-profile-nova-senha')?.value ?? '' : null,
       confirmarSenha: alterar ? document.getElementById('dash-profile-confirm-senha')?.value ?? '' : null,
@@ -2973,9 +3452,19 @@ function initDashboard() {
       profileStatus.textContent =
         (r.data && typeof r.data === 'object' && r.data.message) || 'Guardado com sucesso.';
       profileStatus.classList.add('ok');
-      if (r.data && typeof r.data === 'object' && r.data.token) saveToken(r.data.token);
+      if (r.data && typeof r.data === 'object' && r.data.token) {
+        saveToken(r.data.token);
+        syncDashPodeGerirColaboradoresFromToken();
+      }
       resetProfilePendingFiles();
       await loadDashProfileChip();
+      const collabSection = document.getElementById('dash-collab-section');
+      const activeView = document.querySelector('#dash-app .dash-view--active');
+      const viewName = activeView?.getAttribute('data-dash-view') || 'home';
+      if (collabSection) {
+        collabSection.hidden = viewName !== 'home' || !getDashPodeGerirColaboradores();
+      }
+      void loadDashColaboradoresList();
       setTimeout(() => closeProfileSheet(), 600);
     } else {
       profileStatus.textContent =
@@ -3018,8 +3507,7 @@ function initDashboard() {
       el.toggleAttribute('hidden', !on);
       el.classList.toggle('dash-view--active', on);
     });
-    const collab = document.getElementById('dash-collab-section');
-    if (collab) collab.hidden = false;
+    updateDashCollabSectionVisibility('home');
   }
 
   function showLogin() {
@@ -3049,6 +3537,9 @@ function initDashboard() {
     loginEl.setAttribute('aria-hidden', 'true');
     shellEl.hidden = false;
     shellEl.removeAttribute('aria-hidden');
+    syncDashPodeGerirColaboradoresFromToken();
+    const activeV = document.querySelector('#dash-app .dash-view--active');
+    updateDashCollabSectionVisibility(activeV?.getAttribute('data-dash-view') || 'home');
     if (!shellStarted) {
       shellStarted = true;
       startShell();
@@ -3106,6 +3597,49 @@ function initDashboard() {
     if (!root) return;
 
     const collabSection = document.getElementById('dash-collab-section');
+    collabSection?.addEventListener('change', async (e) => {
+      const inp = e.target;
+      if (
+        !inp ||
+        inp.tagName !== 'INPUT' ||
+        inp.type !== 'checkbox' ||
+        !inp.classList.contains('dash-collab-acesso-toggle')
+      )
+        return;
+      if (!getDashIsPlataformaAdmin()) return;
+      if (!inp.closest('#dash-collab-table-wrap')) return;
+      const tr = inp.closest('tr');
+      const idStr = inp.getAttribute('data-dash-colab-id') || tr?.getAttribute('data-dash-colab-id');
+      const cid = idStr ? parseInt(idStr, 10) : NaN;
+      if (!Number.isFinite(cid)) return;
+      const acessoAdministrador = !!inp.checked;
+      const st = document.getElementById('dash-collab-list-status');
+      if (st) {
+        st.textContent = 'A gravar…';
+        st.classList.remove('bad', 'ok');
+      }
+      const baseList = getDashApiPath('colaboradorList') || '/api/Colaborador';
+      const putPath = `${baseList.replace(/\/$/, '')}/${cid}/acesso-administrador`;
+      const pr = await dashFetchNoThrow(putPath, {
+        method: 'PUT',
+        body: JSON.stringify({ acessoAdministrador }),
+      });
+      if (st) {
+        if (pr.ok) {
+          st.textContent = 'Acesso atualizado.';
+          st.classList.add('ok');
+          st.classList.remove('bad');
+        } else {
+          const msg =
+            (pr.data && typeof pr.data === 'object' && pr.data.message) ||
+            'Não foi possível atualizar o acesso.';
+          st.textContent = msg;
+          st.classList.add('bad');
+          st.classList.remove('ok');
+        }
+      }
+      await loadDashColaboradoresList();
+    });
     const moderatorEl = document.getElementById('dash-moderator');
     const fbList = document.getElementById('dash-fb-list');
     const fbEmpty = document.getElementById('dash-fb-empty');
@@ -3124,9 +3658,7 @@ function initDashboard() {
         el.toggleAttribute('hidden', !on);
         el.classList.toggle('dash-view--active', on);
       });
-      if (collabSection) {
-        collabSection.hidden = view !== 'home';
-      }
+      updateDashCollabSectionVisibility(view);
     }
 
     window.__dashGoHome = () => setDashView('home');
@@ -3216,61 +3748,24 @@ function initDashboard() {
     let editSlides = [];
     let editSlidesSlug = null;
     let cardEditorStepIndex = 0;
-    let dashCardIconObjectUrl = null;
 
-    function revokeDashCardIconPreviewUrl() {
-      if (dashCardIconObjectUrl) {
-        URL.revokeObjectURL(dashCardIconObjectUrl);
-        dashCardIconObjectUrl = null;
-      }
+    function dashSyncCardFormBorderFromThemePreset() {
+      const t = document.getElementById('dash-card-theme')?.value || 'git';
+      const hex = buildxpPresetHexForTheme(t);
+      const picker = document.getElementById('dash-card-border-picker');
+      const hexInp = document.getElementById('dash-card-border-hex');
+      if (picker) picker.value = hex;
+      if (hexInp) hexInp.value = hex;
     }
 
-    function resetDashCardIconFileUi() {
-      revokeDashCardIconPreviewUrl();
-      const fi = document.getElementById('dash-card-icon-file');
-      if (fi) fi.value = '';
+    function dashSyncWizBorderFromThemePreset() {
+      const t = document.getElementById('dash-wiz-theme')?.value || 'git';
+      const hex = buildxpPresetHexForTheme(t);
+      const picker = document.getElementById('dash-wiz-border-picker');
+      const hexInp = document.getElementById('dash-wiz-border-hex');
+      if (picker) picker.value = hex;
+      if (hexInp) hexInp.value = hex;
     }
-
-    function syncDashCardIconPreviewFromInput() {
-      const img = document.getElementById('dash-card-icon-preview');
-      const pri = document.getElementById('dash-card-icon-pri')?.value?.trim();
-      if (!img) return;
-      revokeDashCardIconPreviewUrl();
-      img.onload = () => {
-        img.style.display = 'block';
-      };
-      img.onerror = () => {
-        img.style.display = 'none';
-      };
-      if (!pri) {
-        img.style.display = 'none';
-        img.removeAttribute('src');
-        return;
-      }
-      img.src = pri;
-    }
-
-    document.getElementById('dash-card-icon-pri')?.addEventListener('input', syncDashCardIconPreviewFromInput);
-    document.getElementById('dash-card-icon-file')?.addEventListener('change', (ev) => {
-      const f = ev.target.files?.[0];
-      const img = document.getElementById('dash-card-icon-preview');
-      const priInp = document.getElementById('dash-card-icon-pri');
-      if (!f) return;
-      revokeDashCardIconPreviewUrl();
-      dashCardIconObjectUrl = URL.createObjectURL(f);
-      if (img) {
-        img.onload = () => {
-          img.style.display = 'block';
-        };
-        img.onerror = () => {
-          img.style.display = 'none';
-        };
-        img.src = dashCardIconObjectUrl;
-      }
-      const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const suggestion = `imagens/${safe}`;
-      if (priInp && !priInp.value.trim()) priInp.value = suggestion;
-    });
 
     function syncSlideEditThemeFromForm() {
       const panel = document.getElementById('dash-card-editor-theme-host');
@@ -3278,9 +3773,17 @@ function initDashboard() {
       const raw = String(document.getElementById('dash-card-theme')?.value || 'git')
         .toLowerCase()
         .replace(/[^a-z]/g, '');
-      const theme = ['docker', 'npm', 'dotnet'].includes(raw) ? raw : 'git';
-      panel.classList.remove('c-git', 'c-docker', 'c-npm', 'c-dotnet', 'dash-slide-theme-host');
+      const theme = ['docker', 'npm', 'dotnet', 'api'].includes(raw) ? raw : 'git';
+      panel.classList.remove('c-git', 'c-docker', 'c-npm', 'c-dotnet', 'c-api', 'dash-slide-theme-host');
       panel.classList.add('dash-slide-theme-host', `c-${theme}`);
+      const hex = buildxpNormalizeHexColor(document.getElementById('dash-card-border-hex')?.value);
+      if (hex) {
+        panel.style.setProperty('--cc', hex);
+        panel.style.setProperty('--accent', hex);
+      } else {
+        panel.style.removeProperty('--cc');
+        panel.style.removeProperty('--accent');
+      }
     }
 
     function getEditSlidesContentOnly() {
@@ -3327,6 +3830,12 @@ function initDashboard() {
               <button type="button" class="term-btn ghost danger dash-wiz-remove" data-rid="${slide.id}">REMOVER</button>
             </div>
             <label class="fb-label">Texto (corpo da pausa, como no site)</label>
+            <div class="dash-slide-html-toolbar">
+              <span class="dash-muted" style="font-size:0.72rem;">Formatação:</span>
+              <button type="button" class="term-btn ghost dash-slide-fmt-strong" title="Negrito (&lt;strong&gt;) — inline, não quebra linha">
+                <strong>B</strong>
+              </button>
+            </div>
             <div class="dash-slide-pause-text">
               <textarea class="fb-input fb-textarea dash-wiz-ta" data-f="text" rows="5"></textarea>
             </div>
@@ -3352,7 +3861,13 @@ function initDashboard() {
               <button type="button" class="dash-wiz-inner-tab" data-itab="obs">OBSERVAÇÃO</button>
             </div>
             <div class="dash-wiz-inner-pane active" data-ipane="text">
-              <label class="fb-label">Conteúdo (HTML)
+              <div class="dash-slide-html-toolbar">
+                <span class="dash-muted" style="font-size:0.72rem;">Formatação:</span>
+                <button type="button" class="term-btn ghost dash-slide-fmt-strong" title="Negrito (&lt;strong&gt;) — inline, não quebra linha">
+                  <strong>B</strong>
+                </button>
+              </div>
+              <label class="fb-label">Conteúdo (HTML) — preferir &lt;strong&gt; para negrito (usa o botão B)
                 <textarea class="fb-input fb-textarea dash-wiz-ta" data-f="text" rows="6"></textarea>
               </label>
             </div>
@@ -3411,6 +3926,8 @@ function initDashboard() {
             });
           });
         });
+
+        dashBindSlideStrongToolbar(wrap);
 
         rootEl.appendChild(wrap);
       } catch (_) {
@@ -3641,10 +4158,12 @@ function initDashboard() {
 
     let wizSlides = [];
     let wizIconDataUrl = '';
+    let wizIconPrimaryPath = '';
 
     function resetCardWizard() {
       wizSlides = [];
       wizIconDataUrl = '';
+      wizIconPrimaryPath = '';
       const ids = [
         'dash-wiz-slug',
         'dash-wiz-theme',
@@ -3669,6 +4188,7 @@ function initDashboard() {
         prev.removeAttribute('src');
         prev.hidden = true;
       }
+      dashSyncWizBorderFromThemePreset();
       const meta = document.getElementById('dash-create-step-meta');
       const slides = document.getElementById('dash-create-step-slides');
       if (meta) meta.hidden = false;
@@ -3686,6 +4206,7 @@ function initDashboard() {
         xpCurrent: Number.parseInt(document.getElementById('dash-wiz-xpc')?.value, 10) || 0,
         xpMax: Number.parseInt(document.getElementById('dash-wiz-xpm')?.value, 10) || 3000,
         iconDataUrl: wizIconDataUrl || null,
+        iconPath: wizIconPrimaryPath || null,
       };
     }
 
@@ -3704,9 +4225,14 @@ function initDashboard() {
               <span class="ref-section-title" style="margin:0;">PAUSA ${slideIndex + 1}</span>
               <button type="button" class="term-btn ghost danger dash-wiz-remove" data-rid="${slide.id}">REMOVER</button>
             </div>
-            <label class="fb-label">Texto
-              <textarea class="fb-input fb-textarea dash-wiz-ta" data-f="text" rows="4"></textarea>
-            </label>
+            <label class="fb-label">Texto</label>
+            <div class="dash-slide-html-toolbar">
+              <span class="dash-muted" style="font-size:0.72rem;">Formatação:</span>
+              <button type="button" class="term-btn ghost dash-slide-fmt-strong" title="Negrito (&lt;strong&gt;) — inline">
+                <strong>B</strong>
+              </button>
+            </div>
+            <textarea class="fb-input fb-textarea dash-wiz-ta" data-f="text" rows="4"></textarea>
             <label class="fb-label">Observação (opcional — some no slide se vazio)
               <textarea class="fb-input fb-textarea dash-wiz-ta" data-f="observation" rows="2"></textarea>
             </label>
@@ -3728,7 +4254,13 @@ function initDashboard() {
               <button type="button" class="dash-wiz-inner-tab" data-itab="obs">OBSERVAÇÃO</button>
             </div>
             <div class="dash-wiz-inner-pane active" data-ipane="text">
-              <label class="fb-label">Conteúdo (texto / HTML simples)
+              <div class="dash-slide-html-toolbar">
+                <span class="dash-muted" style="font-size:0.72rem;">Formatação:</span>
+                <button type="button" class="term-btn ghost dash-slide-fmt-strong" title="Negrito (&lt;strong&gt;) — inline">
+                  <strong>B</strong>
+                </button>
+              </div>
+              <label class="fb-label">Conteúdo (texto / HTML simples) — botão <strong>B</strong> insere &lt;strong&gt;
                 <textarea class="fb-input fb-textarea dash-wiz-ta" data-f="text" rows="6"></textarea>
               </label>
             </div>
@@ -3781,23 +4313,53 @@ function initDashboard() {
           });
         });
 
+        dashBindSlideStrongToolbar(wrap);
+
         rootEl.appendChild(wrap);
       });
     }
 
-    document.getElementById('dash-wiz-icon-file')?.addEventListener('change', (ev) => {
+    document.getElementById('dash-wiz-icon-file')?.addEventListener('change', async (ev) => {
       const f = ev.target.files?.[0];
+      const img = document.getElementById('dash-wiz-icon-preview');
+      const wizSt = document.getElementById('dash-wiz-status');
       if (!f) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        wizIconDataUrl = typeof reader.result === 'string' ? reader.result : '';
-        const img = document.getElementById('dash-wiz-icon-preview');
-        if (img && wizIconDataUrl) {
-          img.src = wizIconDataUrl;
-          img.hidden = false;
+      if (wizSt) {
+        wizSt.textContent = '';
+        wizSt.classList.remove('ok', 'bad');
+      }
+      const blobUrl = URL.createObjectURL(f);
+      if (img) {
+        img.src = blobUrl;
+        img.hidden = false;
+      }
+      const path = await dashUploadCardIconFile(f);
+      URL.revokeObjectURL(blobUrl);
+      if (!path) {
+        wizIconPrimaryPath = '';
+        wizIconDataUrl = '';
+        if (img) {
+          img.removeAttribute('src');
+          img.hidden = true;
         }
-      };
-      reader.readAsDataURL(f);
+        if (wizSt) {
+          wizSt.textContent =
+            'Upload do ícone falhou. Confirme sessão (JWT), tipo (PNG, JPEG, WebP, GIF, SVG) e máx. 2 MB.';
+          wizSt.classList.add('bad');
+        }
+        return;
+      }
+      wizIconPrimaryPath = path;
+      wizIconDataUrl = '';
+      if (img) {
+        img.src = path;
+        img.hidden = false;
+      }
+      if (wizSt) {
+        wizSt.textContent = `Ícone guardado: ${path}`;
+        wizSt.classList.add('ok');
+        wizSt.classList.remove('bad');
+      }
     });
 
     document.getElementById('dash-wiz-to-slides')?.addEventListener('click', () => {
@@ -3853,62 +4415,58 @@ function initDashboard() {
       if (st) {
         st.classList.remove('ok', 'bad');
       }
-      const slugNorm = (document.getElementById('dash-wiz-slug')?.value || '')
+      const slugRaw = (document.getElementById('dash-wiz-slug')?.value || '')
         .trim()
         .toLowerCase()
-        .replace(/[^a-z0-9-]/g, '');
-      if (!slugNorm) {
-        if (st) {
-          st.textContent = 'Preencha o slug do card (minúsculas, números e hífen).';
-          st.classList.add('bad');
-        }
-        return;
-      }
+        .replace(/[^a-z0-9_-]/g, '')
+        .slice(0, 48);
+      let slugNorm = slugRaw || null;
+
       const slugEl = document.getElementById('dash-wiz-slug');
-      if (slugEl) slugEl.value = slugNorm;
-
       const meta = buildWizMeta();
-      if (!meta.title || !meta.badge || !meta.cardClass) {
-        if (st) {
-          st.textContent = 'Complete título, badge e classe no passo 1.';
-          st.classList.add('bad');
-        }
-        return;
-      }
-      if (!wizSlides.length) {
-        if (st) {
-          st.textContent = 'Adicione pelo menos um slide.';
-          st.classList.add('bad');
-        }
-        return;
-      }
-
       const theme = document.getElementById('dash-wiz-theme')?.value || 'git';
       const body = buildWizCardPayloadForApi(slugNorm, meta, theme);
 
       try {
         let cardId = 0;
-        try {
-          const existing = await fetchJson(`/api/card/${encodeURIComponent(slugNorm)}`);
-          cardId = Number(existing?.id ?? existing?.Id ?? 0);
-          await fetchJson(`/api/card/${encodeURIComponent(slugNorm)}`, {
-            method: 'PUT',
-            body: JSON.stringify(body),
-          });
-        } catch (err) {
-          if (err.status !== 404) throw err;
+        let effectiveSlug = slugNorm;
+
+        if (effectiveSlug) {
+          try {
+            const existing = await fetchJson(`/api/card/${encodeURIComponent(effectiveSlug)}`);
+            cardId = Number(existing?.id ?? existing?.Id ?? 0);
+            await fetchJson(`/api/card/${encodeURIComponent(effectiveSlug)}`, {
+              method: 'PUT',
+              body: JSON.stringify(body),
+            });
+          } catch (err) {
+            if (err.status !== 404) throw err;
+            const created = await fetchJson('/api/card', {
+              method: 'POST',
+              body: JSON.stringify(body),
+            });
+            effectiveSlug = String(created.slug ?? created.Slug ?? '').trim().toLowerCase();
+            cardId = Number(created?.id ?? created?.Id ?? 0);
+            if (slugEl && effectiveSlug) slugEl.value = effectiveSlug;
+          }
+        } else {
           const created = await fetchJson('/api/card', {
             method: 'POST',
-            body: JSON.stringify({ ...body, slug: slugNorm }),
+            body: JSON.stringify(body),
           });
+          effectiveSlug = String(created.slug ?? created.Slug ?? '').trim().toLowerCase();
+          if (!effectiveSlug) throw new Error('A API não devolveu slug para o card criado.');
+          if (slugEl) slugEl.value = effectiveSlug;
           cardId = Number(created?.id ?? created?.Id ?? 0);
         }
 
-        if (!cardId) {
-          const again = await fetchJson(`/api/card/${encodeURIComponent(slugNorm)}`);
+        if (!cardId && effectiveSlug) {
+          const again = await fetchJson(`/api/card/${encodeURIComponent(effectiveSlug)}`);
           cardId = Number(again?.id ?? again?.Id ?? 0);
         }
         if (!cardId) throw new Error('Sem id do card após criar/atualizar.');
+
+        slugNorm = effectiveSlug;
 
         const full = await fetchJson(`/api/card/${encodeURIComponent(slugNorm)}`);
         const slideList = full.slides ?? full.Slides ?? [];
@@ -3943,16 +4501,22 @@ function initDashboard() {
 
         if (st) {
           st.textContent =
-            `Publicado na API (slug «${slugNorm}»). As páginas «${slugNorm}.html» continuam a precisar existir no site para abrir o treino; os slides da aba Iniciante vêm deste card se a API responder.`;
+            `Publicado (slug «${slugNorm}»). O index.html lê GET /api/card — recarrega a página inicial para ver o card na faixa. Abrir: card.html?slug=${encodeURIComponent(slugNorm)}&tab=beginner`;
           st.classList.add('ok');
           st.classList.remove('bad');
         }
         await loadCards();
       } catch (e) {
         if (st) {
-          st.textContent =
+          const stCode = e && typeof e.status === 'number' ? e.status : 0;
+          let msg =
             (e && e.message) ||
-            'Erro ao publicar. Confirme JWT (admin/colaborador) e que o slug não colida com outro erro do servidor.';
+            'Erro ao publicar. Confirme sessão (login) e que o slug não está em uso.';
+          if (stCode === 401) msg = 'Sessão expirada ou sem token. Volte a entrar no dashboard.';
+          if (stCode === 403) msg = 'Sem permissão para criar/atualizar este card. Peça acesso de admin ou colaborador.';
+          if (stCode === 404 && String(msg).toLowerCase().includes('not found'))
+            msg = 'Card não encontrado na API (slug errado ou card apagado).';
+          st.textContent = msg;
           st.classList.add('bad');
         }
       }
@@ -4023,7 +4587,22 @@ function initDashboard() {
     });
 
     document.getElementById('dash-card-theme')?.addEventListener('change', () => {
+      dashSyncCardFormBorderFromThemePreset();
       syncSlideEditThemeFromForm();
+    });
+    document.getElementById('dash-card-border-picker')?.addEventListener('input', (ev) => {
+      const hexInp = document.getElementById('dash-card-border-hex');
+      if (hexInp) hexInp.value = ev.target.value;
+      syncSlideEditThemeFromForm();
+    });
+    document.getElementById('dash-card-border-hex')?.addEventListener('change', () => {
+      const n = buildxpNormalizeHexColor(document.getElementById('dash-card-border-hex')?.value);
+      const picker = document.getElementById('dash-card-border-picker');
+      if (n && picker) picker.value = n;
+      syncSlideEditThemeFromForm();
+    });
+    document.getElementById('dash-wiz-theme')?.addEventListener('change', () => {
+      dashSyncWizBorderFromThemePreset();
     });
 
     function setFbStatus(msg, type) {
@@ -4120,10 +4699,29 @@ function initDashboard() {
             <span class="dash-fb-status dash-fb-status--${stClass}">${dashEscapeHtml(st)}</span>
           </div>
           <div class="fb-meta">${dashEscapeHtml(it.name ? `${it.name} · ` : '')}${dashEscapeHtml(fmtDate(it.createdAt))}</div>
+          <div class="dash-fb-decision-meta" ${canModerate ? 'hidden' : ''}></div>
           <div class="dash-queue-msg"></div>
           <div class="dash-queue-actions"></div>
         `;
         row.querySelector('.dash-queue-msg').textContent = it.msg;
+        const decisionMeta = row.querySelector('.dash-fb-decision-meta');
+        if (decisionMeta && !canModerate) {
+          decisionMeta.removeAttribute('hidden');
+          const verb = st === 'approved' ? 'Aprovado' : st === 'rejected' ? 'Rejeitado' : '';
+          const who = (it.moderatedBy || '').trim();
+          const whenRaw = (it.moderatedAt || '').trim();
+          if (verb) {
+            if (who && whenRaw) {
+              decisionMeta.textContent = `${verb} por ${who} em ${fmtDate(whenRaw)}`;
+            } else if (who) {
+              decisionMeta.textContent = `${verb} por ${who}`;
+            } else if (whenRaw) {
+              decisionMeta.textContent = `${verb} em ${fmtDate(whenRaw)} (moderador não registado)`;
+            } else {
+              decisionMeta.textContent = `${verb} (sem registo de moderador)`;
+            }
+          }
+        }
         const actions = row.querySelector('.dash-queue-actions');
         if (canModerate) {
           const approveBtn = document.createElement('button');
@@ -4149,7 +4747,8 @@ function initDashboard() {
   }
 
   async function moderate(id, action) {
-    const mod = String(moderatorEl?.value || '').trim() || 'moderador';
+    const typed = String(moderatorEl?.value || '').trim();
+    const body = typed ? { moderador: typed } : {};
     setFbStatus('', '');
     try {
       // nosso backend tem rotas separadas para aprovar e rejeitar
@@ -4157,7 +4756,7 @@ function initDashboard() {
         ? `/api/feedback/${encodeURIComponent(id)}/aprovar`
         : `/api/feedback/${encodeURIComponent(id)}/rejeitar`;
   
-      await fetchJson(endpoint, { method: 'PATCH' });
+      await fetchJson(endpoint, { method: 'PATCH', body: JSON.stringify(body) });
       setFbStatus('', '');
       await loadFeedback();
     } catch (e) {
@@ -4185,6 +4784,7 @@ function initDashboard() {
         const tileTheme = theme === 'dotnet' ? 'dotnet' : theme;
         const el = document.createElement('div');
         el.className = `dash-card-tile c-${tileTheme}`;
+        if (c.border_color) el.style.setProperty('--tile-accent', c.border_color);
         el.innerHTML = `
           <div class="dash-card-tile-rarity">${dashEscapeHtml(c.rarity || '—')}</div>
           <div class="dash-card-tile-name">${dashEscapeHtml(c.display_name)}</div>
@@ -4216,6 +4816,41 @@ function initDashboard() {
     cardFormStatus.classList.toggle('ok', type === 'ok');
     cardFormStatus.classList.toggle('bad', type === 'bad');
   }
+
+  document.getElementById('dash-card-icon-file')?.addEventListener('change', async (ev) => {
+    const f = ev.target.files?.[0];
+    const img = document.getElementById('dash-card-icon-preview');
+    const priInp = document.getElementById('dash-card-icon-pri');
+    if (!f) return;
+    setCardFormStatus('A enviar ícone…', '');
+    revokeDashCardIconPreviewUrl();
+    dashCardIconObjectUrl = URL.createObjectURL(f);
+    if (img) {
+      img.onload = () => {
+        img.style.display = 'block';
+      };
+      img.onerror = () => {
+        img.style.display = 'none';
+      };
+      img.src = dashCardIconObjectUrl;
+    }
+    const saved = await dashUploadCardIconFile(f);
+    if (!saved) {
+      setCardFormStatus(
+        'Não foi possível gravar o ficheiro. Confirme sessão (JWT), tipo (PNG, JPEG, WebP, GIF, SVG) e tamanho máx. 2 MB.',
+        'bad',
+      );
+      return;
+    }
+    if (priInp) priInp.value = saved;
+    dashSetCardIconPathReadout(saved);
+    revokeDashCardIconPreviewUrl();
+    if (img) {
+      img.src = saved;
+      img.style.display = 'block';
+    }
+    setCardFormStatus('Ícone guardado em wwwroot/imagens/.', 'ok');
+  });
 
   async function loadCardForEdit(slug) {
     setCardFormStatus('', '');
@@ -4256,16 +4891,10 @@ function initDashboard() {
       setCardFormStatus('Selecione um card (FORM + SLIDES na grade ou na lista «CARDS NO INDEX»). Criar card novo é só na aba «Criar card».', 'bad');
       return;
     }
-    const slugNorm = document
-      .getElementById('dash-card-slug')
-      .value.trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9-]/g, '');
-    if (!slugNorm || slugNorm.length > 48) {
-      setCardFormStatus('Slug inválido: só minúsculas, números e hífen; máximo 48 caracteres.', 'bad');
-      return;
-    }
-    document.getElementById('dash-card-slug').value = slugNorm;
+    const slugRaw = document.getElementById('dash-card-slug').value.trim().toLowerCase();
+    const slugNorm =
+      slugRaw.replace(/[^a-z0-9_-]/g, '').slice(0, 48) || null;
+    if (slugNorm) document.getElementById('dash-card-slug').value = slugNorm;
 
     const priRaw = document.getElementById('dash-card-icon-pri').value.trim();
     const iconPri = priRaw || 'imagens/logo2buildxpret.png';
@@ -4282,9 +4911,14 @@ function initDashboard() {
       return;
     }
 
+    const themeSel = document.getElementById('dash-card-theme').value;
+    const border_color =
+      buildxpNormalizeHexColor(document.getElementById('dash-card-border-hex')?.value) ??
+      buildxpPresetHexForTheme(themeSel);
     const body = {
       slug: slugNorm,
-      theme: document.getElementById('dash-card-theme').value,
+      theme: themeSel,
+      border_color,
       rarity_label: document.getElementById('dash-card-rarity').value.trim(),
       card_class: document.getElementById('dash-card-class').value.trim(),
       display_name: document.getElementById('dash-card-display').value.trim(),
@@ -4318,10 +4952,16 @@ function initDashboard() {
           setCardEditorScreenTitles(`Editar · ${disp}`, `slug: ${slugNorm}`);
         }
       } else if (!isCardsEditViewActive() && !isCardEditorViewActive()) {
-        await fetchJson('/api/card', {
+        const created = await fetchJson('/api/card', {
           method: 'POST',
           body: JSON.stringify(body),
         });
+        const ns =
+          created && typeof created === 'object' ? created.slug ?? created.Slug : null;
+        const slugIn = document.getElementById('dash-card-slug');
+        if (ns && slugIn && !slugIn.value.trim()) {
+          slugIn.value = String(ns).trim().toLowerCase();
+        }
       } else {
         setCardFormStatus('Não é possível criar card nesta aba.', 'bad');
         return;
@@ -4370,6 +5010,7 @@ function initDashboard() {
       collabStatus.classList.add('ok');
       collabStatus.classList.remove('bad');
       collabEmail.value = '';
+      void loadDashColaboradoresList();
     } else {
       let msg = apiMsg;
       if (!msg) {
@@ -4403,7 +5044,9 @@ function initDashboard() {
     dashReloadAll = () => {
       loadFeedback();
       loadCards();
+      void loadDashColaboradoresList();
     };
+    void loadDashColaboradoresList();
   }
 
 }

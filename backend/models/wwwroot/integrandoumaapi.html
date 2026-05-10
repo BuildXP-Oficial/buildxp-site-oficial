@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Redirecionando — BuildXP</title>
+  <script>
+    (function () {
+      var q = new URLSearchParams(window.location.search);
+      var tab = q.get('tab');
+      tab = tab === 'ref' ? 'ref' : 'beginner';
+      window.location.replace('card.html?slug=integrandoumaapi&tab=' + encodeURIComponent(tab));
+    })();
+  </script>
+  <meta http-equiv="refresh" content="0;url=card.html?slug=integrandoumaapi&amp;tab=beginner" />
+</head>
+<body>
+  <p style="font-family: system-ui, sans-serif; padding: 2rem; color: #ccc; background: #0a0f1a;">
+    A abrir o card na página única…
+    <a href="card.html?slug=integrandoumaapi&amp;tab=beginner" style="color: #39d353;">Abrir manualmente</a>
+  </p>
+</body>
+</html>
