@@ -32,5 +32,5 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: SEU_APP_SERVICE
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_0666C1AD8C1345A2ACEFA1221FAAB269 }}
+          publish-profile: ${{ secrets.BUILDXP_SECRET }}
           package: ./publish
