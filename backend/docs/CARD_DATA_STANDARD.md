@@ -156,6 +156,12 @@ Espelha abas “Cheat codes”: seções e linhas `cmd_text` + `description`; `r
 | POST | `/api/feedback` | Novo feedback `pending`. |
 | GET | `/api/feedback/approved` | Mural público. |
 | GET | `/api/admin/feedback/pending` | Fila moderação (proteger com login). |
+| GET | `/api/admin/feedback` | Lista todos os feedbacks (dashboard · aba «Todos»). Opcional até implementar. |
 | PATCH | `/api/admin/feedback/:id` | Body `{ "status": "approved"\|"rejected", "moderator": "..." }`. |
+| POST | `/api/admin/login` | Body `{ "password": "…" }` → `{ "ok": true }` se válido (cookies/JWT conforme stack). |
+| POST | `/api/cards` | Cria linha em `skill_cards` (payload compatível com a tabela). |
+| PATCH | `/api/cards/:slug` | Atualiza card existente. |
+
+**Dashboard (`frontend/dashboard.html`):** não aparece no menu do site. Na busca da **referência rápida** (Cheat Codes), ao digitar **`eu sou admin`** (maiúsculas/minúsculas iguais após normalização), o navegador vai para o login do dashboard; só após login válido o painel aparece. Sessão: `sessionStorage`. Para testar sem backend de login, em `dashboard.html` defina `window.BUILDXP_ADMIN_DEV_PIN = 'pin'` antes de `main.js`; string vazia = só API (`POST /api/admin/login` com `{ "ok": true }`).
 
 **Banco:** criar BD PostgreSQL → `psql … -f database/schema.sql` → `psql … -f database/seed.sql`. Servir o site estático continua podendo ser Nginx/IIS ou `wwwroot` do ASP.NET Core.

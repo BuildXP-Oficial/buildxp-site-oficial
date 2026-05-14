@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: buildxp-db
+    restart: always
+    environment:
+      POSTGRES_USER: buildxp
+      POSTGRES_PASSWORD: buildxp123
+      POSTGRES_DB: buildxpdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - buildxp-data:/var/lib/postgresql/data
+
+volumes:
+  buildxp-data:
