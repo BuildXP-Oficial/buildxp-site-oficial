@@ -370,3 +370,9 @@ C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\c
 C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\2xy6akra5m-{0}-1lwujp4g0j-1lwujp4g0j.gz
 C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\ca686fc4h1-{0}-gsj2was17m-gsj2was17m.gz
 C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\84xb0uywul-{0}-2krmphng7q-2krmphng7q.gz
+C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\bin\Debug\net10.0\publish\web.config
+C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\bin\Debug\net10.0\publish\appsettings.Development.json
+C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\bin\Debug\net10.0\publish\appsettings.json
+C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\bin\Debug\net10.0\publish\models.deps.json
+C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\bin\Debug\net10.0\publish\models.runtimeconfig.json
+C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\bin\Debug\net10.0\publish\models.staticwebassets.endpoints.json
