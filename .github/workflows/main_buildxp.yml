@@ -1,36 +1,35 @@
-name: Build and Deploy ASP.NET App
+name: Build and deploy ASP.Net Core app to Azure Web App - buildxp
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup .NET 10
+      - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
-          include-prerelease: true
+          dotnet-version: '10.x'
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - name: Build with dotnet
+        run: dotnet build --configuration Release
+        working-directory: backend/models
 
-      - name: Build application
-        run: dotnet build --configuration Release --no-restore
-
-      - name: Publish application
-        run: dotnet publish --configuration Release --output ./publish
+      - name: dotnet publish
+        run: dotnet publish -c Release -o ./publish
+        working-directory: backend/models
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: SEU_APP_SERVICE
-          publish-profile: ${{ secrets.BUILDXP_SECRET }}
-          package: ./publish
+          app-name: 'buildxp'
+          slot-name: 'Production'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
+          package: backend/models/publish
