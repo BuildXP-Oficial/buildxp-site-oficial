@@ -1,4 +1,4 @@
-name: Build and deploy ASP.Net Core app to Azure Web App - buildxp
+name: Build and deploy ASP.NET Core app to Azure Web App - buildxp
 
 on:
   push:
@@ -11,25 +11,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout código
+        uses: actions/checkout@v4
 
-      - name: Set up .NET Core
+      - name: Configurar .NET 10
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.x'
 
-      - name: Build with dotnet
+      - name: Build
         run: dotnet build --configuration Release
         working-directory: backend/models
 
-      - name: dotnet publish
+      - name: Publish
         run: dotnet publish -c Release -o ./publish
         working-directory: backend/models
 
-      - name: Deploy to Azure Web App
+      - name: Login no Azure
+        uses: azure/login@v2
+        with:
+          creds: >-
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+            }
+
+      - name: Deploy para Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'buildxp'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
           package: backend/models/publish
+
+      - name: Logout do Azure
+        run: az logout
+        if: always()
