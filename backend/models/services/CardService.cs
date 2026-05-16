@@ -154,7 +154,7 @@ public class CardService
         {
             var g = Guid.NewGuid().ToString("n");
             var candidate = $"card-{g}".Length <= 48 ? $"card-{g}" : $"card-{g}"[..48];
-            var taken = await _context.SkillCards.AsNoTracking().AnyAsync(c => c.Slug == candidate);
+            var taken = await _context.SkillCards.AsNoTracking().AnyAsync(c => c.Slug.ToLower() == candidate);
             if (!taken) return candidate;
         }
 
@@ -165,10 +165,12 @@ public class CardService
     {
         if (string.IsNullOrWhiteSpace(payload.Slug)) return;
         var desired = payload.Slug.Trim().ToLowerInvariant();
-        if (desired == card.Slug) return;
+        if (string.Equals(desired, card.Slug, StringComparison.OrdinalIgnoreCase))
+            return;
         if (string.IsNullOrEmpty(desired))
             throw new InvalidOperationException("Slug não pode ficar vazio.");
-        var taken = await _context.SkillCards.AnyAsync(c => c.Slug == desired && c.Id != card.Id);
+        var taken = await _context.SkillCards.AnyAsync(c =>
+            c.Id != card.Id && c.Slug.ToLower() == desired);
         if (taken)
             throw new InvalidOperationException("Este slug já está em uso por outro card.");
     }
@@ -208,7 +210,7 @@ public class CardService
             .Include(c => c.Slides)
                 .ThenInclude(s => s.Conteudos)
             .Include(c => c.Referencias)
-            .FirstOrDefaultAsync(c => c.Ativo && c.Slug == s);
+            .FirstOrDefaultAsync(c => c.Ativo && c.Slug.ToLower() == s);
     }
 
     /// <summary>Painel: card por slug incluindo não publicados (<see cref="SkillCard.Ativo"/> false).</summary>
@@ -219,14 +221,24 @@ public class CardService
             .Include(c => c.Slides)
                 .ThenInclude(sl => sl.Conteudos)
             .Include(c => c.Referencias)
-            .FirstOrDefaultAsync(c => c.Slug == s);
+            .FirstOrDefaultAsync(c => c.Slug.ToLower() == s);
+    }
+
+    /// <summary>Painel: card por id mesmo inativo — para edição quando o slug na BD diverge por capitalização/import.</summary>
+    public async Task<SkillCard?> BuscarPorIdParaEdicaoAsync(int id)
+    {
+        return await _context.SkillCards
+            .Include(c => c.Slides)
+                .ThenInclude(sl => sl.Conteudos)
+            .Include(c => c.Referencias)
+            .FirstOrDefaultAsync(c => c.Id == id);
     }
 
     public async Task<int?> ResolverIdPorSlugAsync(string slug)
     {
         var s = slug.Trim().ToLowerInvariant();
         var id = await _context.SkillCards.AsNoTracking()
-            .Where(c => c.Slug == s)
+            .Where(c => c.Slug.ToLower() == s)
             .Select(c => (int?)c.Id)
             .FirstOrDefaultAsync();
         return id;
@@ -279,7 +291,7 @@ public class CardService
     public async Task<bool> EditarPorSlugAsync(string slug, CardDashboardPayload payload)
     {
         var s = slug.Trim().ToLowerInvariant();
-        var card = await _context.SkillCards.FirstOrDefaultAsync(c => c.Slug == s);
+        var card = await _context.SkillCards.FirstOrDefaultAsync(c => c.Slug.ToLower() == s);
         if (card is null) return false;
 
         await AssertSlugDisponivelAsync(card, payload);
@@ -326,13 +338,24 @@ public class CardService
         await _context.SaveChangesAsync();
     }
 
-    // adiciona slide ao card
-    public async Task<Slide> AdicionarSlideAsync(Slide slide)
+    // adiciona slide ao card (entidade nova — evita grafos vindos da deserialização JSON)
+    public async Task<Slide?> AdicionarSlideAsync(Slide entrada)
     {
+        if (entrada.CardId <= 0) return null;
+        var existe = await _context.SkillCards.AsNoTracking().AnyAsync(c => c.Id == entrada.CardId);
+        if (!existe) return null;
+
+        var slide = new Slide
+        {
+            CardId = entrada.CardId,
+            Ordem = entrada.Ordem,
+            Titulo = entrada.Titulo ?? string.Empty,
+            Descricao = entrada.Descricao ?? string.Empty,
+            Ativo = entrada.Ativo,
+        };
         _context.Slides.Add(slide);
         await _context.SaveChangesAsync();
 
-        // recalcula XP após adicionar
         await RecalcularXpAsync(slide.CardId);
         return slide;
     }

@@ -66,6 +66,15 @@ public class CardController : ControllerBase
         return Ok(CardClientDto.FromEntity(card));
     }
 
+    [HttpGet("for-edit/id/{id:int}")]
+    [Authorize(Roles = "admin,colaborador")]
+    public async Task<IActionResult> BuscarParaEdicaoPorId(int id)
+    {
+        var card = await _service.BuscarPorIdParaEdicaoAsync(id);
+        if (card is null) return NotFound(new { message = "Card não encontrado." });
+        return Ok(CardClientDto.FromEntity(card));
+    }
+
     // ── ROTAS PRIVADAS — só o dashboard acessa ──────────────
 
     [HttpGet("dashboard")]
@@ -211,9 +220,37 @@ public class CardController : ControllerBase
     public async Task<IActionResult> AdicionarSlide(int id, [FromBody] Slide slide)
     {
         slide.CardId = id;
-        var criado = await _service.AdicionarSlideAsync(slide);
-        // Não devolver a entidade Slide — evita ciclos de referência na serialização JSON (500).
-        return Created("", new { id = criado.Id, cardId = criado.CardId, ordem = criado.Ordem });
+        try
+        {
+            var criado = await _service.AdicionarSlideAsync(slide);
+            if (criado is null)
+            {
+                return NotFound(new
+                {
+                    message =
+                        $"Não existe SkillCard com Id={id} nesta base de dados. Guarde primeiro o formulário do card ou abra FORM + SLIDES de novo para recarregar o id correto (evite usar id assumido pela página estática).",
+                });
+            }
+
+            return Created("", new { id = criado.Id, cardId = criado.CardId, ordem = criado.Ordem });
+        }
+        catch (Exception ex)
+        {
+            // DbUpdateException (ex.: FK) por vezes vem apenas como InnerException
+            for (Exception? scan = ex; scan != null; scan = scan.InnerException)
+            {
+                if (scan is DbUpdateException)
+                {
+                    return BadRequest(new
+                    {
+                        message =
+                            "Não foi possível gravar o slide na base de dados (ex.: vínculo com o card inválido ou limite dos campos). Recarregue o editor e verifique que o mesmo Id do dashboard corresponde a um card existente nesta BD.",
+                    });
+                }
+            }
+
+            throw;
+        }
     }
 
     [HttpPost($"{CardRouteConstants.SlugSegment}/slides")]
@@ -225,8 +262,36 @@ public class CardController : ControllerBase
         var cardId = await _service.ResolverIdPorSlugAsync(slug);
         if (cardId is null) return NotFound("Card não encontrado.");
         slide.CardId = cardId.Value;
-        var criado = await _service.AdicionarSlideAsync(slide);
-        return Created("", new { id = criado.Id, cardId = criado.CardId, ordem = criado.Ordem });
+        try
+        {
+            var criado = await _service.AdicionarSlideAsync(slide);
+            if (criado is null)
+            {
+                return NotFound(new
+                {
+                    message =
+                        $"O slug «{slug}» não está associado a um card válido nesta base de dados. Crie o card ou atualize esta instância da API.",
+                });
+            }
+
+            return Created("", new { id = criado.Id, cardId = criado.CardId, ordem = criado.Ordem });
+        }
+        catch (Exception ex)
+        {
+            for (Exception? scan = ex; scan != null; scan = scan.InnerException)
+            {
+                if (scan is DbUpdateException)
+                {
+                    return BadRequest(new
+                    {
+                        message =
+                            "Não foi possível gravar o slide na base de dados. Confirme título/descrição e tente novamente.",
+                    });
+                }
+            }
+
+            throw;
+        }
     }
 
     [HttpPut("slides/{slideId:int}")]

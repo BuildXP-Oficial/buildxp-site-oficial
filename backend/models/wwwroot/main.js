@@ -3706,6 +3706,38 @@ function initDashboard() {
     const dashApiCardPanelPath = (slug) =>
       `/api/card/panel/${encodeURIComponent(String(slug || '').trim())}`;
 
+    /** Tenta `panel/{slug}`; se 404 ou falhar, casa com `/api/card/dashboard` (slug insensível a maiúsculas) e carrega `/api/card/for-edit/id/{id}`. */
+    async function dashFetchCardMetaForEditor(slug) {
+      try {
+        return await fetchJson(dashApiCardPanelPath(slug));
+      } catch (e1) {
+        let list;
+        try {
+          list = await fetchJson('/api/card/dashboard');
+        } catch {
+          throw e1;
+        }
+        const desired = String(slug || '').trim().toLowerCase();
+        const arr = Array.isArray(list) ? list : [];
+        const hit = arr.find(
+          (c) =>
+            String(c.slug ?? c.Slug ?? '')
+              .trim()
+              .toLowerCase() === desired,
+        );
+        if (!hit) throw e1;
+        const nid = Number(hit.id ?? hit.Id ?? 0);
+        if (Number.isFinite(nid) && nid > 0) {
+          try {
+            return await fetchJson(`/api/card/for-edit/id/${nid}`);
+          } catch {
+            /* resumo sem slides completos */
+          }
+        }
+        return hit;
+      }
+    }
+
     /** Labels para a lista «CARDS NO INDEX» (inclui cards criados na API). */
     let dashIndexCardLabels = {};
 
@@ -4036,7 +4068,7 @@ function initDashboard() {
       const staticD = INDEX_CARD_STATIC_DEFAULTS[slug];
       if (staticD) dashApplyCardToForm(staticD);
       try {
-        const raw = await fetchJson(dashApiCardPanelPath(slug));
+        const raw = await dashFetchCardMetaForEditor(slug);
         dashApplyCardToForm(raw);
         editingCardNumericId = Number(raw?.id ?? raw?.Id ?? 0) || null;
       } catch (_) {
@@ -4073,18 +4105,12 @@ function initDashboard() {
       if (!editSlidesSlug) return;
 
       setSlidesSaveStatus('', '');
-      let postCardId = 0;
       let meta = null;
       try {
-        meta = await fetchJson(dashApiCardPanelPath(editSlidesSlug));
-        postCardId = Number(meta?.id ?? meta?.Id ?? 0) || 0;
+        meta = await dashFetchCardMetaForEditor(editSlidesSlug);
       } catch (_) {
-        const def = BUILDXP_INDEX_CARD_DEFS.find((d) => d.slug === editSlidesSlug);
-        if (def && typeof def.id === 'number') postCardId = def.id;
-      }
-      if (!postCardId) {
         setSlidesSaveStatus(
-          'Não foi possível obter o id do card na API. Confirme o slug, o login (JWT) e o servidor.',
+          'Não foi possível carregar dados do card (slug, JWT ou servidor). Faça login e confira se este slug existe na API.',
           'bad',
         );
         return;
@@ -4114,9 +4140,8 @@ function initDashboard() {
 
         for (const [idx, slide] of slidesParaSalvar.entries()) {
           const body = dashSlideToApiBody(slide, idx);
-          body.cardId = postCardId;
 
-          const criado = await fetchJson(`/api/card/${postCardId}/slides`, {
+          const criado = await fetchJson(`/api/card/${encodeURIComponent(editSlidesSlug)}/slides`, {
             method: 'POST',
             body: JSON.stringify(body),
           });
@@ -4468,13 +4493,10 @@ function initDashboard() {
       const body = buildWizCardPayloadForApi(slugNorm, meta, theme);
 
       try {
-        let cardId = 0;
         let effectiveSlug = slugNorm;
 
         if (effectiveSlug) {
           try {
-            const existing = await fetchJson(dashApiCardPanelPath(effectiveSlug));
-            cardId = Number(existing?.id ?? existing?.Id ?? 0);
             await fetchJson(`/api/card/${encodeURIComponent(effectiveSlug)}`, {
               method: 'PUT',
               body: JSON.stringify(body),
@@ -4486,7 +4508,6 @@ function initDashboard() {
               body: JSON.stringify(body),
             });
             effectiveSlug = String(created.slug ?? created.Slug ?? '').trim().toLowerCase();
-            cardId = Number(created?.id ?? created?.Id ?? 0);
             if (slugEl && effectiveSlug) slugEl.value = effectiveSlug;
           }
         } else {
@@ -4497,16 +4518,10 @@ function initDashboard() {
           effectiveSlug = String(created.slug ?? created.Slug ?? '').trim().toLowerCase();
           if (!effectiveSlug) throw new Error('A API não devolveu slug para o card criado.');
           if (slugEl) slugEl.value = effectiveSlug;
-          cardId = Number(created?.id ?? created?.Id ?? 0);
         }
-
-        if (!cardId && effectiveSlug) {
-          const again = await fetchJson(dashApiCardPanelPath(effectiveSlug));
-          cardId = Number(again?.id ?? again?.Id ?? 0);
-        }
-        if (!cardId) throw new Error('Sem id do card após criar/atualizar.');
 
         slugNorm = effectiveSlug;
+        if (!slugNorm) throw new Error('Sem slug após criar/atualizar.');
 
         const full = await fetchJson(dashApiCardPanelPath(slugNorm));
         const slideList = full.slides ?? full.Slides ?? [];
@@ -4526,8 +4541,7 @@ function initDashboard() {
 
         for (const [idx, slide] of wizSlides.entries()) {
           const slideBody = dashSlideToApiBody(slide, idx);
-          slideBody.cardId = cardId;
-          await fetchJson(`/api/card/${cardId}/slides`, {
+          await fetchJson(`/api/card/${encodeURIComponent(slugNorm)}/slides`, {
             method: 'POST',
             body: JSON.stringify(slideBody),
           });
@@ -4920,7 +4934,7 @@ function initDashboard() {
     setCardFormStatus('', '');
     setSlidesSaveStatus('', '');
     try {
-      const raw = await fetchJson(dashApiCardPanelPath(slug));
+      const raw = await dashFetchCardMetaForEditor(slug);
       editingCardSlug = slug;
       editingCardNumericId = Number(raw?.id ?? raw?.Id ?? 0) || null;
       dashApplyCardToForm(raw);
