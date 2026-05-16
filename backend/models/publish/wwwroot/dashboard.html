@@ -306,8 +306,8 @@
           <button type="button" class="dash-subtab" data-dash-fb-scope="history">HISTÓRICO</button>
         </div>
         <label class="fb-label">
-          Nome no histórico (opcional)
-          <input class="fb-input" id="dash-moderator" type="text" maxlength="80" placeholder="vazio = utilizador da sessão" />
+          Buscar Feedback
+          <input class="fb-input" id="dash-fb-search" type="search" maxlength="120" placeholder="pesquisar" autocomplete="off" />
         </label>
         <div id="dash-fb-status" class="fb-status" aria-live="polite"></div>
         <div id="dash-fb-list" class="dash-queue"></div>
@@ -342,16 +342,6 @@
         <div class="ref-section-title">CARDS NO INDEX</div>
         <p class="dash-muted">A ordem abaixo é a mesma da seção de cards em <code>index.html</code> (salva no navegador).</p>
         <ul id="dash-index-order-list" class="dash-index-order-list"></ul>
-      </div>
-
-      <div class="fb-card dash-panel-inner" style="margin-top:1rem;">
-        <div class="dash-panel-head">
-          <div class="ref-section-title" style="margin:0;">EDIÇÃO (API)</div>
-        </div>
-        <div id="dash-cards-status" class="fb-status"></div>
-        <p class="dash-muted" style="margin:0 0 0.75rem;"><strong>FORM + SLIDES</strong> abre um ecrã próprio: primeiro o card (API), depois cada slide de conteúdo do treino (git, docker, npm, dotnet).</p>
-        <div id="dash-cards-grid" class="dash-cards-grid"></div>
-        <div id="dash-cards-empty" class="fb-empty" hidden></div>
       </div>
     </div>
 

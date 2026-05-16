@@ -55,6 +55,17 @@ public class CardController : ControllerBase
         return Ok(CardClientDto.FromEntity(card));
     }
 
+    [HttpGet("panel/" + CardRouteConstants.SlugSegment)]
+    [Authorize(Roles = "admin,colaborador")]
+    public async Task<IActionResult> BuscarParaEdicao(string slug)
+    {
+        if (string.Equals(slug, "dashboard", StringComparison.OrdinalIgnoreCase))
+            return NotFound();
+        var card = await _service.BuscarPorSlugParaEdicaoAsync(slug);
+        if (card is null) return NotFound("Card não encontrado.");
+        return Ok(CardClientDto.FromEntity(card));
+    }
+
     // ── ROTAS PRIVADAS — só o dashboard acessa ──────────────
 
     [HttpGet("dashboard")]
@@ -148,7 +159,15 @@ public class CardController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (DbUpdateException)
+        {
+            return BadRequest(new
+            {
+                message =
+                    "Não foi possível gravar o card (base de dados). Confirme ícones e links com no máximo 512 caracteres, slug único e caminhos válidos.",
+            });
         }
     }
 
@@ -166,7 +185,15 @@ public class CardController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (DbUpdateException)
+        {
+            return BadRequest(new
+            {
+                message =
+                    "Não foi possível gravar o card (base de dados). Confirme ícones e links com no máximo 512 caracteres, slug único e caminhos válidos.",
+            });
         }
     }
 

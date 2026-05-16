@@ -100,4 +100,16 @@ public class FeedbackService
         await _context.SaveChangesAsync();
         return feedback;
     }
+
+    /// <summary>Remove o feedback da base de dados (deixa de aparecer no mural público).</summary>
+    public async Task<bool> ExcluirAsync(int id)
+    {
+        var feedback = await BuscarPorIdAsync(id);
+        if (feedback is null)
+            return false;
+
+        _context.Feedbacks.Remove(feedback);
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }

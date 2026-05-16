@@ -13,7 +13,6 @@
           "Microsoft.EntityFrameworkCore": "10.0.7",
           "Microsoft.EntityFrameworkCore.Design": "10.0.7",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "10.0.1",
-          "Resend": "0.5.0",
           "Swashbuckle.AspNetCore": "10.1.7"
         },
         "runtime": {
@@ -507,14 +506,6 @@
           }
         }
       },
-      "Resend/0.5.0": {
-        "runtime": {
-          "lib/net8.0/Resend.dll": {
-            "assemblyVersion": "0.5.0.0",
-            "fileVersion": "0.5.0.0"
-          }
-        }
-      },
       "Swashbuckle.AspNetCore/10.1.7": {
         "dependencies": {
           "Swashbuckle.AspNetCore.Swagger": "10.1.7",
@@ -821,13 +812,6 @@
       "sha512": "sha512-P6EwH0Q4xkaA264iNZDqCPhWt8pscfUGxXazDQg4noBfqjoOlk4hKWfvBjF9ZX3R/9JybRmmJfmxr2iBMj0EpA==",
       "path": "npgsql.entityframeworkcore.postgresql/10.0.1",
       "hashPath": "npgsql.entityframeworkcore.postgresql.10.0.1.nupkg.sha512"
-    },
-    "Resend/0.5.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-PL2tr3wbKHkkKj+I4tK3aDWrP2Unqntbzr0U7A8MzeiZk796Upp1xAg94YPyvkODp/KWezPXS57simSwyGp6QA==",
-      "path": "resend/0.5.0",
-      "hashPath": "resend.0.5.0.nupkg.sha512"
     },
     "Swashbuckle.AspNetCore/10.1.7": {
       "type": "package",

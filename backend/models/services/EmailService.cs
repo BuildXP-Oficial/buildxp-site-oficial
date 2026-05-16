@@ -61,7 +61,10 @@ public class EmailService
     // convite para colaborador
     public async Task EnviarConviteColaboradorAsync(string emailColaborador, string token)
     {
-        var link = $"http://localhost:5021/dashboard.html?convite={token}";
+        var baseUrl = (_config["App:PublicDashboardUrl"] ?? "").Trim().TrimEnd('/');
+        if (string.IsNullOrEmpty(baseUrl))
+            baseUrl = "http://localhost:5021";
+        var link = $"{baseUrl}/dashboard.html?convite={token}";
 
         var html = $"""
             <div style="font-family:sans-serif;max-width:600px;margin:0 auto;">
