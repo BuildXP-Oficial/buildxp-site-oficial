@@ -46,7 +46,7 @@ public class ColaboradorService
         {
             _context.Colaboradores.Remove(colaborador);
             await _context.SaveChangesAsync();
-            return "Não foi possível enviar o e-mail. Confira Resend:ApiKey em appsettings / variável de ambiente, o remetente \"De\" permitido no Resend e se o domínio está verificado.";
+            return "Não foi possível enviar o e-mail. Confira Email:Smtp, Email:Porta, Email:Usuario, Email:Senha e App:PublicDashboardUrl (URL pública do painel para o link do convite) em appsettings ou variáveis de ambiente; para Gmail use uma palavra-passe de aplicação.";
         }
 
         return null;

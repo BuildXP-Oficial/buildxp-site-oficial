@@ -428,18 +428,6 @@ function initFeedback() {
     return banned.find(w => t.includes(w)) ?? null;
   };
 
-  const load = () => {
-    try {
-      const raw = localStorage.getItem(LS_KEY);
-      const arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr : [];
-    } catch {
-      return [];
-    }
-  };
-
-  const save = (items) => localStorage.setItem(LS_KEY, JSON.stringify(items));
-
   const fmtDate = (iso) => {
     try {
       const d = new Date(iso);
@@ -488,8 +476,15 @@ function initFeedback() {
     }
   }
 
-  /** Itens do mural: API (aprovados) quando disponível; senão cache local. */
-  let displayItems = load();
+  /** Mural público: só entradas aprovadas vindas da API (sem fallback local — evita conteúdo sem moderação). */
+  let displayItems = [];
+  let muralApiUnavailable = false;
+
+  try {
+    localStorage.removeItem(LS_KEY);
+  } catch {
+    /* ignore */
+  }
 
   function render() {
     const q = norm(searchEl.value);
@@ -504,7 +499,17 @@ function initFeedback() {
         );
 
     listEl.innerHTML = '';
-    emptyEl.style.display = filtered.length === 0 ? '' : 'none';
+    if (filtered.length === 0) {
+      emptyEl.style.display = '';
+      if (muralApiUnavailable && emptyEl) {
+        emptyEl.textContent =
+          'Não foi possível carregar o mural (servidor indisponível). Só são mostradas mensagens já moderadas — volte mais tarde.';
+      } else if (emptyEl) {
+        emptyEl.textContent = 'Nenhum feedback ainda. Seja o primeiro.';
+      }
+    } else {
+      emptyEl.style.display = 'none';
+    }
 
     filtered
       .slice()
@@ -530,8 +535,10 @@ function initFeedback() {
     const remote = await fetchApprovedFromApi();
     if (remote !== null) {
       displayItems = remote;
+      muralApiUnavailable = false;
     } else {
-      displayItems = load();
+      displayItems = [];
+      muralApiUnavailable = true;
     }
     render();
   }
@@ -577,23 +584,20 @@ function initFeedback() {
         await refreshWall();
         return;
       }
+      setStatus(
+        res.status >= 400 && res.status < 500
+          ? 'Não foi possível enviar (pedido inválido ou servidor ocupado). Tente de novo.'
+          : 'O servidor não respondeu. Não foi possível registar o feedback — tente mais tarde.',
+        'bad',
+      );
+      return;
     } catch {
-      /* fallback local abaixo */
+      setStatus(
+        'Sem ligação ao servidor. O feedback não foi registado — confira a sua rede ou volte quando o site estiver disponível.',
+        'bad',
+      );
+      return;
     }
-
-    const items = load();
-    items.push({
-      id: crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2),
-      name,
-      kind,
-      msg: msg.slice(0, 400),
-      createdAt: new Date().toISOString(),
-    });
-    save(items);
-    displayItems = load();
-    msgEl.value = '';
-    setStatus('Enviado só neste navegador (API indisponível).', 'ok');
-    render();
   });
 
   refreshWall();
@@ -2436,7 +2440,9 @@ function dashNormalizePending(raw) {
 }
 
 function dashNormalizeCard(raw) {
-  const slug = raw.slug ?? '';
+  const slug = String(raw.slug ?? '')
+    .trim()
+    .toLowerCase();
   const display =
     raw.display_name ??
     raw.displayName ??
@@ -2448,6 +2454,7 @@ function dashNormalizeCard(raw) {
     display_name: display || '—',
     theme: raw.theme ?? '',
     rarity: raw.rarity_label ?? raw.rarity ?? '',
+    sort_order: Number(raw.sort_order ?? raw.sortOrder ?? raw.Ordem ?? 0) || 0,
     border_color:
       buildxpNormalizeHexColor(raw.border_color ?? raw.BorderColor ?? raw.cor_borda) ??
       buildxpPresetHexForTheme(raw.theme),
@@ -3530,6 +3537,8 @@ function initDashboard() {
   let shellStarted = false;
   let fbScope = 'pending';
   let editingCardSlug = null;
+  /** ID numérico do card na API — usamos PUT /api/card/{id} para evitar ambiguidades de rota com o slug na URL. */
+  let editingCardNumericId = null;
 
   function showShell() {
     document.body.classList.add('dash-body--authed');
@@ -3640,14 +3649,11 @@ function initDashboard() {
       }
       await loadDashColaboradoresList();
     });
-    const moderatorEl = document.getElementById('dash-moderator');
+    const fbSearchEl = document.getElementById('dash-fb-search');
     const fbList = document.getElementById('dash-fb-list');
     const fbEmpty = document.getElementById('dash-fb-empty');
     const fbStatus = document.getElementById('dash-fb-status');
     const fbRefresh = document.getElementById('dash-fb-refresh');
-    const cardsGrid = document.getElementById('dash-cards-grid');
-    const cardsEmpty = document.getElementById('dash-cards-empty');
-    const cardsStatus = document.getElementById('dash-cards-status');
     const cardsRefresh = document.getElementById('dash-cards-refresh');
 
     function setDashView(name) {
@@ -3670,8 +3676,7 @@ function initDashboard() {
     document.getElementById('dash-open-cards-hub')?.addEventListener('click', () => setDashView('cards-hub'));
     document.getElementById('dash-open-cards-edit')?.addEventListener('click', () => {
       setDashView('cards-edit');
-      renderIndexOrderList();
-      loadCards();
+      void syncIndexOrderPanelFromApi();
     });
     document.getElementById('dash-open-cards-create')?.addEventListener('click', () => {
       resetCardWizard();
@@ -3698,6 +3703,36 @@ function initDashboard() {
       });
     });
 
+    const dashApiCardPanelPath = (slug) =>
+      `/api/card/panel/${encodeURIComponent(String(slug || '').trim())}`;
+
+    /** Labels para a lista «CARDS NO INDEX» (inclui cards criados na API). */
+    let dashIndexCardLabels = {};
+
+    function mergeIndexOrderWithDashboardCards(order, cardsNorm) {
+      const sorted = [...cardsNorm].sort((a, b) => a.sort_order - b.sort_order);
+      const apiSlugs = sorted.map((c) => c.slug).filter(Boolean);
+      const apiSet = new Set(apiSlugs);
+      const kept = order.filter((s) => apiSet.has(s));
+      const tail = apiSlugs.filter((s) => !kept.includes(s));
+      return [...kept, ...tail];
+    }
+
+    async function syncIndexOrderPanelFromApi() {
+      try {
+        const data = await fetchJson('/api/card/dashboard');
+        const arr = Array.isArray(data) ? data : [];
+        const cards = arr.map(dashNormalizeCard).filter((c) => c.slug);
+        dashIndexCardLabels = Object.fromEntries(cards.map((c) => [c.slug, c.display_name || c.slug]));
+        const merged = mergeIndexOrderWithDashboardCards(getIndexCardOrder(), cards);
+        setIndexCardOrder(merged);
+        renderIndexOrderList();
+        applyIndexCardOrder();
+      } catch (_) {
+        renderIndexOrderList();
+      }
+    }
+
     function renderIndexOrderList() {
       const ul = document.getElementById('dash-index-order-list');
       if (!ul) return;
@@ -3705,13 +3740,13 @@ function initDashboard() {
       const order = getIndexCardOrder();
       order.forEach((slug, idx) => {
         const def = BUILDXP_INDEX_CARD_DEFS.find((d) => d.slug === slug);
-        if (!def) return;
+        const label = def?.label ?? dashIndexCardLabels[slug] ?? slug;
         const li = document.createElement('li');
         li.className = 'dash-index-order-item';
         const row = document.createElement('div');
         row.className = 'dash-index-order-row';
         row.innerHTML = `
-          <span class="dash-index-order-label">${dashEscapeHtml(def.label)}</span>
+          <span class="dash-index-order-label">${dashEscapeHtml(label)}</span>
           <code class="dash-index-order-slug">${dashEscapeHtml(slug)}</code>
           <div class="dash-index-order-btns">
             <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="-1" ${idx === 0 ? 'disabled' : ''}>↑</button>
@@ -3994,21 +4029,26 @@ function initDashboard() {
     }
 
     async function openIndexCardForDeepEdit(slug) {
-      const def = BUILDXP_INDEX_CARD_DEFS.find((d) => d.slug === slug);
-      if (!def) return;
+      if (!slug) return;
       setSlidesSaveStatus('', '');
-      const staticD = INDEX_CARD_STATIC_DEFAULTS[slug];
       editingCardSlug = slug;
+      editingCardNumericId = null;
+      const staticD = INDEX_CARD_STATIC_DEFAULTS[slug];
       if (staticD) dashApplyCardToForm(staticD);
       try {
-        const raw = await fetchJson(`/api/card/${encodeURIComponent(slug)}`);
+        const raw = await fetchJson(dashApiCardPanelPath(slug));
         dashApplyCardToForm(raw);
+        editingCardNumericId = Number(raw?.id ?? raw?.Id ?? 0) || null;
       } catch (_) {
-        /* mantém estático */
+        /* sem API: mantém estático se existir */
       }
       await loadCardEditorSlidesData(slug);
       setDashView('card-editor');
-      setCardEditorScreenTitles(`Editar · ${def.label}`, `slug: ${slug}`);
+      const disp =
+        BUILDXP_INDEX_CARD_DEFS.find((d) => d.slug === slug)?.label ??
+        document.getElementById('dash-card-display')?.value?.trim() ??
+        slug;
+      setCardEditorScreenTitles(`Editar · ${disp}`, `slug: ${slug}`);
       cardEditorStepIndex = getEditSlidesContentOnly().length ? 1 : 0;
       renderCardEditorChrome();
       resetDashCardIconFileUi();
@@ -4036,7 +4076,7 @@ function initDashboard() {
       let postCardId = 0;
       let meta = null;
       try {
-        meta = await fetchJson(`/api/card/${encodeURIComponent(editSlidesSlug)}`);
+        meta = await fetchJson(dashApiCardPanelPath(editSlidesSlug));
         postCardId = Number(meta?.id ?? meta?.Id ?? 0) || 0;
       } catch (_) {
         const def = BUILDXP_INDEX_CARD_DEFS.find((d) => d.slug === editSlidesSlug);
@@ -4433,7 +4473,7 @@ function initDashboard() {
 
         if (effectiveSlug) {
           try {
-            const existing = await fetchJson(`/api/card/${encodeURIComponent(effectiveSlug)}`);
+            const existing = await fetchJson(dashApiCardPanelPath(effectiveSlug));
             cardId = Number(existing?.id ?? existing?.Id ?? 0);
             await fetchJson(`/api/card/${encodeURIComponent(effectiveSlug)}`, {
               method: 'PUT',
@@ -4461,14 +4501,14 @@ function initDashboard() {
         }
 
         if (!cardId && effectiveSlug) {
-          const again = await fetchJson(`/api/card/${encodeURIComponent(effectiveSlug)}`);
+          const again = await fetchJson(dashApiCardPanelPath(effectiveSlug));
           cardId = Number(again?.id ?? again?.Id ?? 0);
         }
         if (!cardId) throw new Error('Sem id do card após criar/atualizar.');
 
         slugNorm = effectiveSlug;
 
-        const full = await fetchJson(`/api/card/${encodeURIComponent(slugNorm)}`);
+        const full = await fetchJson(dashApiCardPanelPath(slugNorm));
         const slideList = full.slides ?? full.Slides ?? [];
         const sortedDel = [...slideList].sort(
           (a, b) => (Number(b.id ?? b.Id) || 0) - (Number(a.id ?? a.Id) || 0),
@@ -4505,7 +4545,7 @@ function initDashboard() {
           st.classList.add('ok');
           st.classList.remove('bad');
         }
-        await loadCards();
+        await syncIndexOrderPanelFromApi();
       } catch (e) {
         if (st) {
           const stCode = e && typeof e.status === 'number' ? e.status : 0;
@@ -4577,13 +4617,16 @@ function initDashboard() {
     });
 
     try {
-      moderatorEl.value = sessionStorage.getItem('buildxp_moderator') || '';
+      if (fbSearchEl) {
+        fbSearchEl.value = sessionStorage.getItem('buildxp_fb_search') || '';
+      }
     } catch (_) { /* ignore */ }
 
-    moderatorEl?.addEventListener('change', () => {
+    fbSearchEl?.addEventListener('input', () => {
       try {
-        sessionStorage.setItem('buildxp_moderator', String(moderatorEl.value || '').trim());
+        sessionStorage.setItem('buildxp_fb_search', String(fbSearchEl.value || '').trim());
       } catch (_) { /* ignore */ }
+      renderFeedbackListFromCache();
     });
 
     document.getElementById('dash-card-theme')?.addEventListener('change', () => {
@@ -4612,13 +4655,6 @@ function initDashboard() {
       fbStatus.classList.toggle('bad', type === 'bad');
     }
 
-    function setCardsStatus(msg, type) {
-      if (!cardsStatus) return;
-      cardsStatus.textContent = msg || '';
-      cardsStatus.classList.toggle('ok', type === 'ok');
-      cardsStatus.classList.toggle('bad', type === 'bad');
-    }
-
     async function fetchJson(path, opts = {}) {
       const base = getBuildXpApiBase();
       const url = `${base}${path}`;
@@ -4642,9 +4678,19 @@ function initDashboard() {
       }
       if (!res.ok) {
         const msg =
-          typeof data === 'object' && data !== null && data.message
-            ? String(data.message)
-            : res.statusText || 'Erro HTTP';
+          typeof data === 'object' && data !== null && !Array.isArray(data)
+            ? String(
+                data.message ??
+                  data.Message ??
+                  data.detail ??
+                  data.Detail ??
+                  data.title ??
+                  data.Title ??
+                  res.statusText,
+              )
+            : typeof data === 'string' && data.trim()
+              ? data.trim()
+              : res.statusText || 'Erro HTTP';
         const err = new Error(msg);
         err.status = res.status;
         err.body = data;
@@ -4662,32 +4708,40 @@ function initDashboard() {
       }
     }
 
-    async function loadFeedback() {
+    let fbCachedItems = [];
+
+    function fbFeedbackMatchesQuery(it, queryRaw) {
+      const q = String(queryRaw || '').trim().toLowerCase();
+      if (!q) return true;
+      const hay = [
+        it.kind,
+        it.name,
+        it.msg,
+        it.status,
+        it.moderatedBy,
+        it.moderatedAt,
+        it.createdAt,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      const tokens = q.split(/\s+/).filter(Boolean);
+      if (!tokens.length) return true;
+      return tokens.every((t) => hay.includes(t));
+    }
+
+    function renderFeedbackListFromCache() {
       if (!fbList || !fbEmpty) return;
+      const q = fbSearchEl ? String(fbSearchEl.value || '') : '';
+      const items = fbCachedItems.filter((it) => fbFeedbackMatchesQuery(it, q));
       fbList.innerHTML = '';
+      if (!items.length) {
+        fbEmpty.hidden = false;
+        fbEmpty.textContent = '';
+        return;
+      }
       fbEmpty.hidden = true;
-      setFbStatus('', '');
-      const path =
-      fbScope === 'history'
-        ? '/api/feedback/dashboard'
-        : '/api/feedback/dashboard?status=Pendente';
-      try {
-        const data = await fetchJson(path);
-        const arr = Array.isArray(data) ? data : data?.items ?? data?.data ?? [];
-        let items = arr.map(dashNormalizePending).filter(Boolean);
-        if (fbScope === 'history') {
-          items = items.filter((it) => {
-            const st = String(it.status || '').toLowerCase();
-            return st === 'approved' || st === 'rejected';
-          });
-        }
-        setFbStatus('', '');
-        if (!items.length) {
-          fbEmpty.hidden = false;
-          fbEmpty.textContent = '';
-          return;
-        }
-        items.forEach((it) => {
+      items.forEach((it) => {
         const st = String(it.status || 'pending').toLowerCase();
         const stClass = st.replace(/[^a-z]/g, '') || 'pending';
         const canModerate = st === 'pending';
@@ -4736,19 +4790,55 @@ function initDashboard() {
           rejectBtn.addEventListener('click', () => moderate(it.id, 'rejected'));
           actions.appendChild(approveBtn);
           actions.appendChild(rejectBtn);
+        } else if (st === 'approved') {
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'term-btn ghost danger';
+          removeBtn.textContent = 'REMOVER DO MURAL';
+          removeBtn.addEventListener('click', () => removeFeedbackFromPublicWall(it.id));
+          actions.appendChild(removeBtn);
         }
         fbList.appendChild(row);
       });
-    } catch (e) {
+    }
+
+    async function loadFeedback() {
+      if (!fbList || !fbEmpty) return;
+      fbCachedItems = [];
+      fbList.innerHTML = '';
+      fbEmpty.hidden = true;
+      setFbStatus('', '');
+      const path =
+      fbScope === 'history'
+        ? '/api/feedback/dashboard'
+        : '/api/feedback/dashboard?status=Pendente';
+      try {
+        const data = await fetchJson(path);
+        const arr = Array.isArray(data) ? data : data?.items ?? data?.data ?? [];
+        let items = arr.map(dashNormalizePending).filter(Boolean);
+        if (fbScope === 'history') {
+          items = items.filter((it) => {
+            const st = String(it.status || '').toLowerCase();
+            return st === 'approved' || st === 'rejected';
+          });
+        }
+        setFbStatus('', '');
+        fbCachedItems = items;
+        if (!items.length) {
+          fbEmpty.hidden = false;
+          fbEmpty.textContent = '';
+          return;
+        }
+        renderFeedbackListFromCache();
+      } catch (e) {
       setFbStatus('', '');
       fbEmpty.hidden = false;
       fbEmpty.textContent = '';
     }
-  }
+    }
 
   async function moderate(id, action) {
-    const typed = String(moderatorEl?.value || '').trim();
-    const body = typed ? { moderador: typed } : {};
+    const body = {};
     setFbStatus('', '');
     try {
       // nosso backend tem rotas separadas para aprovar e rejeitar
@@ -4764,46 +4854,20 @@ function initDashboard() {
     }
   }
 
-  async function loadCards() {
-    if (!cardsGrid || !cardsEmpty) return;
-    cardsGrid.innerHTML = '';
-    cardsEmpty.hidden = true;
-    setCardsStatus('', '');
+  async function removeFeedbackFromPublicWall(id) {
+    if (
+      !globalThis.confirm(
+        'Remover esta mensagem do mural público? Será apagada da base de dados (irreversível).',
+      )
+    ) {
+      return;
+    }
+    setFbStatus('', '');
     try {
-      const data = await fetchJson('/api/card');
-      const arr = Array.isArray(data) ? data : data?.items ?? data?.data ?? [];
-      const cards = arr.map(dashNormalizeCard).filter((c) => c.slug);
-      setCardsStatus('', '');
-      if (!cards.length) {
-        cardsEmpty.hidden = false;
-        cardsEmpty.textContent = '';
-        return;
-      }
-      cards.forEach((c) => {
-        const theme = String(c.theme || 'git').toLowerCase().replace(/[^a-z]/g, '') || 'git';
-        const tileTheme = theme === 'dotnet' ? 'dotnet' : theme;
-        const el = document.createElement('div');
-        el.className = `dash-card-tile c-${tileTheme}`;
-        if (c.border_color) el.style.setProperty('--tile-accent', c.border_color);
-        el.innerHTML = `
-          <div class="dash-card-tile-rarity">${dashEscapeHtml(c.rarity || '—')}</div>
-          <div class="dash-card-tile-name">${dashEscapeHtml(c.display_name)}</div>
-          <div class="dash-card-tile-slug"><code>${dashEscapeHtml(c.slug)}</code></div>
-          <div class="dash-card-tile-actions"></div>
-        `;
-        const act = el.querySelector('.dash-card-tile-actions');
-        const editBtn = document.createElement('button');
-        editBtn.type = 'button';
-        editBtn.className = 'term-btn ghost';
-        editBtn.textContent = 'FORM + SLIDES';
-        editBtn.addEventListener('click', () => loadCardForEdit(c.slug));
-        act.appendChild(editBtn);
-        cardsGrid.appendChild(el);
-      });
+      await fetchJson(`/api/feedback/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      await loadFeedback();
     } catch (e) {
-      setCardsStatus('', '');
-      cardsEmpty.hidden = false;
-      cardsEmpty.textContent = '';
+      setFbStatus(e?.message || 'Não foi possível remover.', 'bad');
     }
   }
 
@@ -4856,8 +4920,9 @@ function initDashboard() {
     setCardFormStatus('', '');
     setSlidesSaveStatus('', '');
     try {
-      const raw = await fetchJson(`/api/card/${encodeURIComponent(slug)}`);
+      const raw = await fetchJson(dashApiCardPanelPath(slug));
       editingCardSlug = slug;
+      editingCardNumericId = Number(raw?.id ?? raw?.Id ?? 0) || null;
       dashApplyCardToForm(raw);
       setCardFormStatus('', '');
       await loadCardEditorSlidesData(slug);
@@ -4870,6 +4935,7 @@ function initDashboard() {
       syncDashCardIconPreviewFromInput();
     } catch (e) {
       editingCardSlug = null;
+      editingCardNumericId = null;
       setCardFormStatus('', '');
       await loadCardEditorSlidesData(null);
     }
@@ -4884,6 +4950,24 @@ function initDashboard() {
     const el = root.querySelector('[data-dash-view="card-editor"]');
     return !!(el && !el.hasAttribute('hidden'));
   };
+
+  function dashFormatApiErrorMessage(errOrBody, fallbackMsg) {
+    const b =
+      errOrBody && typeof errOrBody.body === 'object' ? errOrBody.body : errOrBody && typeof errOrBody === 'object'
+        ? errOrBody
+        : null;
+    if (!b || typeof b !== 'object') return fallbackMsg;
+    const errors = b.errors ?? b.Errors;
+    if (errors && typeof errors === 'object' && !Array.isArray(errors)) {
+      const bits = [];
+      for (const k of Object.keys(errors)) {
+        const v = errors[k];
+        bits.push(Array.isArray(v) ? `${k}: ${v.join('; ')}` : `${k}: ${v}`);
+      }
+      if (bits.length) return bits.join(' ');
+    }
+    return String(b.detail ?? b.Detail ?? b.title ?? b.Title ?? b.message ?? b.Message ?? fallbackMsg);
+  }
 
   cardForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -4940,12 +5024,26 @@ function initDashboard() {
     setCardFormStatus('', '');
     try {
       if (editingCardSlug) {
-        const urlSlug = editingCardSlug;
-        await fetchJson(`/api/card/${encodeURIComponent(urlSlug)}`, {
-          method: 'PUT',
-          body: JSON.stringify(body),
-        });
-        if (slugNorm !== urlSlug) {
+        const numericId =
+          editingCardNumericId != null &&
+          typeof editingCardNumericId === 'number' &&
+          Number.isFinite(editingCardNumericId) &&
+          editingCardNumericId > 0
+            ? editingCardNumericId
+            : null;
+        if (numericId != null) {
+          await fetchJson(`/api/card/${numericId}`, {
+            method: 'PUT',
+            body: JSON.stringify(body),
+          });
+        } else {
+          const urlSlug = editingCardSlug;
+          await fetchJson(`/api/card/${encodeURIComponent(urlSlug)}`, {
+            method: 'PUT',
+            body: JSON.stringify(body),
+          });
+        }
+        if (slugNorm && slugNorm !== editingCardSlug) {
           editingCardSlug = slugNorm;
           editSlidesSlug = slugNorm;
           const disp = document.getElementById('dash-card-display')?.value?.trim() || slugNorm;
@@ -4967,14 +5065,17 @@ function initDashboard() {
         return;
       }
       setCardFormStatus('Card guardado na API com sucesso.', 'ok');
-      await loadCards();
+      await syncIndexOrderPanelFromApi();
     } catch (err) {
-      let msg =
+      const fallback =
         (err && err.message) || 'Não foi possível salvar. Verifique o login e a consola do servidor.';
+      let msg = dashFormatApiErrorMessage(err, fallback);
       const b = err?.body;
-      if (b && typeof b === 'object' && !Array.isArray(b)) {
-        msg = String(b.detail || b.title || b.message || msg);
-      } else if (typeof b === 'string' && b.trim()) {
+      if (
+        typeof b === 'string' &&
+        b.trim() &&
+        (!msg || msg === 'Bad Request' || msg === fallback)
+      ) {
         msg = b.trim();
       }
       setCardFormStatus(msg, 'bad');
@@ -5036,14 +5137,16 @@ function initDashboard() {
   });
 
     fbRefresh?.addEventListener('click', loadFeedback);
-    cardsRefresh?.addEventListener('click', loadCards);
+    cardsRefresh?.addEventListener('click', () => {
+      void syncIndexOrderPanelFromApi();
+    });
 
     setDashView('home');
     loadFeedback();
-    loadCards();
+    void syncIndexOrderPanelFromApi();
     dashReloadAll = () => {
       loadFeedback();
-      loadCards();
+      void syncIndexOrderPanelFromApi();
       void loadDashColaboradoresList();
     };
     void loadDashColaboradoresList();

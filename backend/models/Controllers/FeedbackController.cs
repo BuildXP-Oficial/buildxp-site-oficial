@@ -98,6 +98,15 @@ public class FeedbackController : ControllerBase
         if (!resultado) return NotFound("Feedback não encontrado ou já rejeitado.");
         return Ok("Feedback rejeitado.");
     }
+
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = "admin,colaborador")]
+    public async Task<IActionResult> Excluir(int id)
+    {
+        var ok = await _service.ExcluirAsync(id);
+        if (!ok) return NotFound(new { message = "Feedback não encontrado." });
+        return NoContent();
+    }
 }
 
 public record FeedbackModerarRequest(string? Moderador);

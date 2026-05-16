@@ -65,7 +65,7 @@ public class AuthController : ControllerBase
             return StatusCode(503, new
             {
                 message =
-                    "Não foi possível enviar o e-mail. Confira a ApiKey do Resend, o remetente (Resend:De) e se o destinatário está autorizado na sua conta Resend.",
+                    "Não foi possível enviar o e-mail. Confira Email:Smtp, Email:Porta, Email:Usuario, Email:Senha em appsettings ou variáveis de ambiente (ex.: Gmail com palavra-passe de aplicação).",
             });
         }
 

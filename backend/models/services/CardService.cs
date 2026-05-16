@@ -211,6 +211,17 @@ public class CardService
             .FirstOrDefaultAsync(c => c.Ativo && c.Slug == s);
     }
 
+    /// <summary>Painel: card por slug incluindo não publicados (<see cref="SkillCard.Ativo"/> false).</summary>
+    public async Task<SkillCard?> BuscarPorSlugParaEdicaoAsync(string slug)
+    {
+        var s = slug.Trim().ToLowerInvariant();
+        return await _context.SkillCards
+            .Include(c => c.Slides)
+                .ThenInclude(sl => sl.Conteudos)
+            .Include(c => c.Referencias)
+            .FirstOrDefaultAsync(c => c.Slug == s);
+    }
+
     public async Task<int?> ResolverIdPorSlugAsync(string slug)
     {
         var s = slug.Trim().ToLowerInvariant();
