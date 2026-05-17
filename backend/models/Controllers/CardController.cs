@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
@@ -27,6 +28,10 @@ public class CardController : ControllerBase
         _service = service;
         _env = env;
     }
+
+    /// <summary>Conta admin da plataforma (JWT <c>nameidentifier</c> <c>admin</c>), não colaborador elevado.</summary>
+    private static bool IsPlataformaAdmin(ClaimsPrincipal user) =>
+        string.Equals(user.FindFirstValue(ClaimTypes.NameIdentifier), "admin", StringComparison.Ordinal);
 
     // ── ROTAS PÚBLICAS ──────────────────────────────────────
 
@@ -207,12 +212,14 @@ public class CardController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin,colaborador")]
     public async Task<IActionResult> Desativar(int id)
     {
+        if (!IsPlataformaAdmin(User))
+            return Forbid();
         var resultado = await _service.DesativarAsync(id);
-        if (!resultado) return NotFound("Card não encontrado.");
-        return Ok("Card desativado.");
+        if (!resultado) return NotFound(new { message = "Card não encontrado." });
+        return Ok(new { message = "Card excluído." });
     }
 
     [HttpPost("{id:int}/slides")]

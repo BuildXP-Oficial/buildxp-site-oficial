@@ -31,6 +31,18 @@ public class ColaboradorController : ControllerBase
         return Ok(list);
     }
 
+    // DELETE api/colaborador/{id} — convite pendente ou colaborador ativo; só plataforma.
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = "admin,colaborador")]
+    public async Task<IActionResult> Excluir(int id, CancellationToken ct)
+    {
+        if (!IsPlataformaAdmin(User))
+            return Forbid();
+        var (ok, erro) = await _service.ExcluirAsync(id, ct);
+        if (!ok) return BadRequest(new { message = erro });
+        return Ok(new { message = "Removido com sucesso." });
+    }
+
     // PUT api/colaborador/{id}/acesso-administrador — só plataforma.
     [HttpPut("{id:int}/acesso-administrador")]
     [Authorize(Roles = "admin,colaborador")]

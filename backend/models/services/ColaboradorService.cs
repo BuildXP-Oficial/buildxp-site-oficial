@@ -97,6 +97,17 @@ public class ColaboradorService
         await _context.SaveChangesAsync(ct);
         return (true, null);
     }
+
+    public async Task<(bool Ok, string? Erro)> ExcluirAsync(int id, CancellationToken ct = default)
+    {
+        var c = await _context.Colaboradores.FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (c is null)
+            return (false, "Colaborador não encontrado.");
+
+        _context.Colaboradores.Remove(c);
+        await _context.SaveChangesAsync(ct);
+        return (true, null);
+    }
 }
 
 public record ColaboradorResumoDto(int Id, string Email, string? Usuario, bool Ativo, bool AcessoAdministrador);

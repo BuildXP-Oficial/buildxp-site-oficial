@@ -389,4 +389,8 @@ c:\Users\gisla\AppData\Local\Temp\bxp-models-build-verify\models.dll
 c:\Users\gisla\AppData\Local\Temp\bxp-models-build-verify\models.pdb
 C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\2xy6akra5m-{0}-z0c0bgexrc-z0c0bgexrc.gz
 C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\8yacpscsa6-{0}-zm3506iacs-zm3506iacs.gz
-C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\ca686fc4h1-{0}-8xe8jcnxgj-8xe8jcnxgj.gz
+C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\ca686fc4h1-{0}-9d0py3pw6w-9d0py3pw6w.gz
+C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\2xy6akra5m-{0}-lr89s2byty-lr89s2byty.gz
+C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\7edw1vpa0v-{0}-y6xrubgy57-y6xrubgy57.gz
+C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\ca686fc4h1-{0}-x9f6tnnbdt-x9f6tnnbdt.gz
+C:\Users\gisla\Documents\buildxp-site-oficial\backend\models\obj\Debug\net10.0\compressed\84xb0uywul-{0}-1sjzamx4h0-1sjzamx4h0.gz

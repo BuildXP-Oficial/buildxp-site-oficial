@@ -503,7 +503,7 @@ function initFeedback() {
       emptyEl.style.display = '';
       if (muralApiUnavailable && emptyEl) {
         emptyEl.textContent =
-          'Não foi possível carregar o mural (servidor indisponível). Só são mostradas mensagens já moderadas — volte mais tarde.';
+          'Não foi possível carregar o mural. Só são mostradas mensagens já publicadas — volte mais tarde.';
       } else if (emptyEl) {
         emptyEl.textContent = 'Nenhum feedback ainda. Seja o primeiro.';
       }
@@ -2042,11 +2042,16 @@ function applyIndexCardOrder() {
     const n = nodes[slug];
     if (n) {
       grid.appendChild(n);
+      n.hidden = false;
       used.add(slug);
     }
   });
   Object.keys(nodes).forEach((slug) => {
-    if (!used.has(slug)) grid.appendChild(nodes[slug]);
+    const n = nodes[slug];
+    if (!n) return;
+    if (!used.has(slug)) {
+      n.hidden = true;
+    }
   });
 }
 
@@ -2090,8 +2095,10 @@ function initIndexCardsHomeMarquee() {
 
   function scrollAmount() {
     const card = grid.querySelector('.card');
-    const w = card?.offsetWidth ?? 280;
-    return Math.max(220, Math.round(w + 24));
+    if (!card) return 280;
+    const gap =
+      parseFloat(getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || '0') || 24;
+    return Math.max(220, Math.round(card.getBoundingClientRect().width + gap));
   }
 
   function loopHalfWidth() {
@@ -2120,6 +2127,11 @@ function initIndexCardsHomeMarquee() {
     next.disabled = !canStep;
   }
 
+  /** Mobile: arrastar + sem setas (marquee automático continua ativo). */
+  function isIndexCardsSwipeMode() {
+    return window.matchMedia('(max-width: 768px)').matches;
+  }
+
   if (cards.length < 2) {
     updateNavDisabled();
     return;
@@ -2136,7 +2148,9 @@ function initIndexCardsHomeMarquee() {
   applyTransform();
 
   let pausedByHover = false;
+  let pausedByDrag = false;
   function bindPauseHover(el) {
+    if (isIndexCardsSwipeMode()) return;
     el.addEventListener(
       'mouseenter',
       () => {
@@ -2155,12 +2169,78 @@ function initIndexCardsHomeMarquee() {
   if (hoverShell) bindPauseHover(hoverShell);
   else bindPauseHover(viewport);
 
+  let dragPointerId = null;
+  let dragStartX = 0;
+  let dragStartTx = 0;
+  let dragMoved = false;
+
+  function endStripDrag(e) {
+    if (dragPointerId == null || (e && e.pointerId !== dragPointerId)) return;
+    try {
+      if (viewport.hasPointerCapture(dragPointerId)) {
+        viewport.releasePointerCapture(dragPointerId);
+      }
+    } catch (_) {
+      /* ignore */
+    }
+    dragPointerId = null;
+    pausedByDrag = false;
+    viewport.classList.remove('cards-strip-viewport--dragging');
+    normalizeTx();
+    applyTransform();
+    if (dragMoved) {
+      const blockClick = (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+      };
+      viewport.addEventListener('click', blockClick, { capture: true, once: true });
+    }
+    dragMoved = false;
+  }
+
+  viewport.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      dragPointerId = e.pointerId;
+      dragStartX = e.clientX;
+      dragStartTx = tx;
+      dragMoved = false;
+      pausedByDrag = true;
+      viewport.classList.add('cards-strip-viewport--dragging');
+      try {
+        viewport.setPointerCapture(e.pointerId);
+      } catch (_) {
+        /* ignore */
+      }
+    },
+    { signal: sig },
+  );
+
+  viewport.addEventListener(
+    'pointermove',
+    (e) => {
+      if (dragPointerId == null || e.pointerId !== dragPointerId) return;
+      const dx = e.clientX - dragStartX;
+      if (Math.abs(dx) > 4) dragMoved = true;
+      if (!dragMoved) return;
+      e.preventDefault();
+      tx = dragStartTx + dx;
+      applyTransform();
+    },
+    { signal: sig, passive: false },
+  );
+
+  viewport.addEventListener('pointerup', endStripDrag, { signal: sig });
+  viewport.addEventListener('pointercancel', endStripDrag, { signal: sig });
+
   let lastTs = 0;
   const pxPerSec = 38;
 
   function tick(ts) {
     indexCardsMarqueeRafId = requestAnimationFrame(tick);
-    const animate = !prefersReduced && !pausedByHover && !document.hidden;
+    const animate =
+      !prefersReduced && !pausedByHover && !pausedByDrag && !document.hidden;
     if (!animate) {
       lastTs = 0;
       applyTransform();
@@ -2439,6 +2519,13 @@ function dashNormalizePending(raw) {
   };
 }
 
+/** Card ativo/publicado na API (<code>is_published</code> / <code>Ativo</code>). */
+function dashCardDtoIsPublished(raw) {
+  if (!raw || typeof raw !== 'object') return false;
+  const pub = raw.is_published ?? raw.IsPublished ?? raw.ativo ?? raw.Ativo;
+  return pub !== false;
+}
+
 function dashNormalizeCard(raw) {
   const slug = String(raw.slug ?? '')
     .trim()
@@ -2614,12 +2701,14 @@ async function loadDashColaboradoresList() {
     '<col class="dash-collab-col dash-collab-col--user" />' +
     '<col class="dash-collab-col dash-collab-col--estado" />' +
     '<col class="dash-collab-col dash-collab-col--acesso" />' +
+    '<col class="dash-collab-col dash-collab-col--acoes" />' +
     '</colgroup>' +
     '<thead><tr>' +
     '<th scope="col">E-mail</th>' +
     '<th scope="col">Username</th>' +
     '<th scope="col">Estado da conta</th>' +
     '<th scope="col">Permissão no painel</th>' +
+    '<th scope="col">Ações</th>' +
     '</tr></thead><tbody>';
   for (const row of rows) {
     const id = row.id ?? row.Id;
@@ -2632,7 +2721,11 @@ async function loadDashColaboradoresList() {
       : '<span class="dash-badge dash-badge--pending">Convite</span>';
     const nivelTitulo = adm ? 'Administrador do painel' : 'Colaborador';
     const toggleId = `dash-collab-acesso-${id}`;
-    html += `<tr class="dash-collab-row" data-dash-colab-id="${id}">
+    const excluirLabel = ativo ? 'Excluir colaborador' : 'Excluir convite';
+    const excluirConfirm = ativo
+      ? `Remover o colaborador ${email}? Esta conta deixará de aceder ao painel.`
+      : `Cancelar o convite para ${email}?`;
+    html += `<tr class="dash-collab-row" data-dash-colab-id="${id}" data-dash-colab-ativo="${ativo ? '1' : '0'}">
       <td class="dash-collab-td dash-collab-td--email"><span class="dash-collab-email">${dashEscapeHtml(String(email))}</span></td>
       <td class="dash-collab-td dash-collab-td--user">${usuario ? `<span class="dash-collab-user">${dashEscapeHtml(String(usuario))}</span>` : '<span class="dash-collab-dash">—</span>'}</td>
       <td class="dash-collab-td dash-collab-td--estado"><span class="dash-collab-estado-cell">${estado}</span></td>
@@ -2653,6 +2746,14 @@ async function loadDashColaboradoresList() {
             </label>
           </div>
         </div>
+      </td>
+      <td class="dash-collab-td dash-collab-td--acoes">
+        <button
+          type="button"
+          class="term-btn danger outline dash-collab-excluir-btn"
+          data-dash-colab-id="${id}"
+          data-dash-colab-confirm="${dashEscapeHtml(excluirConfirm)}"
+        >${dashEscapeHtml(excluirLabel)}</button>
       </td>
     </tr>`;
   }
@@ -3236,11 +3337,42 @@ function initDashboard() {
   const profileAdminMsg = document.getElementById('dash-profile-admin-msg');
   const profileForm = document.getElementById('dash-profile-form');
   const profileStatus = document.getElementById('dash-profile-status');
-  const profileAlterarSenha = document.getElementById('dash-profile-alterar-senha');
+  const profileAlterarSenhaBtn = document.getElementById('dash-profile-alterar-senha-btn');
   const profileSenhaFields = document.getElementById('dash-profile-senha-fields');
+  const profileSenhaSection = document.querySelector('.dash-profile-section--senha');
+  let profileSenhaOpen = false;
   let profilePendingRemoverFoto = false;
   let profilePendingBase64 = null;
   let profilePendingMime = null;
+  let profileSavedFotoUrl = null;
+
+  function setProfileFotoPreview(dataUrl) {
+    const wrap = document.getElementById('dash-profile-foto-preview');
+    const img = document.getElementById('dash-profile-foto-preview-img');
+    const empty = document.getElementById('dash-profile-foto-preview-empty');
+    const url = dataUrl && String(dataUrl).trim() ? String(dataUrl).trim() : null;
+    if (wrap) wrap.classList.toggle('has-image', !!url);
+    if (img) {
+      if (url) {
+        img.src = url;
+        img.hidden = false;
+        img.alt = 'Pré-visualização da foto de perfil';
+      } else {
+        img.removeAttribute('src');
+        img.hidden = true;
+        img.alt = '';
+      }
+    }
+    if (empty) empty.hidden = !!url;
+  }
+
+  function setProfileFotoFilename(name) {
+    const el = document.getElementById('dash-profile-foto-filename');
+    if (!el) return;
+    const text =
+      name && String(name).trim() ? String(name).trim() : 'Nenhum ficheiro selecionado';
+    el.textContent = text;
+  }
 
   function resetProfilePendingFiles() {
     profilePendingRemoverFoto = false;
@@ -3248,6 +3380,31 @@ function initDashboard() {
     profilePendingMime = null;
     const fi = document.getElementById('dash-profile-foto-file');
     if (fi) fi.value = '';
+    setProfileFotoFilename('');
+    setProfileFotoPreview(profilePendingRemoverFoto ? null : profileSavedFotoUrl);
+  }
+
+  function setProfileSenhaOpen(open) {
+    profileSenhaOpen = !!open;
+    if (profileSenhaFields) profileSenhaFields.hidden = !profileSenhaOpen;
+    if (profileSenhaSection) {
+      profileSenhaSection.classList.toggle('dash-profile-section--senha-open', profileSenhaOpen);
+    }
+    if (profileAlterarSenhaBtn) {
+      profileAlterarSenhaBtn.setAttribute('aria-expanded', profileSenhaOpen ? 'true' : 'false');
+      profileAlterarSenhaBtn.textContent = profileSenhaOpen
+        ? 'Ocultar alteração de senha'
+        : 'Alterar palavra-passe';
+    }
+    if (!profileSenhaOpen) {
+      ['dash-profile-senha-atual', 'dash-profile-nova-senha', 'dash-profile-confirm-senha'].forEach(
+        (id) => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        }
+      );
+      if (profileSheet) resetDashPwWraps(profileSheet);
+    }
   }
 
   function closeProfileSheet() {
@@ -3257,6 +3414,7 @@ function initDashboard() {
     document.body.classList.remove('dash-profile-sheet-open');
     resetDashPwWraps(profileSheet);
     resetProfilePendingFiles();
+    setProfileSenhaOpen(false);
     if (profileStatus) {
       profileStatus.textContent = '';
       profileStatus.classList.remove('ok', 'bad');
@@ -3336,15 +3494,13 @@ function initDashboard() {
       if (isAdminProfile) {
         if (emInput) emInput.value = d.email ? String(d.email) : '';
       } else if (emEl) {
-        emEl.textContent = d.email || '';
+        emEl.value = d.email ? String(d.email) : '';
       }
       if (uEl) uEl.value = d.usuario ? String(d.usuario) : '';
-      if (profileAlterarSenha) profileAlterarSenha.checked = false;
-      if (profileSenhaFields) profileSenhaFields.hidden = true;
-      ['dash-profile-senha-atual', 'dash-profile-nova-senha', 'dash-profile-confirm-senha'].forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-      });
+      profileSavedFotoUrl =
+        d.fotoDataUrl && typeof d.fotoDataUrl === 'string' ? String(d.fotoDataUrl) : null;
+      setProfileFotoPreview(profileSavedFotoUrl);
+      setProfileSenhaOpen(false);
     }
     profileSheet.removeAttribute('hidden');
     profileSheet.setAttribute('aria-hidden', 'false');
@@ -3357,8 +3513,8 @@ function initDashboard() {
   profileClose?.addEventListener('click', () => closeProfileSheet());
   profileBackdrop?.addEventListener('click', () => closeProfileSheet());
 
-  profileAlterarSenha?.addEventListener('change', () => {
-    if (profileSenhaFields) profileSenhaFields.hidden = !profileAlterarSenha.checked;
+  profileAlterarSenhaBtn?.addEventListener('click', () => {
+    setProfileSenhaOpen(!profileSenhaOpen);
   });
 
   document.getElementById('dash-profile-foto-file')?.addEventListener('change', async (e) => {
@@ -3366,13 +3522,19 @@ function initDashboard() {
     profilePendingRemoverFoto = false;
     profilePendingBase64 = null;
     profilePendingMime = null;
-    if (!f) return;
+    if (!f) {
+      setProfileFotoFilename('');
+      setProfileFotoPreview(profilePendingRemoverFoto ? null : profileSavedFotoUrl);
+      return;
+    }
     if (f.size > 256 * 1024) {
       if (profileStatus) {
         profileStatus.textContent = 'Imagem demasiado grande (máx. 256 KB).';
         profileStatus.classList.add('bad');
       }
       e.target.value = '';
+      setProfileFotoFilename('');
+      setProfileFotoPreview(profilePendingRemoverFoto ? null : profileSavedFotoUrl);
       return;
     }
     const mime = f.type || '';
@@ -3382,8 +3544,11 @@ function initDashboard() {
         profileStatus.classList.add('bad');
       }
       e.target.value = '';
+      setProfileFotoFilename('');
+      setProfileFotoPreview(profilePendingRemoverFoto ? null : profileSavedFotoUrl);
       return;
     }
+    setProfileFotoFilename(f.name);
     const dataUrl = await new Promise((resolve, reject) => {
       const fr = new FileReader();
       fr.onload = () => resolve(String(fr.result || ''));
@@ -3395,6 +3560,7 @@ function initDashboard() {
       profilePendingMime = m[1];
       profilePendingBase64 = m[2];
     }
+    setProfileFotoPreview(dataUrl);
     if (profileStatus) profileStatus.classList.remove('bad');
   });
 
@@ -3404,6 +3570,8 @@ function initDashboard() {
     profilePendingMime = null;
     const fi = document.getElementById('dash-profile-foto-file');
     if (fi) fi.value = '';
+    setProfileFotoFilename('');
+    setProfileFotoPreview(null);
     if (profileStatus) {
       profileStatus.textContent = 'Foto será removida ao guardar.';
       profileStatus.classList.remove('bad');
@@ -3416,7 +3584,7 @@ function initDashboard() {
     if (!profileStatus) return;
     profileStatus.textContent = '';
     profileStatus.classList.remove('ok', 'bad');
-    const alterar = !!(profileAlterarSenha && profileAlterarSenha.checked);
+    const alterar = profileSenhaOpen;
     const usuarioVal = document.getElementById('dash-profile-usuario')?.value?.trim() ?? '';
     const profileMode = profileForm?.dataset.profileMode === 'admin' ? 'admin' : 'colab';
     const emailVal =
@@ -3462,6 +3630,11 @@ function initDashboard() {
       if (r.data && typeof r.data === 'object' && r.data.token) {
         saveToken(r.data.token);
         syncDashPodeGerirColaboradoresFromToken();
+      }
+      if (profilePendingRemoverFoto) {
+        profileSavedFotoUrl = null;
+      } else if (profilePendingBase64 && profilePendingMime) {
+        profileSavedFotoUrl = `data:${profilePendingMime};base64,${profilePendingBase64}`;
       }
       resetProfilePendingFiles();
       await loadDashProfileChip();
@@ -3649,6 +3822,44 @@ function initDashboard() {
       }
       await loadDashColaboradoresList();
     });
+
+    collabSection?.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.dash-collab-excluir-btn');
+      if (!btn) return;
+      if (!getDashIsPlataformaAdmin()) return;
+      if (!btn.closest('#dash-collab-table-wrap')) return;
+      const idStr = btn.getAttribute('data-dash-colab-id');
+      const cid = idStr ? parseInt(idStr, 10) : NaN;
+      if (!Number.isFinite(cid)) return;
+      const confirmMsg =
+        btn.getAttribute('data-dash-colab-confirm') || 'Remover este registo?';
+      if (!window.confirm(confirmMsg)) return;
+      const st = document.getElementById('dash-collab-list-status');
+      if (st) {
+        st.textContent = 'A remover…';
+        st.classList.remove('bad', 'ok');
+      }
+      const baseList = getDashApiPath('colaboradorList') || '/api/Colaborador';
+      const delPath = `${baseList.replace(/\/$/, '')}/${cid}`;
+      const dr = await dashFetchNoThrow(delPath, { method: 'DELETE' });
+      if (st) {
+        if (dr.ok) {
+          st.textContent =
+            (dr.data && typeof dr.data === 'object' && dr.data.message) || 'Removido.';
+          st.classList.add('ok');
+          st.classList.remove('bad');
+        } else {
+          const msg =
+            (dr.data && typeof dr.data === 'object' && dr.data.message) ||
+            'Não foi possível remover.';
+          st.textContent = msg;
+          st.classList.add('bad');
+          st.classList.remove('ok');
+        }
+      }
+      await loadDashColaboradoresList();
+    });
+
     const fbSearchEl = document.getElementById('dash-fb-search');
     const fbList = document.getElementById('dash-fb-list');
     const fbEmpty = document.getElementById('dash-fb-empty');
@@ -3679,8 +3890,7 @@ function initDashboard() {
       void syncIndexOrderPanelFromApi();
     });
     document.getElementById('dash-open-cards-create')?.addEventListener('click', () => {
-      resetCardWizard();
-      setDashView('cards-create');
+      enterCardsCreateView();
     });
 
     /** Delegação: clique no texto dentro do botão «VOLTAR» também volta ao destino certo. */
@@ -3738,8 +3948,67 @@ function initDashboard() {
       }
     }
 
-    /** Labels para a lista «CARDS NO INDEX» (inclui cards criados na API). */
+    /** Labels e ids para a lista «CARDS NO INDEX» (inclui cards criados na API). */
     let dashIndexCardLabels = {};
+    let dashIndexCardIds = {};
+
+    function setIndexOrderStatus(msg, kind) {
+      const st = document.getElementById('dash-index-order-status');
+      if (!st) return;
+      st.textContent = msg || '';
+      st.classList.toggle('ok', kind === 'ok');
+      st.classList.toggle('bad', kind === 'bad');
+    }
+
+    async function dashDeleteCardFromList(slug, cardId, displayName) {
+      if (!getDashIsPlataformaAdmin()) return;
+      const id = Number(cardId);
+      if (!Number.isFinite(id) || id <= 0) {
+        setIndexOrderStatus('Este card ainda não está na API (sem id).', 'bad');
+        return;
+      }
+      const name = displayName || slug || 'este card';
+      if (
+        !window.confirm(
+          `Excluir o card «${name}»? Deixará de aparecer no site (desativação na API).`,
+        )
+      ) {
+        return;
+      }
+      setIndexOrderStatus('A excluir card…', '');
+      try {
+        await fetchJson(`/api/card/${id}`, { method: 'DELETE' });
+        if (slug) {
+          const nextOrder = getIndexCardOrder().filter((s) => s !== slug);
+          setIndexCardOrder(nextOrder);
+          delete dashIndexCardIds[slug];
+          delete dashIndexCardLabels[slug];
+          try {
+            localStorage.removeItem(dashSlidesStorageKey(slug));
+          } catch (_) {
+            /* ignore */
+          }
+          renderIndexOrderList();
+          applyIndexCardOrder();
+        }
+        if (editingCardSlug === slug) {
+          editingCardSlug = null;
+          editingCardNumericId = null;
+          editSlidesSlug = null;
+          if (isCardEditorViewActive()) setDashView('cards-edit');
+        }
+        setIndexOrderStatus('Card excluído.', 'ok');
+        await syncIndexOrderPanelFromApi();
+      } catch (e) {
+        const extra =
+          e?.status === 403
+            ? ' Apenas o administrador da plataforma pode excluir cards.'
+            : e?.message
+              ? ` ${e.message}`
+              : '';
+        setIndexOrderStatus(`Não foi possível excluir o card.${extra}`, 'bad');
+      }
+    }
 
     function mergeIndexOrderWithDashboardCards(order, cardsNorm) {
       const sorted = [...cardsNorm].sort((a, b) => a.sort_order - b.sort_order);
@@ -3754,8 +4023,20 @@ function initDashboard() {
       try {
         const data = await fetchJson('/api/card/dashboard');
         const arr = Array.isArray(data) ? data : [];
-        const cards = arr.map(dashNormalizeCard).filter((c) => c.slug);
+        const activeRows = arr.filter(dashCardDtoIsPublished);
+        const cards = activeRows.map(dashNormalizeCard).filter((c) => c.slug);
         dashIndexCardLabels = Object.fromEntries(cards.map((c) => [c.slug, c.display_name || c.slug]));
+        dashIndexCardIds = Object.fromEntries(
+          activeRows
+            .map((r) => {
+              const slug = String(r.slug ?? r.Slug ?? '')
+                .trim()
+                .toLowerCase();
+              const id = Number(r.id ?? r.Id ?? 0);
+              return slug && Number.isFinite(id) && id > 0 ? [slug, id] : null;
+            })
+            .filter(Boolean),
+        );
         const merged = mergeIndexOrderWithDashboardCards(getIndexCardOrder(), cards);
         setIndexCardOrder(merged);
         renderIndexOrderList();
@@ -3763,6 +4044,16 @@ function initDashboard() {
       } catch (_) {
         renderIndexOrderList();
       }
+    }
+
+    function dashAddSlugToIndexCardOrder(slug) {
+      const s = String(slug || '')
+        .trim()
+        .toLowerCase();
+      if (!s) return;
+      const order = getIndexCardOrder();
+      if (order.includes(s)) return;
+      setIndexCardOrder([...order, s]);
     }
 
     function renderIndexOrderList() {
@@ -3777,14 +4068,31 @@ function initDashboard() {
         li.className = 'dash-index-order-item';
         const row = document.createElement('div');
         row.className = 'dash-index-order-row';
+        const cardId = dashIndexCardIds[slug];
+        const canDelete =
+          getDashIsPlataformaAdmin() &&
+          cardId != null &&
+          Number.isFinite(cardId) &&
+          cardId > 0;
         row.innerHTML = `
-          <span class="dash-index-order-label">${dashEscapeHtml(label)}</span>
-          <code class="dash-index-order-slug">${dashEscapeHtml(slug)}</code>
-          <div class="dash-index-order-btns">
-            <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="-1" ${idx === 0 ? 'disabled' : ''}>↑</button>
-            <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="1" ${idx === order.length - 1 ? 'disabled' : ''}>↓</button>
+          <div class="dash-index-order-head">
+            <div class="dash-index-order-title">
+              <span class="dash-index-order-label">${dashEscapeHtml(label)}</span>
+              <code class="dash-index-order-slug">${dashEscapeHtml(slug)}</code>
+            </div>
+            <div class="dash-index-order-btns">
+              <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="-1" ${idx === 0 ? 'disabled' : ''} aria-label="Subir">↑</button>
+              <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="1" ${idx === order.length - 1 ? 'disabled' : ''} aria-label="Descer">↓</button>
+            </div>
           </div>
-          <button type="button" class="term-btn primary" data-edit-slug="${slug}">FORM + SLIDES</button>
+          <div class="dash-index-order-actions">
+            <button type="button" class="term-btn primary" data-edit-slug="${dashEscapeHtml(slug)}">Editar Slide</button>
+            ${
+              canDelete
+                ? `<button type="button" class="term-btn danger outline" data-delete-card data-delete-slug="${dashEscapeHtml(slug)}" data-delete-id="${cardId}" data-delete-label="${dashEscapeHtml(label)}">Excluir card</button>`
+                : ''
+            }
+          </div>
         `;
         li.appendChild(row);
         ul.appendChild(li);
@@ -3793,6 +4101,14 @@ function initDashboard() {
         btn.addEventListener('click', () => {
           const slug = btn.getAttribute('data-edit-slug');
           if (slug) openIndexCardForDeepEdit(slug);
+        });
+      });
+      ul.querySelectorAll('[data-delete-card]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const slug = btn.getAttribute('data-delete-slug');
+          const cardId = btn.getAttribute('data-delete-id');
+          const label = btn.getAttribute('data-delete-label');
+          if (slug) void dashDeleteCardFromList(slug, cardId, label);
         });
       });
       ul.querySelectorAll('[data-idx-move]').forEach((b) => {
@@ -4225,6 +4541,206 @@ function initDashboard() {
     let wizIconDataUrl = '';
     let wizIconPrimaryPath = '';
 
+    function getWizardDraftsFromStorage() {
+      try {
+        const arr = JSON.parse(localStorage.getItem(BUILDXP_WIZ_DRAFT_KEY) || '[]');
+        return Array.isArray(arr) ? arr : [];
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function setWizardDraftsToStorage(arr) {
+      try {
+        localStorage.setItem(BUILDXP_WIZ_DRAFT_KEY, JSON.stringify(Array.isArray(arr) ? arr : []));
+      } catch (_) {
+        /* ignorado */
+      }
+    }
+
+    function hideCardsCreateDraftPanels() {
+      const gate = document.getElementById('dash-create-draft-gate');
+      const list = document.getElementById('dash-create-draft-list-panel');
+      if (gate) gate.hidden = true;
+      if (list) list.hidden = true;
+    }
+
+    function enterCardsCreateView() {
+      const drafts = getWizardDraftsFromStorage();
+      if (!drafts.length) {
+        startNewCardWizard();
+        setDashView('cards-create');
+        return;
+      }
+      const gate = document.getElementById('dash-create-draft-gate');
+      const list = document.getElementById('dash-create-draft-list-panel');
+      const meta = document.getElementById('dash-create-step-meta');
+      const slides = document.getElementById('dash-create-step-slides');
+      const msg = document.getElementById('dash-create-draft-gate-msg');
+      if (msg) {
+        msg.textContent =
+          drafts.length === 1
+            ? 'Existe 1 rascunho guardado neste navegador.'
+            : `Existem ${drafts.length} rascunhos guardados neste navegador.`;
+      }
+      if (meta) meta.hidden = true;
+      if (slides) slides.hidden = true;
+      if (list) list.hidden = true;
+      if (gate) gate.hidden = false;
+      const st = document.getElementById('dash-wiz-status');
+      if (st) st.textContent = '';
+      setDashView('cards-create');
+    }
+
+    function startNewCardWizard() {
+      resetCardWizard();
+    }
+
+    function renderWizardDraftList() {
+      const ul = document.getElementById('dash-create-draft-list');
+      if (!ul) return;
+      const drafts = getWizardDraftsFromStorage();
+      ul.innerHTML = '';
+      drafts.forEach((d, i) => {
+        const li = document.createElement('li');
+        li.className = 'dash-wiz-draft-item';
+        const title = (d.meta && d.meta.title) || d.slug || `Rascunho ${i + 1}`;
+        const when = d.savedAt ? new Date(d.savedAt).toLocaleString('pt-PT') : '';
+        const subParts = [];
+        if (d.slug) subParts.push(d.slug);
+        if (d.meta && d.meta.badge) subParts.push(d.meta.badge);
+        if (when) subParts.push(when);
+        const main = document.createElement('div');
+        main.className = 'dash-wiz-draft-item-main';
+        const titleEl = document.createElement('span');
+        titleEl.className = 'dash-wiz-draft-item-title';
+        titleEl.textContent = title;
+        const subEl = document.createElement('span');
+        subEl.className = 'dash-muted dash-wiz-draft-item-sub';
+        subEl.textContent = subParts.join(' · ');
+        main.appendChild(titleEl);
+        main.appendChild(subEl);
+        const actions = document.createElement('div');
+        actions.className = 'dash-wiz-draft-item-actions';
+        const btnContinue = document.createElement('button');
+        btnContinue.type = 'button';
+        btnContinue.className = 'term-btn primary dash-wiz-draft-continue';
+        btnContinue.dataset.idx = String(i);
+        btnContinue.textContent = 'Continuar';
+        const btnDelete = document.createElement('button');
+        btnDelete.type = 'button';
+        btnDelete.className = 'term-btn ghost danger dash-wiz-draft-delete';
+        btnDelete.dataset.idx = String(i);
+        btnDelete.textContent = 'Apagar';
+        actions.appendChild(btnContinue);
+        actions.appendChild(btnDelete);
+        li.appendChild(main);
+        li.appendChild(actions);
+        ul.appendChild(li);
+      });
+      ul.querySelectorAll('.dash-wiz-draft-continue').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const idx = Number.parseInt(btn.getAttribute('data-idx'), 10);
+          if (Number.isFinite(idx)) loadWizardDraftAtIndex(idx);
+        });
+      });
+      ul.querySelectorAll('.dash-wiz-draft-delete').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const idx = Number.parseInt(btn.getAttribute('data-idx'), 10);
+          if (!Number.isFinite(idx)) return;
+          const next = getWizardDraftsFromStorage();
+          next.splice(idx, 1);
+          setWizardDraftsToStorage(next);
+          if (!next.length) {
+            startNewCardWizard();
+            return;
+          }
+          renderWizardDraftList();
+        });
+      });
+    }
+
+    function loadWizardDraftAtIndex(index) {
+      const drafts = getWizardDraftsFromStorage();
+      const bundle = drafts[index];
+      if (!bundle) return;
+      resetCardWizard();
+      const slugEl = document.getElementById('dash-wiz-slug');
+      if (slugEl) slugEl.value = String(bundle.slug || '').trim();
+      const themeEl = document.getElementById('dash-wiz-theme');
+      const theme = bundle.theme || 'git';
+      if (themeEl) themeEl.value = theme;
+      const borderNorm = buildxpNormalizeHexColor(bundle.border_color);
+      if (borderNorm) {
+        const picker = document.getElementById('dash-wiz-border-picker');
+        const hexInp = document.getElementById('dash-wiz-border-hex');
+        if (picker) picker.value = borderNorm;
+        if (hexInp) hexInp.value = borderNorm;
+      } else {
+        dashSyncWizBorderFromThemePreset();
+      }
+      const m = bundle.meta || {};
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val ?? '';
+      };
+      setVal('dash-wiz-title', m.title || '');
+      setVal('dash-wiz-badge', m.badge || '');
+      setVal('dash-wiz-class', m.cardClass || '');
+      setVal('dash-wiz-desc', m.desc || '');
+      setVal('dash-wiz-xpc', String(m.xpCurrent ?? 0));
+      setVal('dash-wiz-xpm', String(m.xpMax ?? 3000));
+      wizIconDataUrl = m.iconDataUrl || '';
+      wizIconPrimaryPath = m.iconPath || '';
+      const prev = document.getElementById('dash-wiz-icon-preview');
+      const iconSrc = wizIconPrimaryPath || wizIconDataUrl;
+      if (prev) {
+        if (iconSrc) {
+          prev.src = iconSrc;
+          prev.hidden = false;
+        } else {
+          prev.removeAttribute('src');
+          prev.hidden = true;
+        }
+      }
+      wizSlides = (Array.isArray(bundle.slides) ? bundle.slides : []).map((s) => {
+        const id = dashNewSlideId();
+        if (s.type === 'pause') {
+          return {
+            id,
+            type: 'pause',
+            text: s.text || '',
+            observation: s.observation || '',
+          };
+        }
+        return {
+          id,
+          type: 'content',
+          title: s.title || '',
+          text: s.text || '',
+          commands: s.commands || '',
+          observation: s.observation || '',
+        };
+      });
+      hideCardsCreateDraftPanels();
+      const metaEl = document.getElementById('dash-create-step-meta');
+      const slidesEl = document.getElementById('dash-create-step-slides');
+      if (wizSlides.length) {
+        if (metaEl) metaEl.hidden = true;
+        if (slidesEl) slidesEl.hidden = false;
+        renderWizSlides();
+      } else {
+        if (metaEl) metaEl.hidden = false;
+        if (slidesEl) slidesEl.hidden = true;
+      }
+      const st = document.getElementById('dash-wiz-status');
+      if (st) {
+        st.textContent = 'Rascunho carregado.';
+        st.classList.add('ok');
+        st.classList.remove('bad');
+      }
+    }
+
     function resetCardWizard() {
       wizSlides = [];
       wizIconDataUrl = '';
@@ -4254,6 +4770,7 @@ function initDashboard() {
         prev.hidden = true;
       }
       dashSyncWizBorderFromThemePreset();
+      hideCardsCreateDraftPanels();
       const meta = document.getElementById('dash-create-step-meta');
       const slides = document.getElementById('dash-create-step-slides');
       if (meta) meta.hidden = false;
@@ -4261,6 +4778,26 @@ function initDashboard() {
       const st = document.getElementById('dash-wiz-status');
       if (st) st.textContent = '';
     }
+
+    document.getElementById('dash-create-draft-open-list')?.addEventListener('click', () => {
+      const gate = document.getElementById('dash-create-draft-gate');
+      const list = document.getElementById('dash-create-draft-list-panel');
+      if (gate) gate.hidden = true;
+      if (list) list.hidden = false;
+      renderWizardDraftList();
+    });
+    document.getElementById('dash-create-draft-new')?.addEventListener('click', () => {
+      startNewCardWizard();
+    });
+    document.getElementById('dash-create-draft-new-from-list')?.addEventListener('click', () => {
+      startNewCardWizard();
+    });
+    document.getElementById('dash-create-draft-back-gate')?.addEventListener('click', () => {
+      const gate = document.getElementById('dash-create-draft-gate');
+      const list = document.getElementById('dash-create-draft-list-panel');
+      if (list) list.hidden = true;
+      if (gate) gate.hidden = false;
+    });
 
     function buildWizMeta() {
       return {
@@ -4554,8 +5091,7 @@ function initDashboard() {
         }
 
         if (st) {
-          st.textContent =
-            `Publicado (slug «${slugNorm}»). O index.html lê GET /api/card — recarrega a página inicial para ver o card na faixa. Abrir: card.html?slug=${encodeURIComponent(slugNorm)}&tab=beginner`;
+          st.textContent = 'Publicado';
           st.classList.add('ok');
           st.classList.remove('bad');
         }
@@ -4604,8 +5140,16 @@ function initDashboard() {
         title: 'Conclusão',
         actions: ['voltar_inicio', 'iniciar_treinamento'],
       };
+      const slug = (document.getElementById('dash-wiz-slug')?.value || '').trim();
+      const theme = document.getElementById('dash-wiz-theme')?.value || 'git';
+      const border_color =
+        buildxpNormalizeHexColor(document.getElementById('dash-wiz-border-hex')?.value) ??
+        buildxpPresetHexForTheme(theme);
       const bundle = {
         version: 1,
+        slug,
+        theme,
+        border_color,
         meta,
         slides: publishedSlides,
         finalSlide,
@@ -4623,7 +5167,7 @@ function initDashboard() {
         localStorage.setItem(BUILDXP_WIZ_DRAFT_KEY, JSON.stringify(arr));
         const st = document.getElementById('dash-wiz-status');
         if (st) {
-          st.textContent = 'Rascunho guardado só neste navegador.';
+          st.textContent = 'Rascunho guardado. Pode continuar em «Criar card» → Ver rascunhos.';
           st.classList.remove('bad');
           st.classList.add('ok');
         }
@@ -4986,7 +5530,7 @@ function initDashboard() {
   cardForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     if ((isCardsEditViewActive() || isCardEditorViewActive()) && !editingCardSlug) {
-      setCardFormStatus('Selecione um card (FORM + SLIDES na grade ou na lista «CARDS NO INDEX»). Criar card novo é só na aba «Criar card».', 'bad');
+      setCardFormStatus('Selecione um card («Editar Slide» na lista «CARDS NO INDEX»). Criar card novo é só na aba «Criar card».', 'bad');
       return;
     }
     const slugRaw = document.getElementById('dash-card-slug').value.trim().toLowerCase();
@@ -5071,9 +5615,13 @@ function initDashboard() {
         const ns =
           created && typeof created === 'object' ? created.slug ?? created.Slug : null;
         const slugIn = document.getElementById('dash-card-slug');
+        const newSlug = String(ns || slugNorm || slugIn?.value || '')
+          .trim()
+          .toLowerCase();
         if (ns && slugIn && !slugIn.value.trim()) {
-          slugIn.value = String(ns).trim().toLowerCase();
+          slugIn.value = newSlug;
         }
+        if (newSlug) dashAddSlugToIndexCardOrder(newSlug);
       } else {
         setCardFormStatus('Não é possível criar card nesta aba.', 'bad');
         return;
