@@ -12,6 +12,8 @@ public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
         var config = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json")
+            .AddJsonFile("appsettings.Development.json", optional: true)
+            .AddEnvironmentVariables()
             .Build();
 
         var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
