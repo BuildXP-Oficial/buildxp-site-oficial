@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using BuildXP.API.Data;
 using BuildXP.API.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace BuildXP.API.Services;
@@ -70,8 +71,14 @@ public class CardService
             const string fallback = "imagens/logo2buildxpret.png";
             if (string.IsNullOrWhiteSpace(s)) return string.Empty;
             var t = s.Trim();
+            if (t.StartsWith(CardIconHelper.TempPrefix, StringComparison.OrdinalIgnoreCase) ||
+                t.Equals(CardIconHelper.DbPrimaryMarker, StringComparison.OrdinalIgnoreCase) ||
+                t.Equals(CardIconHelper.DbSecondaryMarker, StringComparison.OrdinalIgnoreCase))
+                return t;
             if (t.StartsWith("data:", StringComparison.OrdinalIgnoreCase) && t.Length > max)
                 return fallback;
+            var mapped = CardIconHelper.MapDuplicateToOriginalPath(t);
+            if (mapped is not null) return mapped;
             return t.Length <= max ? t : t[..max];
         }
 
@@ -121,12 +128,7 @@ public class CardService
         card.BtnPrimaryLabel = (p.BtnPrimaryLabel ?? card.BtnPrimaryLabel).Trim();
         card.BtnSecondaryLabel = (p.BtnSecondaryLabel ?? card.BtnSecondaryLabel).Trim();
         card.IconLayout = string.IsNullOrWhiteSpace(p.IconLayout) ? card.IconLayout : p.IconLayout!.Trim();
-        var pri = (p.IconPrimarySrc ?? card.IconPrimarySrc).Trim();
-        card.IconPrimarySrc = pri;
-        card.Icone = pri.Length > 0 ? pri : card.Icone;
         card.IconPrimaryAlt = (p.IconPrimaryAlt ?? card.IconPrimaryAlt).Trim();
-        var sec = (p.IconSecondarySrc ?? card.IconSecondarySrc).Trim();
-        card.IconSecondarySrc = sec;
         card.IconSecondaryAlt = (p.IconSecondaryAlt ?? card.IconSecondaryAlt).Trim();
         if (p.XpCurrent is int xpc) card.XpAtual = xpc;
         if (p.XpMax is int xpm) card.XpMaximo = xpm;
@@ -145,8 +147,132 @@ public class CardService
             card.LinkRef = CardClientDto.NormalizePublicListLink(card.LinkRef, sl, "ref");
         }
 
+    }
+
+    public async Task ApplyIconRefsFromPayloadAsync(SkillCard card, CardDashboardPayload p)
+    {
+        await ApplyOneIconRefAsync(card, p.IconPrimarySrc, primary: true);
+        var layout = (p.IconLayout ?? card.IconLayout ?? "single").Trim().ToLowerInvariant();
+        if (layout == "dual")
+            await ApplyOneIconRefAsync(card, p.IconSecondarySrc, primary: false);
+        else
+        {
+            card.IconSecondaryBytes = null;
+            card.IconSecondaryMimeType = null;
+            card.IconSecondarySrc = string.Empty;
+        }
+
+        card.Icone = !string.IsNullOrEmpty(card.IconPrimarySrc)
+            ? card.IconPrimarySrc
+            : card.Icone;
         AplicarLimitesColunasSkillCard(card);
     }
+
+    private async Task ApplyOneIconRefAsync(SkillCard card, string? refValue, bool primary)
+    {
+        var r = (refValue ?? (primary ? card.IconPrimarySrc : card.IconSecondarySrc) ?? "").Trim();
+        if (string.IsNullOrEmpty(r))
+        {
+            if (primary)
+            {
+                card.IconPrimaryBytes = null;
+                card.IconPrimaryMimeType = null;
+            }
+            else
+            {
+                card.IconSecondaryBytes = null;
+                card.IconSecondaryMimeType = null;
+            }
+            return;
+        }
+
+        if (r.Equals(CardIconHelper.DbPrimaryMarker, StringComparison.OrdinalIgnoreCase) ||
+            r.Equals(CardIconHelper.DbSecondaryMarker, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        if (r.Contains("/icon/primary", StringComparison.OrdinalIgnoreCase) && primary &&
+            CardIconHelper.HasPrimaryBytes(card))
+            return;
+        if (r.Contains("/icon/secondary", StringComparison.OrdinalIgnoreCase) && !primary &&
+            CardIconHelper.HasSecondaryBytes(card))
+            return;
+
+        if (CardIconHelper.IsTempRef(r))
+        {
+            var id = CardIconHelper.ParseTempId(r);
+            if (!id.HasValue) return;
+            var upload = await _context.CardIconUploads.FindAsync(id.Value);
+            if (upload is null) return;
+            if (primary)
+            {
+                card.IconPrimaryBytes = upload.Data;
+                card.IconPrimaryMimeType = upload.MimeType;
+                card.IconPrimarySrc = CardIconHelper.DbPrimaryMarker;
+            }
+            else
+            {
+                card.IconSecondaryBytes = upload.Data;
+                card.IconSecondaryMimeType = upload.MimeType;
+                card.IconSecondarySrc = CardIconHelper.DbSecondaryMarker;
+            }
+            _context.CardIconUploads.Remove(upload);
+            return;
+        }
+
+        var normalized = CardIconHelper.MapDuplicateToOriginalPath(r) ?? r;
+        if (primary)
+        {
+            card.IconPrimaryBytes = null;
+            card.IconPrimaryMimeType = null;
+            card.IconPrimarySrc = normalized;
+        }
+        else
+        {
+            card.IconSecondaryBytes = null;
+            card.IconSecondaryMimeType = null;
+            card.IconSecondarySrc = normalized;
+        }
+    }
+
+    public async Task<int> FixDuplicateStaticIconPathsAsync()
+    {
+        var cards = await _context.SkillCards.ToListAsync();
+        var n = 0;
+        foreach (var card in cards)
+        {
+            var p = CardIconHelper.MapDuplicateToOriginalPath(card.IconPrimarySrc);
+            if (p is not null && p != card.IconPrimarySrc)
+            {
+                card.IconPrimarySrc = p;
+                card.IconPrimaryBytes = null;
+                card.IconPrimaryMimeType = null;
+                n++;
+            }
+            var s = CardIconHelper.MapDuplicateToOriginalPath(card.IconSecondarySrc);
+            if (s is not null && s != card.IconSecondarySrc)
+            {
+                card.IconSecondarySrc = s;
+                card.IconSecondaryBytes = null;
+                card.IconSecondaryMimeType = null;
+                n++;
+            }
+        }
+        if (n > 0) await _context.SaveChangesAsync();
+        return n;
+    }
+
+    public async Task<CardIconUpload?> GetIconUploadAsync(Guid id) =>
+        await _context.CardIconUploads.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+
+    public (byte[] Data, string MimeType)? GetPrimaryIconBytes(SkillCard card) =>
+        card.IconPrimaryBytes is { Length: > 0 } bytes
+            ? (bytes, card.IconPrimaryMimeType ?? "image/png")
+            : null;
+
+    public (byte[] Data, string MimeType)? GetSecondaryIconBytes(SkillCard card) =>
+        card.IconSecondaryBytes is { Length: > 0 } bytes
+            ? (bytes, card.IconSecondaryMimeType ?? "image/png")
+            : null;
 
     private async Task<string> GerarSlugUnicoAsync()
     {
@@ -270,6 +396,8 @@ public class CardService
         if (card.XpMaximo <= 0) card.XpMaximo = 3000;
         _context.SkillCards.Add(card);
         await _context.SaveChangesAsync();
+        await ApplyIconRefsFromPayloadAsync(card, payload);
+        await _context.SaveChangesAsync();
         return card;
     }
 
@@ -282,6 +410,7 @@ public class CardService
         await AssertSlugDisponivelAsync(card, payload);
 
         AplicarPayload(card, payload);
+        await ApplyIconRefsFromPayloadAsync(card, payload);
         card.AtualizadoEm = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
@@ -297,9 +426,85 @@ public class CardService
         await AssertSlugDisponivelAsync(card, payload);
 
         AplicarPayload(card, payload);
+        await ApplyIconRefsFromPayloadAsync(card, payload);
         card.AtualizadoEm = DateTime.UtcNow;
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    public Task<(Guid Id, string Ref, string PreviewUrl)> SaveIconUploadAsync(
+        IFormFile file,
+        string mimeType,
+        CancellationToken ct = default) =>
+        SaveIconUploadFromBytesAsync(ReadFormFileBytes(file), mimeType, ct);
+
+    public async Task<(Guid Id, string Ref, string PreviewUrl)> SaveIconUploadFromBytesAsync(
+        byte[] data,
+        string mimeType,
+        CancellationToken ct = default)
+    {
+        if (data is not { Length: > 0 })
+            throw new InvalidOperationException("Ficheiro vazio.");
+
+        var upload = new CardIconUpload
+        {
+            Id = Guid.NewGuid(),
+            Data = data,
+            MimeType = mimeType,
+            CriadoEm = DateTime.UtcNow,
+        };
+        _context.CardIconUploads.Add(upload);
+        await _context.SaveChangesAsync(ct);
+        return (upload.Id, CardIconHelper.TempRef(upload.Id), CardIconHelper.PublicTempUrl(upload.Id));
+    }
+
+    private static byte[] ReadFormFileBytes(IFormFile file)
+    {
+        using var ms = new MemoryStream();
+        file.CopyTo(ms);
+        return ms.ToArray();
+    }
+
+    /// <summary>Fallback: grava em <c>wwwroot/imagens/</c> (nome original sanitizado).</summary>
+    public static Task<string> SaveIconBytesToWwwrootAsync(
+        byte[] data,
+        string originalFileName,
+        string webRootPath,
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(webRootPath))
+            throw new InvalidOperationException("WebRoot não configurado.");
+        if (data is not { Length: > 0 })
+            throw new InvalidOperationException("Ficheiro vazio.");
+
+        var ext = Path.GetExtension(originalFileName).ToLowerInvariant();
+        var baseName = Path.GetFileNameWithoutExtension(originalFileName);
+        baseName = Regex.Replace(baseName ?? "", @"[^a-zA-Z0-9_-]", "_");
+        if (string.IsNullOrWhiteSpace(baseName)) baseName = "icon";
+        if (baseName.Length > 48) baseName = baseName[..48];
+
+        var fileName = $"{baseName}{ext}".ToLowerInvariant();
+        var imagensDir = Path.Combine(webRootPath, "imagens");
+        Directory.CreateDirectory(imagensDir);
+        var physical = Path.Combine(imagensDir, fileName);
+        return WriteIconBytesAsync(data, physical, ct);
+    }
+
+    private static async Task<string> WriteIconBytesAsync(byte[] data, string physicalPath, CancellationToken ct)
+    {
+        await using (var stream = new FileStream(
+                         physicalPath,
+                         FileMode.Create,
+                         FileAccess.Write,
+                         FileShare.None,
+                         bufferSize: 65536,
+                         options: FileOptions.Asynchronous))
+        {
+            await stream.WriteAsync(data, ct);
+        }
+
+        var fileName = Path.GetFileName(physicalPath);
+        return $"imagens/{fileName}".Replace('\\', '/');
     }
 
     // desativa card — soft delete
@@ -356,7 +561,6 @@ public class CardService
         _context.Slides.Add(slide);
         await _context.SaveChangesAsync();
 
-        await RecalcularXpAsync(slide.CardId);
         return slide;
     }
 
@@ -384,8 +588,6 @@ public class CardService
         _context.Slides.Remove(slide);
         await _context.SaveChangesAsync();
 
-        // recalcula XP após remover
-        await RecalcularXpAsync(cardId);
         return true;
     }
 
@@ -395,7 +597,6 @@ public class CardService
         _context.ReferenciasRapidas.Add(referencia);
         await _context.SaveChangesAsync();
 
-        await RecalcularXpAsync(referencia.CardId);
         return referencia;
     }
 
@@ -409,7 +610,6 @@ public class CardService
         _context.ReferenciasRapidas.Remove(ref_);
         await _context.SaveChangesAsync();
 
-        await RecalcularXpAsync(cardId);
         return true;
     }
 }

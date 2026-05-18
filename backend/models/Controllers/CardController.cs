@@ -39,7 +39,7 @@ public class CardController : ControllerBase
     public async Task<IActionResult> Listar()
     {
         var cards = await _service.ListarAtivosAsync();
-        return Ok(cards.Select(CardClientDto.FromEntity).ToList());
+        return Ok(cards.Select(c => CardClientDto.FromEntity(c)).ToList());
     }
 
     [HttpGet("{id:int}")]
@@ -68,7 +68,7 @@ public class CardController : ControllerBase
             return NotFound();
         var card = await _service.BuscarPorSlugParaEdicaoAsync(slug);
         if (card is null) return NotFound("Card não encontrado.");
-        return Ok(CardClientDto.FromEntity(card));
+        return Ok(CardClientDto.FromEntity(card, forDashboardEdit: true));
     }
 
     [HttpGet("for-edit/id/{id:int}")]
@@ -77,7 +77,35 @@ public class CardController : ControllerBase
     {
         var card = await _service.BuscarPorIdParaEdicaoAsync(id);
         if (card is null) return NotFound(new { message = "Card não encontrado." });
-        return Ok(CardClientDto.FromEntity(card));
+        return Ok(CardClientDto.FromEntity(card, forDashboardEdit: true));
+    }
+
+    [HttpGet("{id:int}/icon/primary")]
+    public async Task<IActionResult> GetPrimaryIcon(int id)
+    {
+        var card = await _service.BuscarPorIdAsync(id);
+        if (card is null) return NotFound();
+        var icon = _service.GetPrimaryIconBytes(card);
+        if (icon is null) return NotFound();
+        return File(icon.Value.Data, icon.Value.MimeType);
+    }
+
+    [HttpGet("{id:int}/icon/secondary")]
+    public async Task<IActionResult> GetSecondaryIcon(int id)
+    {
+        var card = await _service.BuscarPorIdAsync(id);
+        if (card is null) return NotFound();
+        var icon = _service.GetSecondaryIconBytes(card);
+        if (icon is null) return NotFound();
+        return File(icon.Value.Data, icon.Value.MimeType);
+    }
+
+    [HttpGet("icon-upload/{uploadId:guid}")]
+    public async Task<IActionResult> GetIconUpload(Guid uploadId)
+    {
+        var upload = await _service.GetIconUploadAsync(uploadId);
+        if (upload is null) return NotFound();
+        return File(upload.Data, upload.MimeType);
     }
 
     // ── ROTAS PRIVADAS — só o dashboard acessa ──────────────
@@ -87,16 +115,16 @@ public class CardController : ControllerBase
     public async Task<IActionResult> ListarDashboard()
     {
         var cards = await _service.ListarTodosAsync();
-        return Ok(cards.Select(CardClientDto.FromEntity).ToList());
+        return Ok(cards.Select(c => CardClientDto.FromEntity(c)).ToList());
     }
 
-    /// <summary>Grava ícone em <c>wwwroot/imagens/</c> e devolve caminho relativo (ex.: <c>imagens/foo.png</c>).</summary>
+    /// <summary>Grava ícone na base de dados (staging) e devolve referência <c>icon-temp:{guid}</c>.</summary>
     [HttpPost("upload-icon")]
     [Authorize(Roles = "admin,colaborador")]
     [RequestFormLimits(MultipartBodyLengthLimit = 3_000_000)]
     [RequestSizeLimit(3_000_000)]
     [Consumes("multipart/form-data")]
-    public async Task<IActionResult> UploadIcon(IFormFile file, CancellationToken ct)
+    public async Task<IActionResult> UploadIcon([FromForm] IFormFile? file, CancellationToken ct)
     {
         if (file is null || file.Length == 0)
             return BadRequest(new { message = "Selecione um ficheiro de imagem." });
@@ -110,34 +138,43 @@ public class CardController : ControllerBase
         if (string.IsNullOrWhiteSpace(ext) || Array.IndexOf(allowed, ext) < 0)
             return BadRequest(new { message = "Use PNG, JPEG, WebP, GIF ou SVG." });
 
-        var webRoot = _env.WebRootPath;
-        if (string.IsNullOrEmpty(webRoot))
-            return StatusCode(500, new { message = "WebRoot não configurado." });
+        var mime = file.ContentType;
+        if (!CardIconHelper.IsAllowedMime(mime))
+            mime = CardIconHelper.MimeFromExtension(ext);
 
-        var imagensDir = Path.Combine(webRoot, "imagens");
-        Directory.CreateDirectory(imagensDir);
+        await using var buffer = new MemoryStream();
+        await file.CopyToAsync(buffer, ct);
+        if (buffer.Length == 0)
+            return BadRequest(new { message = "Ficheiro vazio." });
 
-        var baseName = Path.GetFileNameWithoutExtension(file.FileName);
-        baseName = Regex.Replace(baseName ?? "", @"[^a-zA-Z0-9_-]", "_");
-        if (string.IsNullOrWhiteSpace(baseName)) baseName = "icon";
-        if (baseName.Length > 40) baseName = baseName[..40];
-
-        var unique = $"{baseName}_{Guid.NewGuid():N}{ext}";
-        var physical = Path.Combine(imagensDir, unique);
-
-        await using (var stream = new FileStream(
-                       physical,
-                       FileMode.CreateNew,
-                       FileAccess.Write,
-                       FileShare.None,
-                       bufferSize: 65536,
-                       options: FileOptions.Asynchronous))
+        try
         {
-            await file.CopyToAsync(stream, ct);
+            var (_, refKey, previewUrl) = await _service.SaveIconUploadFromBytesAsync(
+                buffer.ToArray(),
+                mime,
+                ct);
+            return Ok(new { iconRef = refKey, previewUrl, storage = "db" });
         }
+        catch (Exception)
+        {
+            try
+            {
+                var webRoot = _env.WebRootPath;
+                if (string.IsNullOrEmpty(webRoot))
+                    return StatusCode(500, new { message = "Não foi possível gravar o ícone (WebRoot ausente)." });
 
-        var relative = $"imagens/{unique}".Replace('\\', '/');
-        return Ok(new { path = relative });
+                var relative = await CardService.SaveIconBytesToWwwrootAsync(
+                    buffer.ToArray(),
+                    file.FileName,
+                    webRoot,
+                    ct);
+                return Ok(new { iconRef = relative, previewUrl = relative, storage = "file" });
+            }
+            catch (Exception ex2)
+            {
+                return StatusCode(500, new { message = "Não foi possível gravar o ícone.", detail = ex2.Message });
+            }
+        }
     }
 
     [HttpPost]

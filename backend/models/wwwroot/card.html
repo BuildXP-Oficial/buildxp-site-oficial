@@ -173,7 +173,7 @@
 </div>
 
 <footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="main.js?v=card-6"></script>
+<script src="main.js?v=card-xp-1"></script>
 <script>
 function escapeHtml(str) {
   return String(str ?? '')
@@ -188,6 +188,7 @@ function cardHtmlIsImageSrc(s) {
   const t = String(s || '').trim();
   if (!t || t.length > 512) return false;
   if (/^https?:\/\//i.test(t)) return true;
+  if (t.startsWith('/api/card/')) return true;
   if (/\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(t)) return true;
   return t.startsWith('imagens/') || t.startsWith('/imagens/');
 }
@@ -556,6 +557,10 @@ function renderError(code, msg, root) {
   const xpMaxRaw = Number(card.xp_max ?? card.XpMax ?? 3000);
   const xpMax = xpMaxRaw > 0 ? xpMaxRaw : 3000;
   const xpPct = Math.min(Math.round((xpAtual / xpMax) * 100), 100);
+  const xpLabel =
+    typeof buildxpFormatXpPair === 'function'
+      ? buildxpFormatXpPair(xpAtual, xpMax)
+      : `${xpAtual} / ${xpMax}`;
 
   // ── 7. SEPARA SLIDES POR TIPO ────────────────────────────
   const slides = (card.slides || card.Slides || []).sort(
@@ -584,7 +589,7 @@ function renderError(code, msg, root) {
 
   // ── 8. RENDERIZA HTML ────────────────────────────────────
   root.innerHTML = `
-    <a href="index.html" class="back-link">← VOLTAR AOS CARDS</a>
+    <a href="index.html#cards" class="back-link">← VOLTAR AOS CARDS</a>
 
     <div class="page-hero">
       <div class="page-hero-glow"></div>
@@ -597,7 +602,7 @@ function renderError(code, msg, root) {
           <div class="xp-mini">
             <div class="xp-mini-fill" style="width:${xpPct}%"></div>
           </div>
-          <span class="xp-mini-label">${xpAtual} XP</span>
+          <span class="xp-mini-label">${xpLabel}</span>
         </div>
       </div>
     </div>

@@ -62,6 +62,29 @@ namespace models.Migrations
                     b.ToTable("AdminPerfis", (string)null);
                 });
 
+            modelBuilder.Entity("BuildXP.API.Models.CardIconUpload", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("Data")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("MimeType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CardIconUploads", (string)null);
+                });
+
             modelBuilder.Entity("BuildXP.API.Models.Colaborador", b =>
                 {
                     b.Property<int>("Id")
@@ -303,6 +326,13 @@ namespace models.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<byte[]>("IconPrimaryBytes")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("IconPrimaryMimeType")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<string>("IconPrimarySrc")
                         .IsRequired()
                         .HasMaxLength(512)
@@ -312,6 +342,13 @@ namespace models.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<byte[]>("IconSecondaryBytes")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("IconSecondaryMimeType")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<string>("IconSecondarySrc")
                         .IsRequired()

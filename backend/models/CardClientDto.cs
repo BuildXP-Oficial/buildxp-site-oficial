@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using BuildXP.API.Services;
 
 namespace BuildXP.API.Models;
 
@@ -102,7 +103,7 @@ public class CardClientDto
         return link!.Trim();
     }
 
-    public static CardClientDto FromEntity(SkillCard c) => new()
+    public static CardClientDto FromEntity(SkillCard c, bool forDashboardEdit = false) => new()
     {
         Id = c.Id,
         Slug = c.Slug,
@@ -120,9 +121,17 @@ public class CardClientDto
         BtnPrimaryLabel = c.BtnPrimaryLabel,
         BtnSecondaryLabel = c.BtnSecondaryLabel,
         IconLayout = string.IsNullOrEmpty(c.IconLayout) ? "single" : c.IconLayout,
-        IconPrimarySrc = string.IsNullOrEmpty(c.IconPrimarySrc) ? c.Icone : c.IconPrimarySrc,
+        IconPrimarySrc = forDashboardEdit
+            ? CardIconHelper.ResolvePrimaryStorageRef(c)
+            : CardIconHelper.ResolvePrimaryPublicSrc(c),
         IconPrimaryAlt = c.IconPrimaryAlt,
-        IconSecondarySrc = string.IsNullOrEmpty(c.IconSecondarySrc) ? null : c.IconSecondarySrc,
+        IconSecondarySrc = forDashboardEdit
+            ? (string.IsNullOrEmpty(CardIconHelper.ResolveSecondaryStorageRef(c))
+                ? null
+                : CardIconHelper.ResolveSecondaryStorageRef(c))
+            : (string.IsNullOrEmpty(CardIconHelper.ResolveSecondaryPublicSrc(c))
+                ? null
+                : CardIconHelper.ResolveSecondaryPublicSrc(c)),
         IconSecondaryAlt = c.IconSecondaryAlt,
         IsPublished = c.Ativo,
         Slides = (c.Slides ?? [])

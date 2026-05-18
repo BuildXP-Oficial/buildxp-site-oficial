@@ -23,8 +23,12 @@ public class SkillCard // Classe do Modelo de SkillCard
     public string IconLayout { get; set; } = "single";
     public string IconPrimarySrc { get; set; } = string.Empty;
     public string IconPrimaryAlt { get; set; } = string.Empty;
+    public byte[]? IconPrimaryBytes { get; set; }
+    public string? IconPrimaryMimeType { get; set; }
     public string IconSecondarySrc { get; set; } = string.Empty;
     public string IconSecondaryAlt { get; set; } = string.Empty;
+    public byte[]? IconSecondaryBytes { get; set; }
+    public string? IconSecondaryMimeType { get; set; }
     public int Ordem { get; set; } = 0; // Posição na página
     public bool Ativo { get; set; } = true; // Se a SkillCard está ativo 
     public int XpAtual { get; set; } = 0; // XP Calculado automaticamente

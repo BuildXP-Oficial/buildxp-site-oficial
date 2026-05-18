@@ -19,6 +19,7 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
     public DbSet<RecuperacaoSenha> RecuperacoesSenha { get; set; }
     public DbSet<Colaborador> Colaboradores { get; set; }
     public DbSet<AdminPerfil> AdminPerfis { get; set; }
+    public DbSet<CardIconUpload> CardIconUploads { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -55,6 +56,15 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
             entity.HasIndex(s => s.Slug)
                 .IsUnique()
                 .HasFilter("\"Slug\" <> ''");
+            entity.Property(s => s.IconPrimaryMimeType).HasMaxLength(64);
+            entity.Property(s => s.IconSecondaryMimeType).HasMaxLength(64);
+        });
+
+        modelBuilder.Entity<CardIconUpload>(entity =>
+        {
+            entity.ToTable("CardIconUploads");
+            entity.Property(u => u.MimeType).HasMaxLength(64);
+            entity.Property(u => u.Data).HasColumnType("bytea");
         });
 
         // ReferenciaRapida — FK real na coluna CardId (SkillCardId na BD é legado / não usado pelo modelo)

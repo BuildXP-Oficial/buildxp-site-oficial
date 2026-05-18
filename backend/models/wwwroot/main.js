@@ -416,6 +416,7 @@ function initFeedback() {
   const listEl = document.getElementById('fb-list');
   const emptyEl = document.getElementById('fb-empty');
   const searchEl = document.getElementById('fb-search');
+  const submitBtn = form?.querySelector('button[type="submit"]');
 
   const norm = (s) =>
     String(s ?? '')
@@ -441,6 +442,18 @@ function initFeedback() {
     statusEl.textContent = text || '';
     statusEl.classList.toggle('ok', type === 'ok');
     statusEl.classList.toggle('bad', type === 'bad');
+  }
+
+  function updateFeedbackSubmitState() {
+    const kind = String(kindEl?.value ?? '').trim();
+    if (submitBtn) submitBtn.disabled = !kind;
+  }
+
+  function resetFeedbackForm() {
+    if (nameEl) nameEl.value = '';
+    if (kindEl) kindEl.value = '';
+    if (msgEl) msgEl.value = '';
+    updateFeedbackSubmitState();
   }
 
   const feedbackApiPrefix = () =>
@@ -544,14 +557,23 @@ function initFeedback() {
   }
 
   searchEl?.addEventListener('input', () => render());
+  kindEl?.addEventListener('change', updateFeedbackSubmitState);
+  msgEl?.addEventListener('input', updateFeedbackSubmitState);
+  updateFeedbackSubmitState();
 
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     setStatus('', '');
 
     const name = String(nameEl.value || '').trim().slice(0, 40);
-    const kind = String(kindEl.value || 'Sugestão de ajuste').trim().slice(0, 40);
+    const kind = String(kindEl.value || '').trim().slice(0, 40);
     const msg = String(msgEl.value || '').trim();
+
+    if (!kind) {
+      setStatus('Selecione uma categoria antes de publicar.', 'bad');
+      updateFeedbackSubmitState();
+      return;
+    }
 
     if (msg.length < 6) {
       setStatus('Escreva uma mensagem um pouco maior (mínimo 6 caracteres).', 'bad');
@@ -579,8 +601,8 @@ function initFeedback() {
         body: JSON.stringify(payload),
       });
       if (res.ok) {
-        msgEl.value = '';
-        setStatus('Recebido! Após moderação pode aparecer no mural.', 'ok');
+        resetFeedbackForm();
+        setStatus('Enviado. Aguarde e logo aparecerá no mural', 'ok');
         await refreshWall();
         return;
       }
@@ -1578,6 +1600,14 @@ function buildxpPublicCardHref(slug, tab) {
   return `card.html?slug=${encodeURIComponent(s)}&tab=${t}`;
 }
 
+/** Formato do XP na home e na página do card: «2 400 / 3 000». */
+function buildxpFormatXpPair(current, max) {
+  const mx = Math.max(1, Number(max) || 3000);
+  const cur = Math.min(Math.max(0, Number(current) || 0), mx);
+  const fmt = (n) => Math.round(n).toLocaleString('pt-PT');
+  return `${fmt(cur)} / ${fmt(mx)}`;
+}
+
 /** Migra links antigos tipo integrandoumaapi.html?tab=… para card.html?slug=… (slug do card é a fonte de verdade). */
 function buildxpNormalizeLegacyCardListHref(href, slug, tab) {
   const sl = String(slug || '').trim().toLowerCase();
@@ -1979,7 +2009,7 @@ function buildxpRenderIndexCardEl(c) {
       <div class="card-name">${dashEscapeHtml(c.display_name)}</div>
     </div>
     <div>
-      <div class="xp-row"><span>XP</span><span>${dashEscapeHtml(String(c.xp_current))} / ${dashEscapeHtml(String(c.xp_max))}</span></div>
+      <div class="xp-row"><span>XP</span><span>${dashEscapeHtml(buildxpFormatXpPair(c.xp_current, c.xp_max))}</span></div>
       <div class="xp-track"><div class="xp-fill" style="width:${pct}%"></div></div>
     </div>
     <div class="card-desc">${c.description_html || ''}</div>
@@ -1989,6 +2019,17 @@ function buildxpRenderIndexCardEl(c) {
     </div>
   `;
   return wrap;
+}
+
+/** Atualiza cards já no index (HTML estático) com metadados da API — nome, XP, descrição, etc. */
+function syncIndexCardsFromApi(normalized) {
+  const grid = document.getElementById('index-cards-grid');
+  if (!grid || !Array.isArray(normalized) || !normalized.length) return;
+  normalized.forEach((c) => {
+    const el = grid.querySelector(`[data-card-slug="${CSS.escape(c.slug)}"]`);
+    if (!el) return;
+    el.replaceWith(buildxpRenderIndexCardEl(c));
+  });
 }
 
 async function buildxpHydrateIndexCardsFromApi() {
@@ -2016,6 +2057,7 @@ async function buildxpHydrateIndexCardsFromApi() {
     );
     const newNorm = normalized.filter((c) => !existingSlugs.has(c.slug));
     newNorm.forEach((c) => grid.appendChild(buildxpRenderIndexCardEl(c)));
+    syncIndexCardsFromApi(normalized);
 
     let order = getIndexCardOrder().filter((s) =>
       grid.querySelector(`[data-card-slug="${CSS.escape(s)}"]`),
@@ -2077,6 +2119,8 @@ function initIndexCardsHomeMarquee() {
   const prev = document.getElementById('index-cards-strip-prev');
   const next = document.getElementById('index-cards-strip-next');
   const hoverShell = viewport?.closest('.cards-strip-viewport-shell');
+  const cardsSection = document.getElementById('cards');
+  const stripWrap = viewport?.closest('.cards-strip-wrap');
   if (!viewport || !track || !grid || !prev || !next) return;
 
   stopIndexCardsMarqueeLoop();
@@ -2127,10 +2171,18 @@ function initIndexCardsHomeMarquee() {
     next.disabled = !canStep;
   }
 
-  /** Mobile: arrastar + sem setas (marquee automático continua ativo). */
+  /** Mobile (≤768px): arrastar com o dedo, sem setas. Desktop: setas, sem arrastar com o rato. */
   function isIndexCardsSwipeMode() {
     return window.matchMedia('(max-width: 768px)').matches;
   }
+
+  function syncIndexCardsStripMode() {
+    const mobile = isIndexCardsSwipeMode();
+    stripWrap?.classList.toggle('cards-strip-wrap--mobile', mobile);
+    stripWrap?.classList.toggle('cards-strip-wrap--desktop', !mobile);
+    viewport.classList.toggle('cards-strip-viewport--swipe', mobile);
+  }
+  syncIndexCardsStripMode();
 
   if (cards.length < 2) {
     updateNavDisabled();
@@ -2149,6 +2201,13 @@ function initIndexCardsHomeMarquee() {
 
   let pausedByHover = false;
   let pausedByDrag = false;
+  let pausedByLink = false;
+
+  function isMarqueeInteractiveTarget(target) {
+    const el = target instanceof Element ? target : target?.parentElement;
+    return !!el?.closest('a, button, input, select, textarea, .card-actions');
+  }
+
   function bindPauseHover(el) {
     if (isIndexCardsSwipeMode()) return;
     el.addEventListener(
@@ -2166,7 +2225,8 @@ function initIndexCardsHomeMarquee() {
       { signal: sig },
     );
   }
-  if (hoverShell) bindPauseHover(hoverShell);
+  if (cardsSection) bindPauseHover(cardsSection);
+  else if (hoverShell) bindPauseHover(hoverShell);
   else bindPauseHover(viewport);
 
   let dragPointerId = null;
@@ -2198,41 +2258,71 @@ function initIndexCardsHomeMarquee() {
     dragMoved = false;
   }
 
+  if (isIndexCardsSwipeMode()) {
+    viewport.addEventListener(
+      'pointerdown',
+      (e) => {
+        if (e.pointerType === 'mouse') return;
+        if (e.button !== 0) return;
+        if (isMarqueeInteractiveTarget(e.target)) {
+          pausedByLink = true;
+          return;
+        }
+        dragPointerId = e.pointerId;
+        dragStartX = e.clientX;
+        dragStartTx = tx;
+        dragMoved = false;
+        pausedByDrag = true;
+        viewport.classList.add('cards-strip-viewport--dragging');
+        try {
+          viewport.setPointerCapture(e.pointerId);
+        } catch (_) {
+          /* ignore */
+        }
+      },
+      { signal: sig },
+    );
+
+    viewport.addEventListener(
+      'pointermove',
+      (e) => {
+        if (dragPointerId == null || e.pointerId !== dragPointerId) return;
+        const dx = e.clientX - dragStartX;
+        if (Math.abs(dx) > 4) dragMoved = true;
+        if (!dragMoved) return;
+        e.preventDefault();
+        tx = dragStartTx + dx;
+        applyTransform();
+      },
+      { signal: sig, passive: false },
+    );
+
+    viewport.addEventListener('pointerup', endStripDrag, { signal: sig });
+    viewport.addEventListener('pointercancel', endStripDrag, { signal: sig });
+  }
+
   viewport.addEventListener(
     'pointerdown',
     (e) => {
-      if (e.pointerType === 'mouse' && e.button !== 0) return;
-      dragPointerId = e.pointerId;
-      dragStartX = e.clientX;
-      dragStartTx = tx;
-      dragMoved = false;
-      pausedByDrag = true;
-      viewport.classList.add('cards-strip-viewport--dragging');
-      try {
-        viewport.setPointerCapture(e.pointerId);
-      } catch (_) {
-        /* ignore */
-      }
+      if (!isMarqueeInteractiveTarget(e.target)) return;
+      pausedByLink = true;
     },
-    { signal: sig },
+    { signal: sig, capture: true },
   );
-
   viewport.addEventListener(
-    'pointermove',
-    (e) => {
-      if (dragPointerId == null || e.pointerId !== dragPointerId) return;
-      const dx = e.clientX - dragStartX;
-      if (Math.abs(dx) > 4) dragMoved = true;
-      if (!dragMoved) return;
-      e.preventDefault();
-      tx = dragStartTx + dx;
-      applyTransform();
+    'pointerup',
+    () => {
+      pausedByLink = false;
     },
-    { signal: sig, passive: false },
+    { signal: sig, capture: true },
   );
-
-  viewport.addEventListener('pointerup', endStripDrag, { signal: sig });
-  viewport.addEventListener('pointercancel', endStripDrag, { signal: sig });
+  viewport.addEventListener(
+    'pointercancel',
+    () => {
+      pausedByLink = false;
+    },
+    { signal: sig, capture: true },
+  );
 
   let lastTs = 0;
   const pxPerSec = 38;
@@ -2240,7 +2330,7 @@ function initIndexCardsHomeMarquee() {
   function tick(ts) {
     indexCardsMarqueeRafId = requestAnimationFrame(tick);
     const animate =
-      !prefersReduced && !pausedByHover && !pausedByDrag && !document.hidden;
+      !prefersReduced && !pausedByHover && !pausedByDrag && !pausedByLink && !document.hidden;
     if (!animate) {
       lastTs = 0;
       applyTransform();
@@ -2277,6 +2367,12 @@ function initIndexCardsHomeMarquee() {
   );
 
   window.addEventListener('resize', () => {
+    const wasSwipe = viewport.classList.contains('cards-strip-viewport--swipe');
+    syncIndexCardsStripMode();
+    if (wasSwipe !== isIndexCardsSwipeMode()) {
+      initIndexCardsHomeMarquee();
+      return;
+    }
     normalizeTx();
     applyTransform();
     updateNavDisabled();
@@ -2585,10 +2681,14 @@ function dashApplyCardToForm(raw) {
   el('dash-card-icon-sec-alt').value = raw.icon_secondary_alt ?? raw.iconSecondaryAlt ?? '';
   const pub = raw.is_published ?? raw.isPublished ?? true;
   el('dash-card-published').checked = pub !== false;
+  syncDashCardIconDualVisibility();
+  window.__buildxpEditingCardId = Number(raw?.id ?? raw?.Id ?? 0) || null;
   syncDashCardIconPreviewFromInput();
+  syncDashCardIconSecPreviewFromInput();
 }
 
 let dashCardIconObjectUrl = null;
+let dashCardIconSecObjectUrl = null;
 
 function revokeDashCardIconPreviewUrl() {
   if (dashCardIconObjectUrl) {
@@ -2597,17 +2697,96 @@ function revokeDashCardIconPreviewUrl() {
   }
 }
 
+function revokeDashCardIconSecPreviewUrl() {
+  if (dashCardIconSecObjectUrl) {
+    URL.revokeObjectURL(dashCardIconSecObjectUrl);
+    dashCardIconSecObjectUrl = null;
+  }
+}
+
 function resetDashCardIconFileUi() {
   revokeDashCardIconPreviewUrl();
+  revokeDashCardIconSecPreviewUrl();
   const fi = document.getElementById('dash-card-icon-file');
+  const secFi = document.getElementById('dash-card-icon-sec-file');
   if (fi) fi.value = '';
+  if (secFi) secFi.value = '';
+}
+
+function syncDashCardIconDualVisibility() {
+  const layout = document.getElementById('dash-card-icon-layout')?.value || 'single';
+  const wrap = document.getElementById('dash-card-icon-dual-wrap');
+  const isDual = layout === 'dual';
+  if (wrap) wrap.hidden = !isDual;
+  if (!isDual) {
+    const secInp = document.getElementById('dash-card-icon-sec');
+    if (secInp) secInp.value = '';
+    resetDashCardIconSecFileUi();
+    syncDashCardIconSecPreviewFromInput();
+  }
+}
+
+function resetDashCardIconSecFileUi() {
+  revokeDashCardIconSecPreviewUrl();
+  const secFi = document.getElementById('dash-card-icon-sec-file');
+  if (secFi) secFi.value = '';
+}
+
+function dashGetEditingCardNumericId() {
+  const id = window.__buildxpEditingCardId;
+  return typeof id === 'number' && Number.isFinite(id) && id > 0 ? id : null;
+}
+
+/** URL para pré-visualização (API ou ficheiro estático legado). */
+function dashResolveIconDisplaySrc(ref, cardId) {
+  const t = String(ref || '').trim();
+  if (!t) return '';
+  if (t === 'db:primary' && cardId) return `/api/card/${cardId}/icon/primary`;
+  if (t === 'db:secondary' && cardId) return `/api/card/${cardId}/icon/secondary`;
+  if (t.startsWith('icon-temp:')) {
+    const id = t.slice('icon-temp:'.length);
+    return id ? `/api/card/icon-upload/${id}` : '';
+  }
+  if (t.startsWith('/api/')) return t;
+  return t;
+}
+
+function syncDashCardIconSecPreviewFromInput() {
+  const img = document.getElementById('dash-card-icon-sec-preview');
+  const sec = document.getElementById('dash-card-icon-sec')?.value?.trim();
+  if (!img) return;
+  revokeDashCardIconSecPreviewUrl();
+  img.onload = () => {
+    img.style.display = 'block';
+  };
+  img.onerror = () => {
+    img.style.display = 'none';
+  };
+  if (!sec) {
+    img.style.display = 'none';
+    img.removeAttribute('src');
+    return;
+  }
+  img.src = dashResolveIconDisplaySrc(sec, dashGetEditingCardNumericId());
 }
 
 function dashSetCardIconPathReadout(text) {
   const out = document.getElementById('dash-card-icon-path-readout');
   if (!out) return;
   const t = String(text || '').trim();
-  out.textContent = t ? `Guardado no servidor: ${t}` : '';
+  if (!t) {
+    out.textContent = '';
+    return;
+  }
+  if (t.startsWith('icon-temp:')) {
+    out.textContent = 'Ícone carregado — grave o card para guardar na base de dados.';
+    return;
+  }
+  if (t === 'db:primary' || t === 'db:secondary') {
+    out.textContent = 'Ícone guardado na base de dados.';
+    return;
+  }
+  out.textContent = `Ícone estático: ${t}`;
 }
 
 function syncDashCardIconPreviewFromInput() {
@@ -2628,7 +2807,7 @@ function syncDashCardIconPreviewFromInput() {
     return;
   }
   dashSetCardIconPathReadout(pri);
-  img.src = pri;
+  img.src = dashResolveIconDisplaySrc(pri, dashGetEditingCardNumericId());
 }
 
 function getDashApiPath(key) {
@@ -2647,16 +2826,44 @@ function getDashApiPath(key) {
   return p[key] || defaults[key] || '';
 }
 
-/** Envia imagem para <code>wwwroot/imagens/</code> e devolve caminho relativo (ex.: <code>imagens/foo.png</code>). */
+function dashUploadIconErrorMessage(r) {
+  if (!r) return 'Não foi possível enviar o ícone.';
+  if (r.status === 401) return 'Sessão expirada. Faça login novamente no dashboard.';
+  if (r.status === 0) return 'Sem ligação à API. Confirme que o servidor está a correr.';
+  const d = r.data;
+  if (d && typeof d === 'object' && typeof d.message === 'string' && d.message.trim()) {
+    return d.message.trim();
+  }
+  if (typeof d === 'string' && d.trim()) return d.trim();
+  return 'Não foi possível enviar o ícone. Confirme sessão (JWT), tipo (PNG, JPEG, WebP, GIF, SVG) e tamanho máx. 2 MB.';
+}
+
+/** Envia imagem para a API e devolve <code>{ ref, previewUrl }</code> ou <code>{ error }</code>. */
 async function dashUploadCardIconFile(file) {
-  if (!file) return null;
+  if (!file) return { error: 'Ficheiro inválido.' };
   const fd = new FormData();
-  fd.append('file', file);
+  fd.append('file', file, file.name || 'icon.png');
   const path = getDashApiPath('uploadCardIcon') || '/api/Card/upload-icon';
   const r = await dashFetchNoThrow(path, { method: 'POST', body: fd });
-  if (!r.ok || !r.data || typeof r.data !== 'object') return null;
-  const p = r.data.path ?? r.data.Path;
-  return typeof p === 'string' && p.trim() ? p.trim() : null;
+  if (!r.ok) return { error: dashUploadIconErrorMessage(r) };
+  if (!r.data || typeof r.data !== 'object') return { error: dashUploadIconErrorMessage(r) };
+  const ref =
+    r.data.iconRef ??
+    r.data.IconRef ??
+    r.data.ref ??
+    r.data.Ref ??
+    r.data.path ??
+    r.data.Path;
+  if (typeof ref !== 'string' || !ref.trim()) return { error: dashUploadIconErrorMessage(r) };
+  const previewUrl = r.data.previewUrl ?? r.data.PreviewUrl;
+  const refTrim = ref.trim();
+  return {
+    ref: refTrim,
+    previewUrl:
+      typeof previewUrl === 'string' && previewUrl.trim()
+        ? previewUrl.trim()
+        : dashResolveIconDisplaySrc(refTrim, null),
+  };
 }
 
 /** Lista colaboradores e controlos de acesso (só admin da plataforma; colaborador elevado convida mas não vê a tabela). */
@@ -3994,6 +4201,7 @@ function initDashboard() {
         if (editingCardSlug === slug) {
           editingCardSlug = null;
           editingCardNumericId = null;
+          window.__buildxpEditingCardId = null;
           editSlidesSlug = null;
           if (isCardEditorViewActive()) setDashView('cards-edit');
         }
@@ -4041,6 +4249,10 @@ function initDashboard() {
         setIndexCardOrder(merged);
         renderIndexOrderList();
         applyIndexCardOrder();
+        const cardsForHome = activeRows
+          .map(buildxpNormalizeHomeCardFromDto)
+          .filter((c) => c != null);
+        syncIndexCardsFromApi(cardsForHome);
       } catch (_) {
         renderIndexOrderList();
       }
@@ -4381,12 +4593,14 @@ function initDashboard() {
       setSlidesSaveStatus('', '');
       editingCardSlug = slug;
       editingCardNumericId = null;
+      window.__buildxpEditingCardId = null;
       const staticD = INDEX_CARD_STATIC_DEFAULTS[slug];
       if (staticD) dashApplyCardToForm(staticD);
       try {
         const raw = await dashFetchCardMetaForEditor(slug);
         dashApplyCardToForm(raw);
         editingCardNumericId = Number(raw?.id ?? raw?.Id ?? 0) || null;
+        window.__buildxpEditingCardId = editingCardNumericId;
       } catch (_) {
         /* sem API: mantém estático se existir */
       }
@@ -4468,7 +4682,7 @@ function initDashboard() {
           localStorage.setItem(dashSlidesStorageKey(editSlidesSlug), JSON.stringify(editSlides));
         } catch (_) { /* ignore */ }
 
-        setSlidesSaveStatus('Slides guardados na API com sucesso.', 'ok');
+        setSlidesSaveStatus('Alteração Publicada', 'ok');
 
         const btn = document.getElementById('dash-slides-save');
         if (btn) {
@@ -4693,7 +4907,9 @@ function initDashboard() {
       wizIconDataUrl = m.iconDataUrl || '';
       wizIconPrimaryPath = m.iconPath || '';
       const prev = document.getElementById('dash-wiz-icon-preview');
-      const iconSrc = wizIconPrimaryPath || wizIconDataUrl;
+      const iconSrc = wizIconPrimaryPath
+        ? dashResolveIconDisplaySrc(wizIconPrimaryPath, null)
+        : wizIconDataUrl;
       if (prev) {
         if (iconSrc) {
           prev.src = iconSrc;
@@ -4935,9 +5151,9 @@ function initDashboard() {
         img.src = blobUrl;
         img.hidden = false;
       }
-      const path = await dashUploadCardIconFile(f);
+      const uploaded = await dashUploadCardIconFile(f);
       URL.revokeObjectURL(blobUrl);
-      if (!path) {
+      if (!uploaded || uploaded.error) {
         wizIconPrimaryPath = '';
         wizIconDataUrl = '';
         if (img) {
@@ -4945,16 +5161,15 @@ function initDashboard() {
           img.hidden = true;
         }
         if (wizSt) {
-          wizSt.textContent =
-            'Upload do ícone falhou. Confirme sessão (JWT), tipo (PNG, JPEG, WebP, GIF, SVG) e máx. 2 MB.';
+          wizSt.textContent = uploaded?.error || 'Upload do ícone falhou.';
           wizSt.classList.add('bad');
         }
         return;
       }
-      wizIconPrimaryPath = path;
+      wizIconPrimaryPath = uploaded.ref;
       wizIconDataUrl = '';
       if (img) {
-        img.src = path;
+        img.src = uploaded.previewUrl;
         img.hidden = false;
       }
       if (wizSt) {
@@ -5431,12 +5646,46 @@ function initDashboard() {
 
   const cardForm = document.getElementById('dash-card-form');
   const cardFormStatus = document.getElementById('dash-card-form-status');
+  const cardSaveBtn = document.getElementById('dash-card-save');
+  const CARD_SAVE_BTN_LABEL = 'SALVAR CARD';
+  let cardSaveBtnResetTimer = null;
 
   function setCardFormStatus(msg, type) {
     if (!cardFormStatus) return;
     cardFormStatus.textContent = msg || '';
     cardFormStatus.classList.toggle('ok', type === 'ok');
     cardFormStatus.classList.toggle('bad', type === 'bad');
+  }
+
+  function flashCardSaveButton(state) {
+    if (!cardSaveBtn) return;
+    if (cardSaveBtnResetTimer) {
+      clearTimeout(cardSaveBtnResetTimer);
+      cardSaveBtnResetTimer = null;
+    }
+    cardSaveBtn.classList.remove('dash-card-save--error');
+    if (state === 'ok') {
+      setCardFormStatus('', '');
+      cardSaveBtn.textContent = 'Salvo!';
+      cardSaveBtn.disabled = true;
+      cardSaveBtnResetTimer = setTimeout(() => {
+        cardSaveBtn.textContent = CARD_SAVE_BTN_LABEL;
+        cardSaveBtn.disabled = false;
+        cardSaveBtnResetTimer = null;
+      }, 2200);
+      return;
+    }
+    if (state === 'err') {
+      setCardFormStatus('', '');
+      cardSaveBtn.textContent = 'erro';
+      cardSaveBtn.classList.add('dash-card-save--error');
+      cardSaveBtn.disabled = false;
+      cardSaveBtnResetTimer = setTimeout(() => {
+        cardSaveBtn.textContent = CARD_SAVE_BTN_LABEL;
+        cardSaveBtn.classList.remove('dash-card-save--error');
+        cardSaveBtnResetTimer = null;
+      }, 2800);
+    }
   }
 
   document.getElementById('dash-card-icon-file')?.addEventListener('change', async (ev) => {
@@ -5457,22 +5706,58 @@ function initDashboard() {
       img.src = dashCardIconObjectUrl;
     }
     const saved = await dashUploadCardIconFile(f);
-    if (!saved) {
-      setCardFormStatus(
-        'Não foi possível gravar o ficheiro. Confirme sessão (JWT), tipo (PNG, JPEG, WebP, GIF, SVG) e tamanho máx. 2 MB.',
-        'bad',
-      );
+    if (!saved || saved.error) {
+      setCardFormStatus(saved?.error || 'Não foi possível enviar o ícone.', 'bad');
       return;
     }
-    if (priInp) priInp.value = saved;
-    dashSetCardIconPathReadout(saved);
+    if (priInp) priInp.value = saved.ref;
+    dashSetCardIconPathReadout(saved.ref);
     revokeDashCardIconPreviewUrl();
     if (img) {
-      img.src = saved;
+      img.src = saved.previewUrl;
       img.style.display = 'block';
     }
-    setCardFormStatus('Ícone guardado em wwwroot/imagens/.', 'ok');
+    setCardFormStatus('Ícone adicionado com Sucesso', 'ok');
   });
+
+  document.getElementById('dash-card-icon-layout')?.addEventListener('change', () => {
+    syncDashCardIconDualVisibility();
+  });
+
+  document.getElementById('dash-card-icon-sec-file')?.addEventListener('change', async (ev) => {
+    const f = ev.target.files?.[0];
+    const img = document.getElementById('dash-card-icon-sec-preview');
+    const secInp = document.getElementById('dash-card-icon-sec');
+    if (!f) return;
+    if (document.getElementById('dash-card-icon-layout')?.value !== 'dual') return;
+    setCardFormStatus('A enviar ícone secundário…', '');
+    revokeDashCardIconSecPreviewUrl();
+    dashCardIconSecObjectUrl = URL.createObjectURL(f);
+    if (img) {
+      img.onload = () => {
+        img.style.display = 'block';
+      };
+      img.onerror = () => {
+        img.style.display = 'none';
+      };
+      img.src = dashCardIconSecObjectUrl;
+    }
+    const saved = await dashUploadCardIconFile(f);
+    if (!saved || saved.error) {
+      setCardFormStatus(saved?.error || 'Não foi possível enviar o ícone secundário.', 'bad');
+      return;
+    }
+    if (secInp) secInp.value = saved.ref;
+    dashSetCardIconPathReadout(saved.ref);
+    revokeDashCardIconSecPreviewUrl();
+    if (img) {
+      img.src = saved.previewUrl;
+      img.style.display = 'block';
+    }
+    setCardFormStatus('Ícone adicionado com Sucesso', 'ok');
+  });
+
+  syncDashCardIconDualVisibility();
 
   async function loadCardForEdit(slug) {
     setCardFormStatus('', '');
@@ -5481,6 +5766,7 @@ function initDashboard() {
       const raw = await dashFetchCardMetaForEditor(slug);
       editingCardSlug = slug;
       editingCardNumericId = Number(raw?.id ?? raw?.Id ?? 0) || null;
+      window.__buildxpEditingCardId = editingCardNumericId;
       dashApplyCardToForm(raw);
       setCardFormStatus('', '');
       await loadCardEditorSlidesData(slug);
@@ -5490,10 +5776,13 @@ function initDashboard() {
       cardEditorStepIndex = getEditSlidesContentOnly().length ? 1 : 0;
       renderCardEditorChrome();
       resetDashCardIconFileUi();
+      syncDashCardIconDualVisibility();
       syncDashCardIconPreviewFromInput();
+      syncDashCardIconSecPreviewFromInput();
     } catch (e) {
       editingCardSlug = null;
       editingCardNumericId = null;
+      window.__buildxpEditingCardId = null;
       setCardFormStatus('', '');
       await loadCardEditorSlidesData(null);
     }
@@ -5547,7 +5836,9 @@ function initDashboard() {
       );
       return;
     }
-    const secondary = document.getElementById('dash-card-icon-sec').value.trim();
+    const iconLayout = document.getElementById('dash-card-icon-layout').value || 'single';
+    const secondary =
+      iconLayout === 'dual' ? document.getElementById('dash-card-icon-sec').value.trim() : '';
     if (secondary.length > 512) {
       setCardFormStatus('Ícone secundário: máximo 512 caracteres.', 'bad');
       return;
@@ -5572,10 +5863,10 @@ function initDashboard() {
       sort_order: Number.parseInt(document.getElementById('dash-card-sort').value, 10) || 0,
       btn_primary_label: document.getElementById('dash-card-btn1').value.trim() || '▶ COMEÇAR',
       btn_secondary_label: document.getElementById('dash-card-btn2').value.trim() || '🎮 CHEAT CODES',
-      icon_layout: document.getElementById('dash-card-icon-layout').value || 'single',
+      icon_layout: iconLayout,
       icon_primary_src: iconPri,
       icon_primary_alt: document.getElementById('dash-card-icon-pri-alt').value.trim(),
-      icon_secondary_src: secondary || null,
+      icon_secondary_src: iconLayout === 'dual' && secondary ? secondary : null,
       icon_secondary_alt: document.getElementById('dash-card-icon-sec-alt').value.trim(),
       is_published: document.getElementById('dash-card-published').checked,
     };
@@ -5626,21 +5917,10 @@ function initDashboard() {
         setCardFormStatus('Não é possível criar card nesta aba.', 'bad');
         return;
       }
-      setCardFormStatus('Card guardado na API com sucesso.', 'ok');
+      flashCardSaveButton('ok');
       await syncIndexOrderPanelFromApi();
     } catch (err) {
-      const fallback =
-        (err && err.message) || 'Não foi possível salvar. Verifique o login e a consola do servidor.';
-      let msg = dashFormatApiErrorMessage(err, fallback);
-      const b = err?.body;
-      if (
-        typeof b === 'string' &&
-        b.trim() &&
-        (!msg || msg === 'Bad Request' || msg === fallback)
-      ) {
-        msg = b.trim();
-      }
-      setCardFormStatus(msg, 'bad');
+      flashCardSaveButton('err');
     }
   });
 
