@@ -92,6 +92,18 @@ function dashComposePauseDescricaoForApi(slide) {
   return parts.join('') || '<div class="step-desc"></div>';
 }
 
+/** Payload para PUT /api/card/{slug}/slides/sync (substitui a trilha inteira, sem duplicar). */
+function dashSlidesToSyncPayload(slides) {
+  return (slides ?? []).map((slide, idx) => {
+    const body = dashSlideToApiBody(slide, idx);
+    return {
+      ordem: body.ordem,
+      titulo: body.titulo,
+      descricao: body.descricao,
+    };
+  });
+}
+
 /** Corpo JSON para POST slide na API (campos que o modelo `Slide` persiste). */
 function dashSlideToApiBody(slide, idx) {
   const ordem = idx + 1;
@@ -287,6 +299,7 @@ function dashApplyCardToForm(raw) {
   el('dash-card-btn2').value = raw.btn_secondary_label ?? raw.btnSecondaryLabel ?? '';
   el('dash-card-desc').value = raw.description_html ?? raw.descriptionHtml ?? '';
   el('dash-card-icon-layout').value = raw.icon_layout ?? raw.iconLayout ?? 'single';
+  syncDashCardIconDualLayout();
   el('dash-card-icon-pri').value = raw.icon_primary_src ?? raw.iconPrimarySrc ?? '';
   el('dash-card-icon-pri-alt').value = raw.icon_primary_alt ?? raw.iconPrimaryAlt ?? '';
   el('dash-card-icon-sec').value = raw.icon_secondary_src ?? raw.iconSecondarySrc ?? '';
@@ -336,7 +349,11 @@ function syncDashCardIconPreviewFromInput() {
     return;
   }
   dashSetCardIconPathReadout(pri);
-  img.src = pri;
+  const cardId = Number.parseInt(
+    document.getElementById('dash-card-form')?.dataset?.cardId || '0',
+    10,
+  );
+  img.src = dashIconPreviewSrc(pri, Number.isFinite(cardId) && cardId > 0 ? cardId : 0);
 }
 
 function getDashApiPath(key) {
@@ -355,16 +372,60 @@ function getDashApiPath(key) {
   return p[key] || defaults[key] || '';
 }
 
-/** Envia imagem para <code>wwwroot/imagens/</code> e devolve caminho relativo (ex.: <code>imagens/foo.png</code>). */
+/** Envia imagem para a API; devolve <code>iconRef</code> (ex.: <code>icon-temp:{guid}</code>) e URL de preview. */
 async function dashUploadCardIconFile(file) {
   if (!file) return null;
   const fd = new FormData();
   fd.append('file', file);
-  const path = getDashApiPath('uploadCardIcon') || '/api/Card/upload-icon';
+  const path = getDashApiPath('uploadCardIcon') || '/api/card/upload-icon';
   const r = await dashFetchNoThrow(path, { method: 'POST', body: fd });
-  if (!r.ok || !r.data || typeof r.data !== 'object') return null;
-  const p = r.data.path ?? r.data.Path;
-  return typeof p === 'string' && p.trim() ? p.trim() : null;
+  if (!r.ok || !r.data || typeof r.data !== 'object') {
+    const msg =
+      (typeof r.data === 'object' && r.data
+        ? r.data.message ?? r.data.Message
+        : null) ||
+      (r.status === 401 ? 'Sessão expirada — volte a entrar.' : 'Falha no upload do ícone.');
+    return { iconRef: null, previewUrl: null, error: msg };
+  }
+  const iconRef = String(
+    r.data.iconRef ?? r.data.IconRef ?? r.data.path ?? r.data.Path ?? '',
+  ).trim();
+  if (!iconRef) {
+    return { iconRef: null, previewUrl: null, error: 'Resposta inválida do servidor.' };
+  }
+  const previewUrl = String(r.data.previewUrl ?? r.data.PreviewUrl ?? '').trim();
+  return {
+    iconRef,
+    previewUrl: previewUrl || dashIconPreviewSrc(iconRef),
+  };
+}
+
+function dashIconPreviewSrc(storedRef, cardNumericId) {
+  const ref = String(storedRef || '').trim();
+  if (!ref) return '';
+  const base = String(getBuildXpApiBase() || '').replace(/\/$/, '');
+  const low = ref.toLowerCase();
+  if (low.startsWith('icon-temp:')) {
+    const id = ref.slice('icon-temp:'.length).trim();
+    return id ? `${base}/api/card/icon-upload/${id}` : '';
+  }
+  const cid = Number(cardNumericId) || 0;
+  if (low === 'db:primary' && cid > 0) return `${base}/api/card/${cid}/icon/primary`;
+  if (low === 'db:secondary' && cid > 0) return `${base}/api/card/${cid}/icon/secondary`;
+  if (ref.startsWith('http://') || ref.startsWith('https://')) return ref;
+  if (ref.startsWith('/api/')) return `${base}${ref}`;
+  return ref;
+}
+
+function dashIsCardPublishedInApi(raw) {
+  const pub = raw?.is_published ?? raw?.IsPublished ?? raw?.ativo ?? raw?.Ativo;
+  return pub !== false && pub !== 0;
+}
+
+function syncDashCardIconDualLayout() {
+  const layout = document.getElementById('dash-card-icon-layout')?.value || 'single';
+  const wrap = document.getElementById('dash-card-icon-dual-wrap');
+  if (wrap) wrap.hidden = layout !== 'dual';
 }
 
 /** Lista colaboradores e controlos de acesso (só admin da plataforma; colaborador elevado convida mas não vê a tabela). */
@@ -1514,6 +1575,10 @@ function initDashboard() {
 
     /** Labels e ids para a lista «CARDS NO INDEX» (inclui cards criados na API). */
     let dashIndexCardLabels = {};
+<<<<<<< HEAD
+    /** slug → id numérico (excluir card na API). */
+    let dashIndexCardIds = {};
+=======
     let dashIndexCardIds = {};
 
     function setIndexOrderStatus(msg, kind) {
@@ -1566,6 +1631,7 @@ function initDashboard() {
         setIndexOrderStatus(`Não foi possível excluir.${extra}`, 'bad');
       }
     }
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
 
     function mergeIndexOrderWithDashboardCards(order, cardsNorm) {
       const sorted = [...cardsNorm].sort((a, b) => a.sort_order - b.sort_order);
@@ -1579,6 +1645,22 @@ function initDashboard() {
     async function syncIndexOrderPanelFromApi() {
       try {
         const data = await fetchJson('/api/card/dashboard');
+<<<<<<< HEAD
+        const arr = Array.isArray(data) ? data : [];
+        dashIndexCardIds = {};
+        arr.forEach((raw) => {
+          if (!dashIsCardPublishedInApi(raw)) return;
+          const slug = String(raw.slug ?? raw.Slug ?? '')
+            .trim()
+            .toLowerCase();
+          const id = Number(raw.id ?? raw.Id ?? 0);
+          if (slug && Number.isFinite(id) && id > 0) dashIndexCardIds[slug] = id;
+        });
+        const cards = arr
+          .filter(dashIsCardPublishedInApi)
+          .map(dashNormalizeCard)
+          .filter((c) => c.slug);
+=======
         const arr = (Array.isArray(data) ? data : []).filter(dashIsCardPublishedInApi);
         dashIndexCardIds = Object.fromEntries(
           arr
@@ -1592,6 +1674,7 @@ function initDashboard() {
             .filter(Boolean),
         );
         const cards = arr.map(dashNormalizeCard).filter((c) => c.slug);
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
         dashIndexCardLabels = Object.fromEntries(cards.map((c) => [c.slug, c.display_name || c.slug]));
         const merged = mergeIndexOrderWithDashboardCards(getIndexCardOrder(), cards);
         setIndexCardOrder(merged);
@@ -1602,11 +1685,47 @@ function initDashboard() {
       }
     }
 
+    async function dashDeleteCardFromList(slug) {
+      const id = dashIndexCardIds[slug];
+      if (!id) {
+        globalThis.alert('Card não encontrado na API ou já foi removido.');
+        return;
+      }
+      if (
+        !globalThis.confirm(
+          `Excluir o card «${slug}»? Deixa de aparecer no index (inativo na API).`,
+        )
+      ) {
+        return;
+      }
+      const st = document.getElementById('dash-index-order-status');
+      try {
+        if (st) st.textContent = 'A excluir…';
+        await fetchJson(`/api/card/${id}`, { method: 'DELETE' });
+        const o = getIndexCardOrder().filter((s) => s !== slug);
+        setIndexCardOrder(o);
+        if (st) {
+          st.textContent = 'Card excluído.';
+          st.classList.add('ok');
+        }
+        await syncIndexOrderPanelFromApi();
+      } catch (e) {
+        if (st) {
+          st.textContent =
+            e?.status === 403
+              ? 'Só o administrador da plataforma pode excluir cards.'
+              : e?.message || 'Não foi possível excluir.';
+          st.classList.add('bad');
+        }
+      }
+    }
+
     function renderIndexOrderList() {
       const ul = document.getElementById('dash-index-order-list');
       if (!ul) return;
       ul.innerHTML = '';
       const order = getIndexCardOrder();
+      const canDelete = getDashIsPlataformaAdmin();
       order.forEach((slug, idx) => {
         const def = BUILDXP_INDEX_CARD_DEFS.find((d) => d.slug === slug);
         const label = def?.label ?? dashIndexCardLabels[slug] ?? slug;
@@ -1618,6 +1737,15 @@ function initDashboard() {
         const canDelete = getDashIsPlataformaAdmin() && Number(cardId) > 0;
         row.innerHTML = `
           <div class="dash-index-order-head">
+<<<<<<< HEAD
+            <div>
+              <span class="dash-index-order-title">${dashEscapeHtml(label)}</span>
+              <code class="dash-index-order-slug">${dashEscapeHtml(slug)}</code>
+            </div>
+            <div class="dash-index-order-btns">
+              <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="-1" ${idx === 0 ? 'disabled' : ''} title="Subir">↑</button>
+              <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="1" ${idx === order.length - 1 ? 'disabled' : ''} title="Descer">↓</button>
+=======
             <div class="dash-index-order-title">
               <span class="dash-index-order-label">${dashEscapeHtml(label)}</span>
               <code class="dash-index-order-slug">${dashEscapeHtml(slug)}</code>
@@ -1625,15 +1753,20 @@ function initDashboard() {
             <div class="dash-index-order-btns">
               <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="-1" ${idx === 0 ? 'disabled' : ''}>↑</button>
               <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="1" ${idx === order.length - 1 ? 'disabled' : ''}>↓</button>
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
             </div>
           </div>
           <div class="dash-index-order-actions">
             <button type="button" class="term-btn primary" data-edit-slug="${slug}">Editar Slide</button>
+<<<<<<< HEAD
+            ${canDelete ? `<button type="button" class="term-btn ghost danger" data-delete-slug="${slug}">Excluir card</button>` : ''}
+=======
             ${
               canDelete
                 ? `<button type="button" class="term-btn ghost danger" data-delete-slug="${slug}" data-delete-id="${cardId}">Excluir card</button>`
                 : ''
             }
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
           </div>
         `;
         li.appendChild(row);
@@ -1651,6 +1784,12 @@ function initDashboard() {
           const id = btn.getAttribute('data-delete-id');
           const label = dashIndexCardLabels[s] ?? s;
           if (s) void dashDeleteCardFromList(s, id, label);
+        });
+      });
+      ul.querySelectorAll('[data-delete-slug]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const slug = btn.getAttribute('data-delete-slug');
+          if (slug) void dashDeleteCardFromList(slug);
         });
       });
       ul.querySelectorAll('[data-idx-move]').forEach((b) => {
@@ -1729,6 +1868,13 @@ function initDashboard() {
       editSlidesSlug = slug;
       editSlides = [];
       try {
+<<<<<<< HEAD
+        const meta = await dashFetchCardMetaForEditor(slug);
+        const parsed = dashParseApiSlidesArrayForEditor(meta?.slides ?? meta?.Slides);
+        if (parsed.length) editSlides = parsed;
+      } catch (_) {
+        /* fallback abaixo */
+=======
         const raw = await dashFetchCardMetaForEditor(slug);
         const slidesRaw = raw?.slides ?? raw?.Slides;
         if (Array.isArray(slidesRaw) && slidesRaw.length > 0) {
@@ -1736,6 +1882,7 @@ function initDashboard() {
         }
       } catch (_) {
         /* painel indisponível — fallback abaixo */
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
       }
       if (!dashSlidesHasEditableContent(editSlides)) {
         editSlides = await dashLoadSlidesForSlug(slug, { preferApi: true });
@@ -1991,7 +2138,13 @@ function initDashboard() {
       const cardId = Number(meta?.id ?? meta?.Id ?? editingCardNumericId ?? 0);
 
       try {
+<<<<<<< HEAD
+        const syncBody = { slides: dashSlidesToSyncPayload(slidesParaSalvar) };
+        const cardId = Number(meta?.id ?? meta?.Id ?? editingCardNumericId ?? 0);
+        if (Number.isFinite(cardId) && cardId > 0) {
+=======
         if (cardId > 0) {
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
           await fetchJson(`/api/card/${cardId}/slides/sync`, {
             method: 'PUT',
             body: JSON.stringify(syncBody),
@@ -2003,10 +2156,13 @@ function initDashboard() {
           });
         }
 
+<<<<<<< HEAD
+=======
         slidesParaSalvar.forEach((s) => {
           delete s._apiId;
         });
 
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
         try {
           localStorage.setItem(dashSlidesStorageKey(editSlidesSlug), JSON.stringify(editSlides));
         } catch (_) { /* ignore */ }
@@ -2262,9 +2418,9 @@ function initDashboard() {
         img.src = blobUrl;
         img.hidden = false;
       }
-      const path = await dashUploadCardIconFile(f);
+      const up = await dashUploadCardIconFile(f);
       URL.revokeObjectURL(blobUrl);
-      if (!path) {
+      if (!up?.iconRef) {
         wizIconPrimaryPath = '';
         wizIconDataUrl = '';
         if (img) {
@@ -2273,19 +2429,20 @@ function initDashboard() {
         }
         if (wizSt) {
           wizSt.textContent =
+            up?.error ||
             'Upload do ícone falhou. Confirme sessão (JWT), tipo (PNG, JPEG, WebP, GIF, SVG) e máx. 2 MB.';
           wizSt.classList.add('bad');
         }
         return;
       }
-      wizIconPrimaryPath = path;
+      wizIconPrimaryPath = up.iconRef;
       wizIconDataUrl = '';
       if (img) {
-        img.src = path;
+        img.src = up.previewUrl || dashIconPreviewSrc(up.iconRef);
         img.hidden = false;
       }
       if (wizSt) {
-        wizSt.textContent = `Ícone guardado: ${path}`;
+        wizSt.textContent = `Ícone enviado (${up.iconRef})`;
         wizSt.classList.add('ok');
         wizSt.classList.remove('bad');
       }
@@ -2387,6 +2544,13 @@ function initDashboard() {
         slugNorm = effectiveSlug;
         if (!slugNorm) throw new Error('Sem slug após criar/atualizar.');
 
+<<<<<<< HEAD
+        const syncBody = { slides: dashSlidesToSyncPayload(wizSlides) };
+        await fetchJson(`/api/card/${encodeURIComponent(slugNorm)}/slides/sync`, {
+          method: 'PUT',
+          body: JSON.stringify(syncBody),
+        });
+=======
         const full = await fetchJson(dashApiCardPanelPath(slugNorm));
         const cardId = Number(full?.id ?? full?.Id ?? 0);
         const syncBody = { slides: dashSlidesToSyncPayload(wizSlides) };
@@ -2401,6 +2565,7 @@ function initDashboard() {
             body: JSON.stringify(syncBody),
           });
         }
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
 
         try {
           localStorage.setItem(dashSlidesStorageKey(slugNorm), JSON.stringify(wizSlides));
@@ -2758,22 +2923,25 @@ function initDashboard() {
       img.src = dashCardIconObjectUrl;
     }
     const saved = await dashUploadCardIconFile(f);
-    if (!saved) {
+    if (!saved?.iconRef) {
       setCardFormStatus(
-        'Não foi possível gravar o ficheiro. Confirme sessão (JWT), tipo (PNG, JPEG, WebP, GIF, SVG) e tamanho máx. 2 MB.',
+        saved?.error ||
+          'Não foi possível gravar o ficheiro. Confirme sessão (JWT), tipo (PNG, JPEG, WebP, GIF, SVG) e tamanho máx. 2 MB.',
         'bad',
       );
       return;
     }
-    if (priInp) priInp.value = saved;
-    dashSetCardIconPathReadout(saved);
+    if (priInp) priInp.value = saved.iconRef;
+    dashSetCardIconPathReadout(saved.iconRef);
     revokeDashCardIconPreviewUrl();
     if (img) {
-      img.src = saved;
+      img.src = saved.previewUrl || dashIconPreviewSrc(saved.iconRef);
       img.style.display = 'block';
     }
-    setCardFormStatus('Ícone guardado em wwwroot/imagens/.', 'ok');
+    setCardFormStatus('Ícone enviado com sucesso.', 'ok');
   });
+
+  document.getElementById('dash-card-icon-layout')?.addEventListener('change', syncDashCardIconDualLayout);
 
   async function loadCardForEdit(slug) {
     setCardFormStatus('', '');

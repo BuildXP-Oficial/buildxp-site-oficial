@@ -506,6 +506,88 @@ function dashSlidesHasEditableContent(slides) {
   return Array.isArray(slides) && slides.some((s) => s && typeof s === 'object' && s.type !== 'fin');
 }
 
+<<<<<<< HEAD
+/** Separa HTML guardado em `Slide.Descricao` nos campos do editor (texto / comandos / observação). */
+function dashParseSlideDescricaoToEditorFields(descricao) {
+  const html = String(descricao ?? '').trim();
+  if (!html) return { text: '', commands: '', observation: '' };
+  try {
+    const doc = new DOMParser().parseFromString(`<div id="dash-parse-desc">${html}</div>`, 'text/html');
+    const wrap = doc.getElementById('dash-parse-desc');
+    if (!wrap) return { text: dashNormalizeSlideBoldTags(html), commands: '', observation: '' };
+
+    const cmdBlock = wrap.querySelector('.cmd-block');
+    let commands = '';
+    if (cmdBlock) {
+      const code = cmdBlock.querySelector('code');
+      commands = (code ? code.textContent : cmdBlock.textContent).trim();
+      cmdBlock.remove();
+    }
+
+    const callouts = [...wrap.querySelectorAll('.callout')];
+    const observation = callouts
+      .map((c) => c.innerHTML.trim())
+      .filter(Boolean)
+      .join('\n\n');
+    callouts.forEach((c) => c.remove());
+
+    const stepDescs = [...wrap.querySelectorAll('.step-desc')];
+    let text;
+    if (stepDescs.length) {
+      text = stepDescs
+        .map((d) => d.innerHTML.trim())
+        .filter(Boolean)
+        .join('\n\n');
+    } else {
+      text = wrap.innerHTML.trim();
+    }
+
+    return {
+      text: dashNormalizeSlideBoldTags(text),
+      commands,
+      observation: observation ? dashNormalizeSlideBoldTags(observation) : '',
+    };
+  } catch (_) {
+    return { text: dashNormalizeSlideBoldTags(html), commands: '', observation: '' };
+  }
+}
+
+/** Converte array de slides da API para o formato do editor do dashboard. */
+function dashParseApiSlidesArrayForEditor(slidesRaw) {
+  if (!Array.isArray(slidesRaw) || !slidesRaw.length) return [];
+  const sorted = [...slidesRaw].sort(
+    (a, b) => (Number(a.ordem ?? a.Ordem) || 0) - (Number(b.ordem ?? b.Ordem) || 0),
+  );
+  const out = [];
+  for (const s of sorted) {
+    const titulo = String(s.titulo ?? s.Titulo ?? '').trim();
+    const desc = String(s.descricao ?? s.Descricao ?? '');
+    const up = titulo.toUpperCase();
+    if (up === 'FIM' || /conclusão|conclusao/i.test(titulo)) continue;
+
+    if (titulo === BUILDXP_SLIDE_PAUSE_TITULO || titulo === '') {
+      const fields = dashParseSlideDescricaoToEditorFields(desc);
+      out.push({
+        id: dashNewSlideId(),
+        type: 'pause',
+        text: fields.text,
+        observation: fields.observation,
+      });
+      continue;
+    }
+
+    const fields = dashParseSlideDescricaoToEditorFields(desc);
+    out.push({
+      id: dashNewSlideId(),
+      type: 'content',
+      title: titulo,
+      text: fields.text,
+      commands: fields.commands,
+      observation: fields.observation,
+    });
+  }
+  return out;
+=======
 /** Extrai texto, comandos e observação de `descricao` HTML gravada na API. */
 function dashParseDescricaoHtmlToSlideFields(descHtml) {
   const html = String(descHtml ?? '').trim();
@@ -562,6 +644,7 @@ function dashParseApiSlidesArrayForEditor(slidesRaw) {
       observation: fields.observation,
     };
   });
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
 }
 
 async function dashTryLoadSlidesFromPublicCardApi(slug) {
@@ -582,12 +665,26 @@ async function dashTryLoadSlidesFromPublicCardApi(slug) {
   }
 }
 
+<<<<<<< HEAD
+/**
+ * Carrega slides para o editor.
+ * @param {string} slug
+ * @param {{ preferApi?: boolean }} [opts] — no dashboard use `preferApi: true` para não sobrescrever a BD com rascunho antigo do navegador.
+ */
+async function dashLoadSlidesForSlug(slug, opts = {}) {
+  const preferApi = opts.preferApi === true;
+  const fromApi = await dashTryLoadSlidesFromPublicCardApi(slug);
+  const local = dashReadSlidesFromLocalStorage(slug);
+  if (preferApi && dashSlidesHasEditableContent(fromApi)) return fromApi;
+  if (dashSlidesHasEditableContent(local)) return local;
+=======
 async function dashLoadSlidesForSlug(slug, opts = {}) {
   const preferApi = opts.preferApi === true;
   const fromApi = await dashTryLoadSlidesFromPublicCardApi(slug);
   if (preferApi && dashSlidesHasEditableContent(fromApi)) return fromApi;
   const local = dashReadSlidesFromLocalStorage(slug);
   if (!preferApi && dashSlidesHasEditableContent(local)) return local;
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
   if (dashSlidesHasEditableContent(fromApi)) return fromApi;
   return local.length ? local : fromApi;
 }
