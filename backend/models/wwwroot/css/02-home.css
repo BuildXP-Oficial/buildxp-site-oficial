@@ -69,6 +69,8 @@
   }
 
   #cards:hover .cards-strip-floater,
+  .cards-strip-wrap:hover .cards-strip-floater,
+  .cards-strip-viewport-shell:hover .cards-strip-floater,
   .cards-strip-floater:hover,
   .cards-strip-floater:focus-visible {
     opacity: 1;
