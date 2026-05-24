@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
+using System.Threading.RateLimiting;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -73,6 +75,21 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("feedback-publico", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "anon",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 8,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0,
+            }));
+});
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -91,6 +108,7 @@ if (app.Environment.IsDevelopment())
 
 // ── ORDEM IMPORTA — middleware na sequência correta ─────────
 app.UseCors("Frontend");         // 1. libera o frontend
+app.UseRateLimiter();
 app.UseHttpsRedirection();       // 2. redireciona para HTTPS
 app.UseDefaultFiles();           // 3. serve index.html e outros arquivos estáticos
 app.UseStaticFiles();           // 4. serve arquivos estáticos (CSS, JS, imagens)

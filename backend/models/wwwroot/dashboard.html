@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
-  <link rel="stylesheet" href="style.css?v=dash-admin-4" />
+  <link rel="stylesheet" href="style.css?v=bxp-mod-2" />
   <style>
     :root {
       --accent: #4db5ff;
@@ -76,13 +76,7 @@
       filter: brightness(1.15);
     }
   </style>
-  <script>
-    window.BUILDXP_DASH_TEST_USER = 'gislanesenaa';
-    window.BUILDXP_DASH_TEST_EMAIL = 'gislanesenaa@gmail.com';
-    window.BUILDXP_DASH_TEST_PASSWORD = '20010109Gi@';
-    window.BUILDXP_ADMIN_DEV_PIN = '20010109Gi@';
-    window.BUILDXP_API_BASE = '';
-  </script>
+  <script>window.BUILDXP_API_BASE = window.BUILDXP_API_BASE || '';</script>
   <script>
     window.BUILDXP_API_PATHS = Object.assign(
       {
@@ -397,7 +391,7 @@
           <div class="dash-card-editor-step-label mono" id="dash-card-editor-step-label">1 / 1 · Card</div>
           <button type="button" class="term-btn ghost" id="dash-card-editor-next">SEGUINTE ›</button>
         </div>
-        <p class="dash-muted dash-card-editor-hint"><strong>SALVAR SLIDES</strong> envia título, texto, comandos e observação para a API (comandos e observação são incorporados no HTML guardado). O slide FIM continua no <code>.html</code>. Sem login JWT os dados ficam só no navegador.</p>
+        <p class="dash-muted dash-card-editor-hint"><strong>SALVAR SLIDES</strong> substitui a trilha na base de dados (não duplica slides antigos). Comandos e observação entram no HTML guardado. O slide FIM continua no <code>.html</code>. Sem login JWT os dados ficam só no navegador.</p>
         <div id="dash-card-editor-addbar" class="dash-card-editor-addbar" hidden>
           <button type="button" class="term-btn ghost" id="dash-edit-add-content">+ SLIDE DE CONTEÚDO</button>
           <button type="button" class="term-btn ghost" id="dash-edit-add-pause">+ PAUSA</button>
@@ -650,6 +644,6 @@
 </div>
 
 <footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="main.js?v=dash-admin-4"></script>
+<script src="main.js?v=bxp-mod-2"></script>
 </body>
 </html>

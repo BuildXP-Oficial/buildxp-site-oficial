@@ -338,6 +338,44 @@ public class CardController : ControllerBase
         }
     }
 
+    /// <summary>Substitui todos os slides do card (painel) — evita duplicação ao republicar a trilha.</summary>
+    [HttpPut($"{CardRouteConstants.SlugSegment}/slides/sync")]
+    [Authorize(Roles = "admin,colaborador")]
+    public async Task<IActionResult> SincronizarSlidesPorSlug(string slug, [FromBody] SlidesSyncPayload payload)
+    {
+        if (string.Equals(slug, "dashboard", StringComparison.OrdinalIgnoreCase))
+            return NotFound();
+        var cardId = await _service.ResolverIdPorSlugAsync(slug);
+        if (cardId is null) return NotFound(new { message = "Card não encontrado." });
+
+        try
+        {
+            var n = await _service.SincronizarSlidesAsync(cardId.Value, payload.Slides ?? []);
+            return Ok(new { message = "Slides sincronizados.", count = n });
+        }
+        catch (DbUpdateException)
+        {
+            return BadRequest(new { message = "Não foi possível sincronizar os slides. Verifique título e descrição." });
+        }
+    }
+
+    [HttpPut("{id:int}/slides/sync")]
+    [Authorize(Roles = "admin,colaborador")]
+    public async Task<IActionResult> SincronizarSlidesPorId(int id, [FromBody] SlidesSyncPayload payload)
+    {
+        try
+        {
+            var n = await _service.SincronizarSlidesAsync(id, payload.Slides ?? []);
+            if (n == 0 && (payload.Slides ?? []).Count > 0)
+                return NotFound(new { message = "Card não encontrado." });
+            return Ok(new { message = "Slides sincronizados.", count = n });
+        }
+        catch (DbUpdateException)
+        {
+            return BadRequest(new { message = "Não foi possível sincronizar os slides. Verifique título e descrição." });
+        }
+    }
+
     [HttpPut("slides/{slideId:int}")]
     [Authorize(Roles = "admin,colaborador")]
     public async Task<IActionResult> EditarSlide(int slideId, [FromBody] Slide slide)

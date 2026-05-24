@@ -1,0 +1,10 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Database=buildxp;Username=postgres;Password=SUA_SENHA_BD"
+  },
+  "Admin": {
+    "Usuario": "gislanesenaa",
+    "Senha": "WA9nTvL6CkINlyaqf1E8Bxpm",
+    "Email": "gislanesenaa@gmail.com"
+  }
+}

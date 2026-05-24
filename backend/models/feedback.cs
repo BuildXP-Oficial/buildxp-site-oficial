@@ -4,6 +4,8 @@ public class Feedback // Classe do Modelo de Feedback
 {
     public int Id { get; set; } = 0; // ID do Feedback
     public string Nome { get; set; } = string.Empty; // Nome do Feedback
+    /// <summary>Categoria do mural (ex.: Ideia, Erro). Não confundir com Categoria dos slides.</summary>
+    public string Categoria { get; set; } = string.Empty;
     public string Mensagem { get; set; } = string.Empty; // Mensagem do Feedback
     public StatusFeedback Status {get; set;} = StatusFeedback.Pendente; // Status começa sempre pendente
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow; // Data de Criação do Feedback - gerada automaticamente 

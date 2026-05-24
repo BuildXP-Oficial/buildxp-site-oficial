@@ -93,6 +93,26 @@ public class FeedbackService
             .ToListAsync();
     }
 
+    /// <summary>Evita gravar o mesmo envio duas vezes (duplo clique / pedido repetido).</summary>
+    public async Task<bool> ExisteDuplicadoRecenteAsync(
+        string nome,
+        string categoria,
+        string mensagem,
+        int janelaSegundos = 90)
+    {
+        var msg = (mensagem ?? string.Empty).Trim();
+        if (msg.Length == 0) return false;
+        var n = (nome ?? string.Empty).Trim();
+        var cat = (categoria ?? string.Empty).Trim();
+        var desde = DateTime.UtcNow.AddSeconds(-janelaSegundos);
+        return await _context.Feedbacks.AsNoTracking().AnyAsync(f =>
+            f.CriadoEm >= desde &&
+            f.Status == StatusFeedback.Pendente &&
+            f.Mensagem == msg &&
+            f.Nome == n &&
+            f.Categoria == cat);
+    }
+
     // salva novo feedback no banco
     public async Task<Feedback> CriarAsync(Feedback feedback)
     {

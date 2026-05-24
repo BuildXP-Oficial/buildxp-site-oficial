@@ -3,106 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" type="image/png" href="imagens/xpbrowser.png" />
-  <title>API — BuildXP</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
-  <link rel="stylesheet" href="style.css" />
-  <style>:root { --accent: var(--api); --accent-glow: var(--api-glow); }</style>
+  <title>Redirecionando — BuildXP</title>
+  <script>
+    (function () {
+      var q = new URLSearchParams(window.location.search);
+      var tab = q.get('tab') === 'ref' ? 'ref' : 'beginner';
+      window.location.replace('card.html?slug=api&tab=' + encodeURIComponent(tab));
+    })();
+  </script>
+  <meta http-equiv="refresh" content="0;url=card.html?slug=api&amp;tab=beginner" />
 </head>
 <body>
-<nav class="navbar">
-  <a href="index.html" class="nav-logo" aria-label="BuildXP — Início">
-    <img class="nav-logo-img" src="imagens/logo2buildxpret.png" alt="BuildXP" />
-  </a>
-  <button class="hamburger" id="hamburger">☰</button>
-  <ul class="nav-links" id="nav-links">
-    <li><a href="index.html#cards">Cards</a></li>
-    <li><a href="index.html#terminal">Terminal</a></li>
-    <li><a href="feedback.html">Feedback</a></li>
-    <li><a href="index.html#contact">Contato</a></li>
-  </ul>
-</nav>
-
-<div class="page-container">
-  <a href="index.html#cards" class="back-link">← VOLTAR AOS CARDS</a>
-
-  <div class="page-hero">
-    <div class="page-hero-glow"></div>
-    <div class="page-icon"><img src="imagens/logo2buildxpret.png" alt="API" /></div>
-    <div>
-      <div class="page-class">HTTP · REST</div>
-      <div class="page-title">API</div>
-      <div class="page-meta">
-        <span class="lvl-badge">BUILDXP</span>
-        <div class="xp-mini"><div class="xp-mini-fill" style="width:35%"></div></div>
-        <span style="font-family:var(--f-mono);font-size:0.65rem;color:var(--text-muted)">Treino</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="beginner">▶ INICIANTE</button>
-    <button class="tab-btn" data-tab="ref">⌘ REFERÊNCIA RÁPIDA</button>
-  </div>
-
-  <div class="tab-pane active" id="beginner">
-    <div class="steps-slider" data-steps-slider>
-      <button class="steps-nav" type="button" aria-label="Anterior" data-slide-prev>‹</button>
-      <div class="steps steps-track">
-
-      <div class="step">
-        <div class="step-num">01</div>
-        <div>
-          <div class="step-title">Conteúdo deste card</div>
-          <div class="step-desc">
-            Os slides da aba <strong>Iniciante</strong> são carregados da API (<code>/api/card/api</code>) quando existirem na base de dados.
-            Se ainda não houver slides guardados, vês este texto por defeito — edita no painel <strong>Editar cards</strong>.
-          </div>
-          <div class="callout callout-info">ℹ️ O ficheiro <code>api.html</code> só precisa de existir para esta URL funcionar; o percurso completo pode ser gerido na API.</div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num">FIM</div>
-        <div>
-          <div class="step-title">Você chegou ao final.</div>
-          <div class="step-desc">Volta aos cards ou treina no terminal.</div>
-          <div class="term-actions">
-            <button class="term-btn ghost" type="button" data-steps-restart>← VOLTAR AO INÍCIO</button>
-            <a class="term-btn primary" href="index.html#terminal">INICIAR TREINAMENTO</a>
-          </div>
-        </div>
-      </div>
-
-      </div>
-      <button class="steps-nav" type="button" aria-label="Próximo" data-slide-next>›</button>
-      <div class="steps-index" data-steps-index aria-label="Índice clicável dos slides"></div>
-    </div>
-  </div>
-
-  <div class="tab-pane" id="ref">
-    <div class="ref-search-wrap">
-      <span class="search-icon">🔍</span>
-      <input class="ref-search" id="ref-search" type="text" placeholder="Buscar na referência..." />
-    </div>
-    <div class="ref-section">
-      <div class="ref-section-title">REFERÊNCIA</div>
-      <p class="dash-muted" style="padding:0 0 1rem;font-size:0.92rem;">
-        Comandos e snippets rápidos podem ser adicionados aqui no HTML ou via evoluções futuras do site.
-        Por agora usa esta secção como guia fixo ou complementa com o teu treino na API.
-      </p>
-      <div class="cmd-grid">
-        <div class="cmd-item"><span class="cmd-text">GET / recurso</span><span class="cmd-desc">Pedido HTTP típico de leitura</span><button class="cmd-copy">copy</button></div>
-        <div class="cmd-item"><span class="cmd-text">POST / recurso + JSON body</span><span class="cmd-desc">Criação com corpo em JSON</span><button class="cmd-copy">copy</button></div>
-        <div class="cmd-item"><span class="cmd-text">Authorization: Bearer …</span><span class="cmd-desc">Cabeçalho com token JWT</span><button class="cmd-copy">copy</button></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="main.js?v=train-api-6"></script>
+  <p style="font-family: system-ui, sans-serif; padding: 2rem; color: #ccc; background: #0a0f1a;">
+    A abrir o card…
+    <a href="card.html?slug=api&amp;tab=beginner" style="color: #39d353;">Abrir manualmente</a>
+  </p>
 </body>
 </html>

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=bxp-mod-2" />
   <style>
     /* ── LOADING STATE ─────────────────────────────────────── */
     .card-loading {
@@ -173,7 +173,7 @@
 </div>
 
 <footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="main.js?v=card-xp-1"></script>
+<script src="main.js?v=bxp-mod-2"></script>
 <script>
 function escapeHtml(str) {
   return String(str ?? '')
@@ -203,52 +203,6 @@ function slideHasApiBody(s) {
   const d = String(s?.descricao ?? s?.Descricao ?? '').trim();
   if (d) return true;
   return slideConteudos(s).length > 0;
-}
-
-/** Slides da aba iniciante a partir do HTML estático (git.html, docker.html, …). */
-async function cardFetchStaticBeginnerStepsOuterHtml(slug) {
-  const s = String(slug || '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]/g, '');
-  if (!s) return '';
-  try {
-    const res = await fetch(`${encodeURI(s)}.html`, { credentials: 'same-origin', cache: 'no-store' });
-    if (!res.ok) return '';
-    const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-    const track =
-      doc.querySelector('#beginner .steps.steps-track')
-      || doc.querySelector('#beginner .steps-track')
-      || doc.querySelector('.tab-pane#beginner .steps.steps-track')
-      || doc.querySelector('.tab-pane#beginner .steps-track');
-    if (!track) return '';
-    const steps = [...track.querySelectorAll(':scope > .step')];
-    if (!steps.length) return '';
-    return steps.map((el) => el.outerHTML).join('');
-  } catch (_) {
-    return '';
-  }
-}
-
-/** Secções de referência rápida a partir do HTML estático. */
-async function cardFetchStaticRefSectionsOuterHtml(slug) {
-  const s = String(slug || '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]/g, '');
-  if (!s) return '';
-  try {
-    const res = await fetch(`${encodeURI(s)}.html`, { credentials: 'same-origin', cache: 'no-store' });
-    if (!res.ok) return '';
-    const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-    const ref = doc.querySelector('#ref') || doc.querySelector('.tab-pane#ref');
-    if (!ref) return '';
-    const sections = [...ref.querySelectorAll('.ref-section')];
-    if (!sections.length) return '';
-    return sections.map((el) => el.outerHTML).join('');
-  } catch (_) {
-    return '';
-  }
 }
 
 /** Hero: só imagens/caminhos válidos; emoji ou lixo na API → fallback pelo slug. */
@@ -470,27 +424,13 @@ function renderError(code, msg, root) {
 
   const root = document.getElementById('page-root');
 
-  /** Slugs cujo HTML estático não existe com o mesmo nome (evita 404 / loop com links antigos). */
-  const STATIC_PAGE_FALLBACK_BY_SLUG = { integrandoumaapi: 'api' };
-
-  function staticPageFallbackUrl(rawSlug, tab) {
-    const s = String(rawSlug || '')
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9_-]/g, '');
-    if (!s) return null;
-    const t = tab === 'ref' ? 'ref' : 'beginner';
-    const fileSlug = STATIC_PAGE_FALLBACK_BY_SLUG[s] || s;
-    return `${encodeURI(fileSlug)}.html?tab=${encodeURIComponent(t)}`;
-  }
-
   // ── 2. VALIDA SLUG ───────────────────────────────────────
   if (!slug) {
     renderError('400', 'Nenhum card foi especificado na URL.', root);
     return;
   }
 
-  // ── 3. BUSCA DADOS NA API · fallback página estática legacy ──
+  // ── 3. BUSCA DADOS NA API ────────────────────────────────
   let card;
   try {
     const apiBase =
@@ -502,22 +442,9 @@ function renderError(code, msg, root) {
       headers: { Accept: 'application/json' },
       cache: 'no-store',
     });
-    if (res.status === 404) {
-      const fb = staticPageFallbackUrl(slug, tabParam);
-      if (fb) {
-        window.location.replace(fb);
-        return;
-      }
-      throw new Error('404');
-    }
-    if (!res.ok) throw new Error(res.status);
+    if (!res.ok) throw new Error(String(res.status));
     card = await res.json();
-  } catch (e) {
-    const fb = staticPageFallbackUrl(slug, tabParam);
-    if (fb) {
-      window.location.replace(fb);
-      return;
-    }
+  } catch {
     renderError('404', `Card "${slug}" não encontrado ou API indisponível.`, root);
     return;
   }
@@ -574,18 +501,8 @@ function renderError(code, msg, root) {
     return (a.ordem_item ?? a.OrdemItem ?? 0) - (b.ordem_item ?? b.OrdemItem ?? 0);
   });
 
-  const [staticStepsHtml, staticRefsHtml] = await Promise.all([
-    cardFetchStaticBeginnerStepsOuterHtml(slug),
-    cardFetchStaticRefSectionsOuterHtml(slug),
-  ]);
-
-  let slidesInner = renderSlides(slides);
-  if (!slides.length || slides.every((s) => !slideHasApiBody(s))) {
-    if (staticStepsHtml) slidesInner = staticStepsHtml;
-  }
-
-  let refsInner = renderReferencias(referencias);
-  if (!referencias.length && staticRefsHtml) refsInner = staticRefsHtml;
+  const slidesInner = renderSlides(slides);
+  const refsInner = renderReferencias(referencias);
 
   // ── 8. RENDERIZA HTML ────────────────────────────────────
   root.innerHTML = `

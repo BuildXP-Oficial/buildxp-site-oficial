@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=bxp-mod-2" />
 </head>
 <body>
 
@@ -29,15 +29,18 @@
 <main class="page-container">
   <a href="index.html" class="back-link">← VOLTAR</a>
 
-  <div class="page-hero">
+  <div class="page-hero page-hero--feedback">
     <div class="page-hero-glow"></div>
     <div class="page-icon"><span style="font-family:var(--f-display);color:var(--accent);text-shadow:var(--accent-glow)">✎</span></div>
-    <div>
+    <div class="page-hero-body">
       <div class="page-class">COMUNIDADE</div>
       <div class="page-title">Feedback público</div>
       <div class="page-meta">
         <span class="lvl-badge">POSTE IDEIAS · ERROS · SUGESTÕES</span>
       </div>
+      <p class="fb-label fb-page-intro">
+        Esse canal tem como finalidade receber sugestões de melhorias, ideias, bugs e solicitação de card... pensando em melhor atender essas especificações, todos os feedbacks passam por análise de texto antes de serem publicados no mural.
+      </p>
     </div>
   </div>
 
@@ -75,17 +78,26 @@
         </form>
       </div>
 
-      <div class="fb-card">
+      <div class="fb-card fb-card-mural">
         <div class="fb-head">
           <div class="ref-section-title" style="margin:0;">MURAL</div>
-          <div class="fb-tools">
-            <input class="fb-input fb-search" id="fb-search" type="text" placeholder="Buscar..." />
-          </div>
+          <label class="fb-label fb-mural-filter-label">
+            Filtrar por categoria
+            <select class="fb-input fb-input--compact" id="fb-mural-filter" aria-label="Filtrar mural por categoria">
+              <option value="" selected>Todos</option>
+              <option value="Sugestão de ajuste">Sugestão de ajuste</option>
+              <option value="Ideia">Ideia</option>
+              <option value="Solicitação de card">Solicitação de card</option>
+              <option value="Erro">Erro</option>
+            </select>
+          </label>
         </div>
 
-        <div id="fb-list" class="fb-list"></div>
-        <div id="fb-empty" class="fb-empty" style="display:none;">
-          Nenhum feedback ainda. Seja o primeiro.
+        <div class="fb-mural-scroll">
+          <div id="fb-list" class="fb-list"></div>
+          <div id="fb-empty" class="fb-empty" style="display:none;">
+            Nenhum feedback ainda. Seja o primeiro.
+          </div>
         </div>
       </div>
     </div>
@@ -93,7 +105,7 @@
 </main>
 
 <footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="main.js?v=fb-form-1"></script>
+<script src="main.js?v=bxp-mod-3"></script>
 </body>
 </html>
 

@@ -1,0 +1,251 @@
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 768px) {
+  .hamburger { display:flex; }
+  .nav-links {
+    display:none; position:absolute; top:62px; left:0; right:0;
+    flex-direction:column; background:var(--surface);
+    border-bottom:1px solid var(--border); padding:1rem;
+  }
+  .nav-links.open { display:flex; }
+  .page-hero { flex-direction: column; text-align: center; }
+
+  .page-hero--feedback {
+    align-items: center;
+    text-align: center;
+  }
+  .page-hero--feedback .page-icon {
+    align-self: center;
+  }
+  .page-hero--feedback .page-hero-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    flex: 0 1 auto;
+  }
+  .page-hero--feedback .page-class,
+  .page-hero--feedback .page-title {
+    text-align: center;
+    width: 100%;
+  }
+  .page-hero--feedback .page-meta {
+    justify-content: center;
+    width: 100%;
+  }
+  .page-hero--feedback .page-meta + .fb-label.fb-page-intro {
+    margin-top: 2.75rem;
+    padding-top: 0.5rem;
+    text-align: center;
+    max-width: 100%;
+    width: 100%;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    box-sizing: border-box;
+  }
+  .cmd-item { grid-template-columns:1fr auto; }
+  .cmd-desc { grid-column:1 / -1; }
+  .tabs { width:100%; }
+  .tab-btn { flex:1; text-align:center; padding:0.6rem 0.5rem; font-size:0.78rem; }
+  .step { grid-template-columns:32px 1fr; gap:1rem; }
+  .steps-slider {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    row-gap: 1rem;
+  }
+  .steps-slider > .steps-track {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .steps-slider > .steps-index {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .steps-nav { display: none; }
+
+  /* Primeiro slide: seta na cor do tema (mais cards Ã  direita ao deslizar) */
+  .steps-track > .step:first-of-type {
+    position: relative;
+    padding-bottom: 2.6rem;
+  }
+  .steps-track > .step:first-of-type::after {
+    content: 'â€ºâ€º';
+    position: absolute;
+    right: 1.1rem;
+    bottom: 0.85rem;
+    font-family: var(--f-display);
+    font-size: clamp(1.75rem, 6.5vw, 2.35rem);
+    font-weight: 700;
+    letter-spacing: 2px;
+    line-height: 1;
+    color: var(--accent, var(--blue));
+    pointer-events: none;
+    animation: steps-more-swipe 1.35s ease-in-out infinite;
+  }
+
+  .contact-links {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: stretch;
+    gap: 0.5rem;
+    margin-top: 1.75rem;
+    width: 100%;
+    max-width: 100%;
+  }
+  .contact-link {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    padding: 0.65rem 0.35rem;
+    font-size: 0.62rem;
+    letter-spacing: 1px;
+    gap: 0.35rem;
+  }
+  .contact-link svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+  .contact-mural-btn {
+    padding: 0.3px 3px;
+    font-size: 0.82rem;
+    letter-spacing: 1px;
+  }
+  .hero-title { letter-spacing:-1px; }
+
+  /* Cards da home â€” proporÃ§Ã£o e hierarquia em telas estreitas */
+  .container { padding-left: 1rem; padding-right: 1rem; }
+  #cards .section-title { margin-bottom: 1.75rem; }
+  /* SÃ³ grelha estÃ¡tica; o carrossel da index nÃ£o pode herdar max-width nem coluna Ãºnica */
+  .cards-grid:not(.cards-marquee-group) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    max-width: 28rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .cards-marquee-group.cards-grid {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 1rem;
+    width: max-content;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .cards-marquee-group.cards-grid .card {
+    width: min(300px, calc(100vw - 5.5rem));
+    min-width: min(300px, calc(100vw - 5.5rem));
+    max-width: min(300px, calc(100vw - 5.5rem));
+    align-self: stretch;
+    height: 100%;
+    min-height: 100%;
+  }
+
+  /* Mobile: arrastar o carrossel; sem setas (marquee automÃ¡tico no JS) */
+  .cards-strip-wrap--mobile .cards-strip-floater,
+  .cards-strip-floater {
+    display: none !important;
+  }
+  .cards-marquee-viewport.cards-strip-viewport--swipe,
+  .cards-marquee-viewport.cards-strip-viewport {
+    touch-action: pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .card {
+    padding: 1.15rem 1rem;
+    gap: 0.85rem;
+  }
+  .card::after {
+    width: 150px;
+    height: 150px;
+    top: -48px;
+    right: -48px;
+    opacity: 0.06;
+  }
+  .card:hover::after { opacity: 0.11; }
+  .card-rarity {
+    top: 0.65rem;
+    right: 0.65rem;
+    font-size: 0.55rem;
+    padding: 0.18rem 0.45rem;
+    letter-spacing: 1px;
+  }
+  .card-icon img {
+    height: 1.85rem;
+  }
+  .card-icon.dual img { height: 1.4rem; }
+  .card-icon.dual img.icon-git { height: calc(1.4rem + 4px); }
+  .card-class {
+    font-size: 0.58rem;
+    letter-spacing: 2px;
+    margin-bottom: 0.1rem;
+  }
+  .card-name {
+    font-size: 1.05rem;
+    letter-spacing: 0.5px;
+  }
+  .xp-row { font-size: 0.58rem; margin-bottom: 0.28rem; }
+  .card-desc {
+    font-size: 0.8rem;
+    line-height: 1.55;
+  }
+  .card-desc code { font-size: 0.78em; }
+  .card-actions {
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-top: auto;
+  }
+  .card-btn {
+    flex: none;
+    width: 100%;
+    font-size: 0.74rem;
+    letter-spacing: 1px;
+    padding: 0.52rem 0.65rem;
+    min-height: 0;
+  }
+
+  /* Blocos de comando (slides): evita coluna de comentÃ¡rio com largura ~0 + wrap letra a letra */
+  .cmd-lines {
+    padding-right: 0;
+    font-size: 0.76rem;
+    line-height: 1.65;
+    gap: 0.5rem;
+  }
+  .cmd-block {
+    padding: 0.85rem 1rem;
+    padding-top: 2.35rem;
+  }
+  .cmd-line:not(.cmd-line-full) {
+    grid-template-columns: 1fr;
+    gap: 0.2rem 0;
+    align-items: stretch;
+  }
+  .cmd-line .cmd-note {
+    opacity: 0.82;
+    padding-left: 0.55rem;
+    border-left: 2px solid rgba(255, 255, 255, 0.12);
+  }
+  .cmd-block code {
+    font-size: 0.76rem;
+  }
+}
+
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  .steps-track > .step:first-of-type::after {
+    animation: none;
+    opacity: 0.88;
+    transform: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .card-desc { font-size: 0.76rem; }
+  .card-name { font-size: 1rem; }
+  .card-btn { font-size: 0.7rem; padding: 0.48rem 0.55rem; }
+}

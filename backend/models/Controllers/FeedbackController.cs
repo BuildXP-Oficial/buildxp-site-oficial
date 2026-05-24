@@ -1,6 +1,9 @@
 using System.Security.Claims;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 using BuildXP.API.Services;
 using BuildXP.API.Models;
 
@@ -51,22 +54,43 @@ public class FeedbackController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Enviar([FromBody] Feedback feedback)
+    [EnableRateLimiting("feedback-publico")]
+    public async Task<IActionResult> Enviar([FromBody] FeedbackEnviarRequest body)
     {
-        if (string.IsNullOrWhiteSpace(feedback.Nome) ||
-            string.IsNullOrWhiteSpace(feedback.Mensagem))
-            return BadRequest("Nome e mensagem são obrigatórios.");
+        if (body is null || string.IsNullOrWhiteSpace(body.Mensagem))
+            return BadRequest("Mensagem é obrigatória.");
 
-        if (feedback.Mensagem.Length > 1000)
+        var categoria = (body.Categoria ?? string.Empty).Trim();
+        if (string.IsNullOrEmpty(categoria))
+            return BadRequest("Categoria é obrigatória.");
+        if (categoria.Length > 40)
+            categoria = categoria[..40];
+
+        var mensagem = body.Mensagem.Trim();
+        if (mensagem.Length > 1000)
             return BadRequest("Mensagem muito longa.");
 
-        feedback.Status = StatusFeedback.Pendente;
-        feedback.CriadoEm = DateTime.UtcNow;
+        var nome = (body.Nome ?? string.Empty).Trim();
+        if (nome.Length > 100)
+            nome = nome[..100];
+
+        if (await _service.ExisteDuplicadoRecenteAsync(nome, categoria, mensagem))
+            return Ok(new { mensagem = "Feedback recebido com sucesso!", duplicadoIgnorado = true });
+
+        var feedback = new Feedback
+        {
+            Nome = nome,
+            Categoria = categoria,
+            Mensagem = mensagem,
+            Status = StatusFeedback.Pendente,
+            CriadoEm = DateTime.UtcNow,
+        };
 
         await _service.CriarAsync(feedback);
-        _ = _email.NotificarNovoFeedbackAsync(feedback.Nome, feedback.Mensagem);
+        var nomeEmail = string.IsNullOrEmpty(nome) ? "Anónimo" : nome;
+        _ = _email.NotificarNovoFeedbackAsync(nomeEmail, categoria, mensagem);
 
-        return Created("", new { mensagem = "Feedback recebido com sucesso!" });
+        return Ok(new { mensagem = "Feedback recebido com sucesso!" });
     }
 
     // ── ROTAS PRIVADAS — só o dashboard acessa ──────────────
@@ -110,3 +134,9 @@ public class FeedbackController : ControllerBase
 }
 
 public record FeedbackModerarRequest(string? Moderador);
+
+/// <summary>Pedido público de feedback — nome opcional em qualquer categoria.</summary>
+public record FeedbackEnviarRequest(
+    [property: JsonPropertyName("mensagem")] string Mensagem,
+    [property: JsonPropertyName("categoria")] string Categoria,
+    [property: JsonPropertyName("nome")] string? Nome = null);

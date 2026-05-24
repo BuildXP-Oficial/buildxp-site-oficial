@@ -29,6 +29,7 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
         modelBuilder.Entity<Feedback>(entity =>
         {
             entity.Property(f => f.Nome).HasMaxLength(100);
+            entity.Property(f => f.Categoria).HasMaxLength(40);
             entity.Property(f => f.Mensagem).HasMaxLength(1000);
             entity.Property(f => f.ModeradoPor).HasMaxLength(120);
         });

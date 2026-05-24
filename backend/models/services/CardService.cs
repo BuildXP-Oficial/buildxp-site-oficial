@@ -543,6 +543,52 @@ public class CardService
         await _context.SaveChangesAsync();
     }
 
+    /// <summary>Remove todos os slides do card e grava a lista nova (transação única — sem duplicar).</summary>
+    public async Task<int> SincronizarSlidesAsync(int cardId, IReadOnlyList<SlideSyncItem> items)
+    {
+        if (cardId <= 0) return 0;
+        var existe = await _context.SkillCards.AsNoTracking().AnyAsync(c => c.Id == cardId);
+        if (!existe) return 0;
+
+        await using var tx = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var existing = await _context.Slides
+                .Include(s => s.Conteudos)
+                .Where(s => s.CardId == cardId)
+                .ToListAsync();
+            if (existing.Count > 0)
+            {
+                _context.Slides.RemoveRange(existing);
+                await _context.SaveChangesAsync();
+            }
+
+            var list = items ?? Array.Empty<SlideSyncItem>();
+            for (var i = 0; i < list.Count; i++)
+            {
+                var item = list[i];
+                var ordem = item.Ordem > 0 ? item.Ordem : i + 1;
+                _context.Slides.Add(new Slide
+                {
+                    CardId = cardId,
+                    Ordem = ordem,
+                    Titulo = item.Titulo ?? string.Empty,
+                    Descricao = item.Descricao ?? string.Empty,
+                    Ativo = true,
+                });
+            }
+
+            await _context.SaveChangesAsync();
+            await tx.CommitAsync();
+            return list.Count;
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            throw;
+        }
+    }
+
     // adiciona slide ao card (entidade nova — evita grafos vindos da deserialização JSON)
     public async Task<Slide?> AdicionarSlideAsync(Slide entrada)
     {

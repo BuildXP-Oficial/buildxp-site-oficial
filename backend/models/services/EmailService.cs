@@ -39,7 +39,7 @@ public class EmailService
     }
 
     // notifica quando chega feedback novo
-    public async Task NotificarNovoFeedbackAsync(string nome, string mensagem)
+    public async Task NotificarNovoFeedbackAsync(string nome, string categoria, string mensagem)
     {
         var para = _config["Email:EmailAdmin"]!;
 
@@ -47,6 +47,7 @@ public class EmailService
             <div style="font-family:sans-serif;max-width:600px;margin:0 auto;">
               <h2 style="color:#39d353;">BuildXP — Novo Feedback</h2>
               <p><strong>De:</strong> {nome}</p>
+              <p><strong>Categoria:</strong> {categoria}</p>
               <p><strong>Mensagem:</strong></p>
               <blockquote style="border-left:3px solid #39d353;padding-left:1rem;color:#555;">
                 {mensagem}
