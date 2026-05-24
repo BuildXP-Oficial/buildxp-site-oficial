@@ -114,6 +114,18 @@ function dashSlideToApiBody(slide, idx) {
   };
 }
 
+/** Payload para PUT /api/card/{slug}/slides/sync (substitui a trilha inteira, sem duplicar). */
+function dashSlidesToSyncPayload(slides) {
+  return (slides ?? []).map((slide, idx) => {
+    const body = dashSlideToApiBody(slide, idx);
+    return {
+      ordem: body.ordem,
+      titulo: body.titulo,
+      descricao: body.descricao,
+    };
+  });
+}
+
 function buildWizCardPayloadForApi(slug, meta, themeRaw) {
   const theme =
     String(themeRaw || 'git')
@@ -1500,8 +1512,60 @@ function initDashboard() {
       }
     }
 
-    /** Labels para a lista «CARDS NO INDEX» (inclui cards criados na API). */
+    /** Labels e ids para a lista «CARDS NO INDEX» (inclui cards criados na API). */
     let dashIndexCardLabels = {};
+    let dashIndexCardIds = {};
+
+    function setIndexOrderStatus(msg, kind) {
+      const st = document.getElementById('dash-index-order-status');
+      if (!st) return;
+      st.textContent = msg || '';
+      st.classList.toggle('ok', kind === 'ok');
+      st.classList.toggle('bad', kind === 'bad');
+    }
+
+    function dashIsCardPublishedInApi(raw) {
+      const pub = raw?.is_published ?? raw?.IsPublished ?? raw?.ativo ?? raw?.Ativo;
+      return pub !== false;
+    }
+
+    async function dashDeleteCardFromList(slug, cardId, displayName) {
+      if (!getDashIsPlataformaAdmin()) {
+        setIndexOrderStatus('Apenas o administrador da plataforma pode excluir cards.', 'bad');
+        return;
+      }
+      const id = Number(cardId);
+      if (!Number.isFinite(id) || id <= 0) {
+        setIndexOrderStatus('Este card ainda não existe na API (sem id para excluir).', 'bad');
+        return;
+      }
+      const nome = displayName || slug;
+      if (
+        !window.confirm(
+          `Excluir o card «${nome}» (${slug}) da base de dados?\n\nIsto remove o card e todos os slides. Não pode ser desfeito.`,
+        )
+      ) {
+        return;
+      }
+      setIndexOrderStatus('A excluir…', '');
+      try {
+        await fetchJson(`/api/card/${id}`, { method: 'DELETE' });
+        try {
+          localStorage.removeItem(dashSlidesStorageKey(slug));
+        } catch (_) {
+          /* ignore */
+        }
+        const o = getIndexCardOrder().filter((s) => s !== slug);
+        setIndexCardOrder(o);
+        delete dashIndexCardLabels[slug];
+        delete dashIndexCardIds[slug];
+        await syncIndexOrderPanelFromApi();
+        setIndexOrderStatus(`Card «${nome}» excluído.`, 'ok');
+      } catch (e) {
+        const extra = e?.status === 403 ? ' Apenas administrador da plataforma pode excluir.' : '';
+        setIndexOrderStatus(`Não foi possível excluir.${extra}`, 'bad');
+      }
+    }
 
     function mergeIndexOrderWithDashboardCards(order, cardsNorm) {
       const sorted = [...cardsNorm].sort((a, b) => a.sort_order - b.sort_order);
@@ -1515,7 +1579,18 @@ function initDashboard() {
     async function syncIndexOrderPanelFromApi() {
       try {
         const data = await fetchJson('/api/card/dashboard');
-        const arr = Array.isArray(data) ? data : [];
+        const arr = (Array.isArray(data) ? data : []).filter(dashIsCardPublishedInApi);
+        dashIndexCardIds = Object.fromEntries(
+          arr
+            .map((raw) => {
+              const slug = String(raw.slug ?? raw.Slug ?? '')
+                .trim()
+                .toLowerCase();
+              const id = Number(raw.id ?? raw.Id ?? 0);
+              return slug && id > 0 ? [slug, id] : null;
+            })
+            .filter(Boolean),
+        );
         const cards = arr.map(dashNormalizeCard).filter((c) => c.slug);
         dashIndexCardLabels = Object.fromEntries(cards.map((c) => [c.slug, c.display_name || c.slug]));
         const merged = mergeIndexOrderWithDashboardCards(getIndexCardOrder(), cards);
@@ -1539,22 +1614,43 @@ function initDashboard() {
         li.className = 'dash-index-order-item';
         const row = document.createElement('div');
         row.className = 'dash-index-order-row';
+        const cardId = dashIndexCardIds[slug];
+        const canDelete = getDashIsPlataformaAdmin() && Number(cardId) > 0;
         row.innerHTML = `
-          <span class="dash-index-order-label">${dashEscapeHtml(label)}</span>
-          <code class="dash-index-order-slug">${dashEscapeHtml(slug)}</code>
-          <div class="dash-index-order-btns">
-            <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="-1" ${idx === 0 ? 'disabled' : ''}>↑</button>
-            <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="1" ${idx === order.length - 1 ? 'disabled' : ''}>↓</button>
+          <div class="dash-index-order-head">
+            <div class="dash-index-order-title">
+              <span class="dash-index-order-label">${dashEscapeHtml(label)}</span>
+              <code class="dash-index-order-slug">${dashEscapeHtml(slug)}</code>
+            </div>
+            <div class="dash-index-order-btns">
+              <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="-1" ${idx === 0 ? 'disabled' : ''}>↑</button>
+              <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="1" ${idx === order.length - 1 ? 'disabled' : ''}>↓</button>
+            </div>
           </div>
-          <button type="button" class="term-btn primary" data-edit-slug="${slug}">FORM + SLIDES</button>
+          <div class="dash-index-order-actions">
+            <button type="button" class="term-btn primary" data-edit-slug="${slug}">Editar Slide</button>
+            ${
+              canDelete
+                ? `<button type="button" class="term-btn ghost danger" data-delete-slug="${slug}" data-delete-id="${cardId}">Excluir card</button>`
+                : ''
+            }
+          </div>
         `;
         li.appendChild(row);
         ul.appendChild(li);
       });
       ul.querySelectorAll('[data-edit-slug]').forEach((btn) => {
         btn.addEventListener('click', () => {
-          const slug = btn.getAttribute('data-edit-slug');
-          if (slug) openIndexCardForDeepEdit(slug);
+          const s = btn.getAttribute('data-edit-slug');
+          if (s) openIndexCardForDeepEdit(s);
+        });
+      });
+      ul.querySelectorAll('[data-delete-slug]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const s = btn.getAttribute('data-delete-slug');
+          const id = btn.getAttribute('data-delete-id');
+          const label = dashIndexCardLabels[s] ?? s;
+          if (s) void dashDeleteCardFromList(s, id, label);
         });
       });
       ul.querySelectorAll('[data-idx-move]').forEach((b) => {
@@ -1631,7 +1727,19 @@ function initDashboard() {
         return false;
       }
       editSlidesSlug = slug;
-      editSlides = await dashLoadSlidesForSlug(slug);
+      editSlides = [];
+      try {
+        const raw = await dashFetchCardMetaForEditor(slug);
+        const slidesRaw = raw?.slides ?? raw?.Slides;
+        if (Array.isArray(slidesRaw) && slidesRaw.length > 0) {
+          editSlides = dashParseApiSlidesArrayForEditor(slidesRaw);
+        }
+      } catch (_) {
+        /* painel indisponível — fallback abaixo */
+      }
+      if (!dashSlidesHasEditableContent(editSlides)) {
+        editSlides = await dashLoadSlidesForSlug(slug, { preferApi: true });
+      }
       renderEditSlides();
       return true;
     }
@@ -1879,42 +1987,36 @@ function initDashboard() {
       }
 
       const slidesParaSalvar = getEditSlidesContentOnly();
+      const syncBody = { slides: dashSlidesToSyncPayload(slidesParaSalvar) };
+      const cardId = Number(meta?.id ?? meta?.Id ?? editingCardNumericId ?? 0);
 
       try {
-        const existingSlides = meta?.slides ?? meta?.Slides;
-        if (Array.isArray(existingSlides) && existingSlides.length > 0) {
-          const ids = [...existingSlides]
-            .map((s) => Number(s.id ?? s.Id))
-            .filter((x) => Number.isFinite(x) && x > 0)
-            .sort((a, b) => b - a);
-          for (const sid of ids) {
-            try {
-              await fetchJson(`/api/card/slides/${sid}`, { method: 'DELETE' });
-            } catch (_) {
-              /* slide já removido ou conflito — segue */
-            }
-          }
+        if (cardId > 0) {
+          await fetchJson(`/api/card/${cardId}/slides/sync`, {
+            method: 'PUT',
+            body: JSON.stringify(syncBody),
+          });
+        } else {
+          await fetchJson(`/api/card/${encodeURIComponent(editSlidesSlug)}/slides/sync`, {
+            method: 'PUT',
+            body: JSON.stringify(syncBody),
+          });
         }
 
         slidesParaSalvar.forEach((s) => {
           delete s._apiId;
         });
 
-        for (const [idx, slide] of slidesParaSalvar.entries()) {
-          const body = dashSlideToApiBody(slide, idx);
-
-          const criado = await fetchJson(`/api/card/${encodeURIComponent(editSlidesSlug)}/slides`, {
-            method: 'POST',
-            body: JSON.stringify(body),
-          });
-          slide._apiId = criado?.id ?? criado?.Id ?? null;
-        }
-
         try {
           localStorage.setItem(dashSlidesStorageKey(editSlidesSlug), JSON.stringify(editSlides));
         } catch (_) { /* ignore */ }
 
-        setSlidesSaveStatus('Slides guardados na API com sucesso.', 'ok');
+        setSlidesSaveStatus(
+          `Trilha sincronizada na API (${slidesParaSalvar.length} slide${slidesParaSalvar.length === 1 ? '' : 's'}). Slides antigos foram substituídos.`,
+          'ok',
+        );
+
+        await loadCardEditorSlidesData(editSlidesSlug);
 
         const btn = document.getElementById('dash-slides-save');
         if (btn) {
@@ -2286,26 +2388,17 @@ function initDashboard() {
         if (!slugNorm) throw new Error('Sem slug após criar/atualizar.');
 
         const full = await fetchJson(dashApiCardPanelPath(slugNorm));
-        const slideList = full.slides ?? full.Slides ?? [];
-        const sortedDel = [...slideList].sort(
-          (a, b) => (Number(b.id ?? b.Id) || 0) - (Number(a.id ?? a.Id) || 0),
-        );
-        for (const s of sortedDel) {
-          const sid = Number(s.id ?? s.Id ?? 0);
-          if (sid > 0) {
-            try {
-              await fetchJson(`/api/card/slides/${sid}`, { method: 'DELETE' });
-            } catch (_) {
-              /* ignorado */
-            }
-          }
-        }
-
-        for (const [idx, slide] of wizSlides.entries()) {
-          const slideBody = dashSlideToApiBody(slide, idx);
-          await fetchJson(`/api/card/${encodeURIComponent(slugNorm)}/slides`, {
-            method: 'POST',
-            body: JSON.stringify(slideBody),
+        const cardId = Number(full?.id ?? full?.Id ?? 0);
+        const syncBody = { slides: dashSlidesToSyncPayload(wizSlides) };
+        if (cardId > 0) {
+          await fetchJson(`/api/card/${cardId}/slides/sync`, {
+            method: 'PUT',
+            body: JSON.stringify(syncBody),
+          });
+        } else {
+          await fetchJson(`/api/card/${encodeURIComponent(slugNorm)}/slides/sync`, {
+            method: 'PUT',
+            body: JSON.stringify(syncBody),
           });
         }
 
@@ -2738,7 +2831,7 @@ function initDashboard() {
   cardForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     if ((isCardsEditViewActive() || isCardEditorViewActive()) && !editingCardSlug) {
-      setCardFormStatus('Selecione um card (FORM + SLIDES na grade ou na lista «CARDS NO INDEX»). Criar card novo é só na aba «Criar card».', 'bad');
+      setCardFormStatus('Selecione um card («Editar Slide» na lista «CARDS NO INDEX»). Criar card novo é só na aba «Criar card».', 'bad');
       return;
     }
     const slugRaw = document.getElementById('dash-card-slug').value.trim().toLowerCase();
