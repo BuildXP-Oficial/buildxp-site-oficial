@@ -1,10 +1,13 @@
+using BuildXP.API.Data;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace models.Migrations;
 
-/// <inheritdoc />
+[DbContext(typeof(AppDbContext))]
+[Migration("20260523120000_FeedbackCategoria")]
 public partial class FeedbackCategoria : Migration
 {
     /// <inheritdoc />

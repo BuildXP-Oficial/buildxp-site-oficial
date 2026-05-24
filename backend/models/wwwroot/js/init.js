@@ -1,4 +1,4 @@
-// BuildXP - init (executado pelo loader em main.js após todos os módulos)
+// BuildXP - init (executado por js/main.js após todos os módulos)
 async function buildxpBoot() {
   ensureDashPasswordToggleDelegation();
   initCopy();

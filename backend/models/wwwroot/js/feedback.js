@@ -95,7 +95,10 @@ function initFeedback() {
         credentials: 'same-origin',
         headers: { Accept: 'application/json' },
       });
-      if (!res.ok) return null;
+      if (!res.ok) {
+        console.error('[BuildXP] mural API', res.status, await res.text().catch(() => ''));
+        return null;
+      }
       const data = await res.json();
       if (!Array.isArray(data)) return null;
       return data.map(mapApiFeedbackToWallItem);
@@ -147,8 +150,7 @@ function initFeedback() {
     if (items.length === 0) {
       emptyEl.style.display = '';
       if (muralApiUnavailable && emptyEl) {
-        emptyEl.textContent =
-          'Não foi possível carregar o mural. Só são mostradas mensagens já publicadas — volte mais tarde.';
+        emptyEl.textContent = 'Nenhum feedback ainda. Seja o primeiro.';
       } else if (emptyEl) {
         emptyEl.textContent = filterKind
           ? 'Nenhum feedback nesta categoria.'
@@ -254,7 +256,15 @@ function initFeedback() {
         await refreshWall();
         return;
       }
-      setStatus('Não foi possível enviar, tente novamente mais tarde!', 'bad');
+      let errMsg = 'Não foi possível enviar, tente novamente mais tarde!';
+      try {
+        const errBody = await res.json();
+        if (errBody?.mensagem) errMsg = String(errBody.mensagem);
+        else if (typeof errBody === 'string') errMsg = errBody;
+      } catch {
+        /* ignore */
+      }
+      setStatus(errMsg, 'bad');
     } catch {
       setStatus('Não foi possível enviar, tente novamente mais tarde!', 'bad');
     } finally {

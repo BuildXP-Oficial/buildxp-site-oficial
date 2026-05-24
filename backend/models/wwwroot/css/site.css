@@ -1,0 +1,9 @@
+/* BuildXP — entrada de estilos do site (módulos parciais nesta pasta) */
+@import url('01-base.css');
+@import url('02-home.css');
+@import url('03-terminal.css');
+@import url('04-contact-footer.css');
+@import url('05-feedback.css');
+@import url('06-card-page.css');
+@import url('07-responsive.css');
+@import url('08-dashboard.css');

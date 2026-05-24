@@ -408,8 +408,8 @@ function initTrainingTerminal() {
           <span class="term-purple">Como funciona:</span> Eu lanço um desafio e você digita o comando.<br>
           <span class="term-purple">Pontuação</span><br>
           <span class="term-good">+50 XP</span> certo · <span class="term-warn">+25 XP</span> parcialmente correto · <span class="term-bad">-1 XP</span> errado<br>
-          <span class="term-purple">Nível atual:</span> sobe com o tempo aprendendo.<br>
-          <span class="term-purple">Próximo desbloqueio:</span> aprenda git log --oneline e outras peças do mapa.
+          <span class="term-purple">Nível atual:</span> Em construção.<br>
+          <span class="term-purple">Próximo desbloqueio:</span><span class="term-intro-br-mobile"><br></span> você do futuro
         </div>`;
   }
 
@@ -425,7 +425,7 @@ function initTrainingTerminal() {
     mount.innerHTML = `
       <div class="term-intro">
         <div class="term-title">TERMINAL TRAINING</div>
-        ${isTopicStep ? termIntroCopyHtml() : ''}
+        ${termIntroCopyHtml()}
 
         ${isTopicStep ? `
           <div class="term-dim" style="text-align:center;margin-bottom:0.75rem;font-family:var(--f-mono);font-size:0.72rem;letter-spacing:2px;">
@@ -439,6 +439,7 @@ function initTrainingTerminal() {
           <div class="term-pick" style="justify-content:center;margin-bottom:0.8rem;">
             <span class="term-chip active" style="cursor:default;">.NET/C#</span>
           </div>
+          ${termMissionMsgHtml()}
           <div class="term-pick" id="pick-dotnet-track"></div>
           <div class="term-actions">
             <button class="term-btn primary" type="button" id="term-dotnet-next">▶ CONTINUAR</button>
@@ -451,6 +452,7 @@ function initTrainingTerminal() {
           <div class="term-pick" style="justify-content:center;margin-bottom:0.8rem;">
             <span class="term-chip active" style="cursor:default;">${termBadgeLabel()}</span>
           </div>
+          ${state.topic === '.NET' ? '' : termMissionMsgHtml()}
           <div class="term-pick" id="pick-level"></div>
           <div class="term-actions">
             <button class="term-btn primary" type="button" id="term-start">▶ INICIAR</button>
@@ -544,11 +546,17 @@ function initTrainingTerminal() {
       <div class="term-frame">
         <div class="term-topbar">
           <div class="term-meta">
-            <span class="term-badge">${termBadgeLabel()}</span>
-            <span class="term-dim">NÍVEL</span>
-            <span class="term-badge">LVL ${state.runLevel}</span>
-            <span class="term-dim">MODO</span>
-            <span class="term-badge">${state.levelMode.toUpperCase()}</span>
+            <span class="term-stat">
+              <span class="term-badge">${termBadgeLabel()}</span>
+            </span>
+            <span class="term-stat">
+              <span class="term-dim">NÍVEL</span>
+              <span class="term-badge">LVL ${state.runLevel}</span>
+            </span>
+            <span class="term-stat">
+              <span class="term-dim">MODO</span>
+              <span class="term-badge">${state.levelMode.toUpperCase()}</span>
+            </span>
           </div>
           <div class="term-meta term-xp">
             <span class="term-xp-wrap" id="term-xp-wrap">XP: <strong id="term-xp">${state.totalXp}</strong></span>
@@ -575,6 +583,16 @@ function initTrainingTerminal() {
     const div = document.createElement('div');
     div.className = 'term-line' + (cls ? ` ${cls}` : '');
     div.textContent = text;
+    screen.appendChild(div);
+    screen.scrollTop = screen.scrollHeight;
+  }
+
+  function lineHtml(html, cls = '') {
+    const screen = mount.querySelector('#term-screen');
+    if (!screen) return;
+    const div = document.createElement('div');
+    div.className = 'term-line' + (cls ? ` ${cls}` : '');
+    div.innerHTML = html;
     screen.appendChild(div);
     screen.scrollTop = screen.scrollHeight;
   }
@@ -665,17 +683,11 @@ function initTrainingTerminal() {
 
     replayAdminGate();
 
-    const screen = mount.querySelector('#term-screen');
     line(`BuildXP Terminal Training — ${termBadgeLabel()}`, 'term-dim');
-    line(
-      'Importante: Este terminal não salva progresso. O objetivo é que você observe sua própria evolução durante a jornada.',
-      'term-bad',
+    lineHtml(
+      '<span class="term-bad">Importante:</span> Este terminal não salva progresso. O objetivo é que você observe sua própria evolução durante a jornada.',
+      'term-dim',
     );
-    if (screen) {
-      const mission = document.createElement('div');
-      mission.innerHTML = termMissionMsgHtml();
-      screen.appendChild(mission);
-    }
     line(`Objetivo: ${state.goalXp} XP.`, 'term-dim');
     if (getBankTopic() === 'C#') {
       line(`Modo C#: nomes de classe e variáveis livres; importa a montagem e operadores.`, 'term-dim');

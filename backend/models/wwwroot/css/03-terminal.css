@@ -216,6 +216,8 @@
   color: var(--text);
 }
 .term-line { white-space: pre-wrap; word-break: break-word; }
+.term-line.term-dim { color: var(--text-dim); }
+.term-line .term-bad { color: #ff6b6b; }
 .term-dim { color: var(--text-dim); }
 .term-warn { color: #ffd60a; }
 .term-bad { color: #ff6b6b; }
@@ -312,8 +314,13 @@
     font-size: 0.6rem;
     flex: 1 1 auto;
     min-width: 0;
+    flex-wrap: nowrap;
   }
-  .term-stat { gap: 0.22rem; }
+  .term-stat {
+    gap: 0.22rem;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
   .term-badge {
     padding: 0.14rem 0.38rem;
     font-size: 0.58rem;
