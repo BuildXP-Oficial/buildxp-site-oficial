@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
-  <link rel="stylesheet" href="css/site.css?v=bxp-mod-6" />
+  <link rel="stylesheet" href="css/site.css?v=bxp-mod-12" />
   <style>
     /* ── LOADING STATE ─────────────────────────────────────── */
     .card-loading {
@@ -124,6 +124,46 @@
     }
     .step-fim-btn--primary:hover { filter: brightness(1.12); }
 
+    .card-fim-body { width: 100%; }
+    .card-fim-actions.term-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 1.25rem;
+    }
+    .card-fim-actions .term-btn {
+      font-family: var(--f-display);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      padding: 0.85rem 1.25rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-b);
+      text-decoration: none;
+      transition: var(--t-fast);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card-fim-actions .term-btn.primary {
+      border-color: var(--accent, var(--git));
+      background: var(--accent, var(--git));
+      color: var(--bg);
+    }
+    .card-fim-actions .term-btn.primary:hover {
+      filter: brightness(1.1);
+      box-shadow: var(--accent-glow, 0 0 20px rgba(57, 211, 83, 0.35));
+    }
+    .card-fim-actions .term-btn.ghost {
+      background: transparent;
+      color: var(--text-dim);
+    }
+    .card-fim-actions .term-btn.ghost:hover {
+      border-color: var(--accent, var(--git));
+      color: var(--accent, var(--git));
+    }
+
     /* normal: pre-line tornava cada \n no HTML (ex.: após &lt;/b&gt;) quebra de linha visível */
     .card-dynamic-slide .step-desc { white-space: normal; }
     .card-dynamic-slide .step-desc b,
@@ -173,7 +213,7 @@
 </div>
 
 <footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="js/main.js?v=bxp-mod-6"></script>
+<script src="js/main.js?v=bxp-mod-12"></script>
 <script>
 function escapeHtml(str) {
   return String(str ?? '')
@@ -501,7 +541,7 @@ function renderError(code, msg, root) {
     return (a.ordem_item ?? a.OrdemItem ?? 0) - (b.ordem_item ?? b.OrdemItem ?? 0);
   });
 
-  const slidesInner = renderSlides(slides);
+  const slidesInner = renderSlides(slides, slug);
   const refsInner = renderReferencias(referencias);
 
   // ── 8. RENDERIZA HTML ────────────────────────────────────
@@ -569,16 +609,37 @@ function renderError(code, msg, root) {
 
 })();
 
+function cardBuildFinSlideHtml(slug, finSlide) {
+  if (typeof buildxpFinSlideHtml === 'function') return buildxpFinSlideHtml(slug, finSlide);
+  const cheatHref = `card.html?slug=${encodeURIComponent(slug)}&tab=ref`;
+  return `
+    <div class="step step--fim">
+      <div class="step-num">🏆</div>
+      <div class="card-fim-body">
+        <div class="step-title">Parabéns! 🏆</div>
+        <div class="step-desc">Você concluiu a trilha iniciante. Pratique no terminal ou consulte os cheat codes.</div>
+        <div class="term-actions card-fim-actions">
+          <a href="index.html#terminal" class="term-btn primary">INICIAR TREINAMENTO</a>
+          <a href="${cheatHref}" class="term-btn ghost">🎮 VERIFICAR CHEAT CODES</a>
+        </div>
+      </div>
+    </div>`;
+}
+
+function cardIsFinSlide(slide) {
+  return detectTipo(slide) === 'fim';
+}
+
 // ── RENDERIZA SLIDES ──────────────────────────────────────────
-function renderSlides(slides) {
-  if (!slides.length) {
-    return `<div style="font-family:var(--f-mono);font-size:0.8rem;
-                        color:var(--text-muted);padding:2rem;text-align:center;">
-              // Nenhum conteúdo adicionado ainda.
-            </div>`;
+function renderSlides(slides, slug) {
+  const finFromApi = (slides || []).find((s) => cardIsFinSlide(s));
+  const contentSlides = (slides || []).filter((s) => !cardIsFinSlide(s));
+
+  if (!contentSlides.length && !finFromApi) {
+    return `${cardBuildFinSlideHtml(slug, null)}`;
   }
 
-  return slides.map((slide, idx) => {
+  const body = contentSlides.map((slide, idx) => {
     const tipo = detectTipo(slide);
 
     // Slide de PAUSA
@@ -598,32 +659,6 @@ function renderSlides(slides) {
           <div>
             ${showPauseTitle ? `<div class="step-title">${escapeHtml(slide.titulo ?? slide.Titulo)}</div>` : ''}
             ${pauseBody}
-          </div>
-        </div>`;
-    }
-
-    // Slide de FIM
-    if (tipo === 'fim') {
-      const fd = String(slide.descricao ?? slide.Descricao ?? '');
-      const fimTitulo = String(slide.titulo ?? slide.Titulo ?? '').trim();
-      const fimBody =
-        fd && /<[a-z][\s\S]*>/i.test(fd)
-          ? fd
-          : fd
-            ? `<div class="step-desc">${escapeHtml(fd).replace(/\n/g, '<br>')}</div>`
-            : '';
-      return `
-        <div class="step step--fim">
-          <div class="step-num">🏆</div>
-          <div style="width:100%">
-            ${fimTitulo ? `<div class="step-title">${escapeHtml(fimTitulo)}</div>` : ''}
-            ${fimBody}
-            <div class="step-fim-actions">
-              <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;"
-                 class="step-fim-btn step-fim-btn--ghost">← VOLTAR AO INÍCIO</a>
-              <a href="index.html#cards"
-                 class="step-fim-btn step-fim-btn--primary">EXPLORAR OUTROS CARDS</a>
-            </div>
           </div>
         </div>`;
     }
@@ -696,6 +731,8 @@ function renderSlides(slides) {
         </div>
       </div>`;
   }).join('');
+
+  return `${body}${cardBuildFinSlideHtml(slug, finFromApi)}`;
 }
 
 // ── RENDERIZA REFERÊNCIAS ─────────────────────────────────────
@@ -742,7 +779,7 @@ function detectTipo(slide) {
   if (cardIsLikelyPauseSlide(slide)) return 'pausa';
 
   if (tipo === 'fim' || tipo === '3') return 'fim';
-  if (titulo === '' && desc.match(/chegou|chegaste|voando|reflexo|🏆/)) return 'fim';
+  if (tituloRaw === 'FIM' || /^conclus(ão|ao)?$/i.test(tituloRaw)) return 'fim';
 
   return 'conteudo';
 }

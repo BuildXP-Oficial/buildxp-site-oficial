@@ -25,6 +25,66 @@ function buildxpTrainingSlugFromPath() {
   }
 }
 
+function buildxpSlugFromPage() {
+  try {
+    const q = new URLSearchParams(window.location.search).get('slug');
+    if (q && String(q).trim()) return String(q).trim().toLowerCase();
+  } catch (_) {
+    /* ignore */
+  }
+  return buildxpTrainingSlugFromPath();
+}
+
+function buildxpEscapeHtml(s) {
+  if (typeof dashEscapeHtml === 'function') return dashEscapeHtml(s);
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/** HTML do slide FIM fixo (terminal + cheat codes) — sempre o último da trilha. */
+function buildxpFinSlideHtml(slug, finSlide) {
+  const safeSlug = String(slug || '').trim().toLowerCase();
+  let fimTitulo = 'Parabéns! 🏆';
+  let fimBody =
+    '<div class="step-desc">Você concluiu a trilha iniciante. Pratique no terminal ou consulte os cheat codes.</div>';
+  if (finSlide) {
+    const ft = String(finSlide.titulo ?? finSlide.Titulo ?? '').trim();
+    const fd = String(finSlide.descricao ?? finSlide.Descricao ?? '').trim();
+    if (ft && ft !== BUILDXP_SLIDE_PAUSE_TITULO && !/^pausa$/i.test(ft)) fimTitulo = ft;
+    if (fd) {
+      fimBody = /<[a-z][\s\S]*>/i.test(fd)
+        ? fd
+        : `<div class="step-desc">${buildxpEscapeHtml(fd).replace(/\n/g, '<br>')}</div>`;
+    }
+  }
+  const cheatHref = safeSlug
+    ? `card.html?slug=${encodeURIComponent(safeSlug)}&tab=ref`
+    : 'card.html?tab=ref';
+  return `
+    <div class="step step--fim">
+      <div class="step-num">🏆</div>
+      <div class="card-fim-body">
+        <div class="step-title">${buildxpEscapeHtml(fimTitulo)}</div>
+        ${fimBody}
+        <div class="term-actions card-fim-actions">
+          <a href="index.html#terminal" class="term-btn primary">INICIAR TREINAMENTO</a>
+          <a href="${cheatHref}" class="term-btn ghost">🎮 VERIFICAR CHEAT CODES</a>
+        </div>
+      </div>
+    </div>`;
+}
+
+function buildxpAppendFinSlideToTrack(track, slug, finSlideFromApi) {
+  if (!track) return;
+  const holder = document.createElement('div');
+  holder.innerHTML = buildxpFinSlideHtml(slug, finSlideFromApi);
+  const fin = holder.firstElementChild;
+  if (fin) track.appendChild(fin);
+}
+
 function buildxpFindFinStepClone(track) {
   if (!track) return null;
   for (const el of track.querySelectorAll('.step')) {
@@ -96,7 +156,7 @@ function buildxpApiSlideToDom(slide) {
  * @returns {Promise<boolean>}
  */
 async function buildxpHydrateTrainingSlidesFromApi() {
-  const slug = buildxpTrainingSlugFromPath();
+  const slug = buildxpSlugFromPage();
   if (!slug) return false;
 
   const track =
@@ -124,14 +184,26 @@ async function buildxpHydrateTrainingSlidesFromApi() {
   const slidesRaw = data.slides ?? data.Slides;
   if (!Array.isArray(slidesRaw) || slidesRaw.length === 0) return false;
 
-  const finClone = buildxpFindFinStepClone(track);
   track.innerHTML = '';
 
   const sorted = [...slidesRaw].sort(
     (a, b) => (Number(a.ordem ?? a.Ordem) || 0) - (Number(b.ordem ?? b.Ordem) || 0),
   );
-  sorted.forEach((s) => track.appendChild(buildxpApiSlideToDom(s)));
-  if (finClone) track.appendChild(finClone);
+  let finFromApi = null;
+  sorted.forEach((s) => {
+    const titulo = String(s.titulo ?? s.Titulo ?? '').trim();
+    const desc = String(s.descricao ?? s.Descricao ?? '').toLowerCase();
+    const isFin =
+      titulo === 'FIM' ||
+      /^conclus(ão|ao)?$/i.test(titulo) ||
+      (titulo === '' && /chegou|chegaste|voando|reflexo|🏆/.test(desc));
+    if (isFin) {
+      if (!finFromApi) finFromApi = s;
+      return;
+    }
+    track.appendChild(buildxpApiSlideToDom(s));
+  });
+  buildxpAppendFinSlideToTrack(track, slug, finFromApi);
   return true;
 }
 
@@ -434,6 +506,7 @@ function dashSlidesHasEditableContent(slides) {
   return Array.isArray(slides) && slides.some((s) => s && typeof s === 'object' && s.type !== 'fin');
 }
 
+<<<<<<< HEAD
 /** Separa HTML guardado em `Slide.Descricao` nos campos do editor (texto / comandos / observação). */
 function dashParseSlideDescricaoToEditorFields(descricao) {
   const html = String(descricao ?? '').trim();
@@ -514,6 +587,64 @@ function dashParseApiSlidesArrayForEditor(slidesRaw) {
     });
   }
   return out;
+=======
+/** Extrai texto, comandos e observação de `descricao` HTML gravada na API. */
+function dashParseDescricaoHtmlToSlideFields(descHtml) {
+  const html = String(descHtml ?? '').trim();
+  if (!html) return { text: '', commands: '', observation: '' };
+  if (!/<[a-z][\s\S]*>/i.test(html)) {
+    return { text: dashNormalizeSlideBoldTags(html), commands: '', observation: '' };
+  }
+  const doc = new DOMParser().parseFromString(`<div id="bxp-root">${html}</div>`, 'text/html');
+  const root = doc.getElementById('bxp-root');
+  if (!root) return { text: dashNormalizeSlideBoldTags(html), commands: '', observation: '' };
+
+  const cmdBlock = root.querySelector('.cmd-block');
+  let commands = '';
+  if (cmdBlock) {
+    const code = cmdBlock.querySelector('code');
+    commands = code ? code.innerText.trim() : '';
+    cmdBlock.remove();
+  }
+  const callouts = [...root.querySelectorAll('.callout')];
+  const observation = callouts.map((c) => c.innerHTML.trim()).filter(Boolean).join('\n\n');
+  callouts.forEach((c) => c.remove());
+  const text = dashNormalizeSlideBoldTags(root.innerHTML.trim());
+  return { text, commands, observation };
+}
+
+/** Converte slides da API (GET público ou painel) para o modelo do editor. */
+function dashParseApiSlidesArrayForEditor(slidesRaw) {
+  if (!Array.isArray(slidesRaw) || slidesRaw.length === 0) return [];
+  const sorted = [...slidesRaw].sort(
+    (a, b) => (Number(a.ordem ?? a.Ordem) || 0) - (Number(b.ordem ?? b.Ordem) || 0),
+  );
+  return sorted.map((s) => {
+    const apiId = Number(s.id ?? s.Id) || null;
+    const titulo = String(s.titulo ?? s.Titulo ?? '');
+    const desc = String(s.descricao ?? s.Descricao ?? '');
+    if (titulo === BUILDXP_SLIDE_PAUSE_TITULO) {
+      const pauseFields = dashParseDescricaoHtmlToSlideFields(desc);
+      return {
+        id: dashNewSlideId(),
+        _apiId: apiId,
+        type: 'pause',
+        text: pauseFields.text,
+        observation: pauseFields.observation,
+      };
+    }
+    const fields = dashParseDescricaoHtmlToSlideFields(desc);
+    return {
+      id: dashNewSlideId(),
+      _apiId: apiId,
+      type: 'content',
+      title: titulo.trim(),
+      text: fields.text,
+      commands: fields.commands,
+      observation: fields.observation,
+    };
+  });
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
 }
 
 async function dashTryLoadSlidesFromPublicCardApi(slug) {
@@ -534,6 +665,7 @@ async function dashTryLoadSlidesFromPublicCardApi(slug) {
   }
 }
 
+<<<<<<< HEAD
 /**
  * Carrega slides para o editor.
  * @param {string} slug
@@ -545,6 +677,14 @@ async function dashLoadSlidesForSlug(slug, opts = {}) {
   const local = dashReadSlidesFromLocalStorage(slug);
   if (preferApi && dashSlidesHasEditableContent(fromApi)) return fromApi;
   if (dashSlidesHasEditableContent(local)) return local;
+=======
+async function dashLoadSlidesForSlug(slug, opts = {}) {
+  const preferApi = opts.preferApi === true;
+  const fromApi = await dashTryLoadSlidesFromPublicCardApi(slug);
+  if (preferApi && dashSlidesHasEditableContent(fromApi)) return fromApi;
+  const local = dashReadSlidesFromLocalStorage(slug);
+  if (!preferApi && dashSlidesHasEditableContent(local)) return local;
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
   if (dashSlidesHasEditableContent(fromApi)) return fromApi;
   return local.length ? local : fromApi;
 }

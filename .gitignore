@@ -2,3 +2,5 @@
 *.log
 .DS_Store
 **/appsettings.Development.json
+**/bin/
+**/obj/

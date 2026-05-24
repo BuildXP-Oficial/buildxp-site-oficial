@@ -1,0 +1,2 @@
+/* Compatibilidade: entradas antigas apontavam para /style.css na raiz do wwwroot. */
+@import url('css/site.css');

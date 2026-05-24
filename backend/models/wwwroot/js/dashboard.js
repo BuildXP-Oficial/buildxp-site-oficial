@@ -126,6 +126,18 @@ function dashSlideToApiBody(slide, idx) {
   };
 }
 
+/** Payload para PUT /api/card/{slug}/slides/sync (substitui a trilha inteira, sem duplicar). */
+function dashSlidesToSyncPayload(slides) {
+  return (slides ?? []).map((slide, idx) => {
+    const body = dashSlideToApiBody(slide, idx);
+    return {
+      ordem: body.ordem,
+      titulo: body.titulo,
+      descricao: body.descricao,
+    };
+  });
+}
+
 function buildWizCardPayloadForApi(slug, meta, themeRaw) {
   const theme =
     String(themeRaw || 'git')
@@ -1561,10 +1573,65 @@ function initDashboard() {
       }
     }
 
-    /** Labels para a lista «CARDS NO INDEX» (inclui cards criados na API). */
+    /** Labels e ids para a lista «CARDS NO INDEX» (inclui cards criados na API). */
     let dashIndexCardLabels = {};
+<<<<<<< HEAD
     /** slug → id numérico (excluir card na API). */
     let dashIndexCardIds = {};
+=======
+    let dashIndexCardIds = {};
+
+    function setIndexOrderStatus(msg, kind) {
+      const st = document.getElementById('dash-index-order-status');
+      if (!st) return;
+      st.textContent = msg || '';
+      st.classList.toggle('ok', kind === 'ok');
+      st.classList.toggle('bad', kind === 'bad');
+    }
+
+    function dashIsCardPublishedInApi(raw) {
+      const pub = raw?.is_published ?? raw?.IsPublished ?? raw?.ativo ?? raw?.Ativo;
+      return pub !== false;
+    }
+
+    async function dashDeleteCardFromList(slug, cardId, displayName) {
+      if (!getDashIsPlataformaAdmin()) {
+        setIndexOrderStatus('Apenas o administrador da plataforma pode excluir cards.', 'bad');
+        return;
+      }
+      const id = Number(cardId);
+      if (!Number.isFinite(id) || id <= 0) {
+        setIndexOrderStatus('Este card ainda não existe na API (sem id para excluir).', 'bad');
+        return;
+      }
+      const nome = displayName || slug;
+      if (
+        !window.confirm(
+          `Excluir o card «${nome}» (${slug}) da base de dados?\n\nIsto remove o card e todos os slides. Não pode ser desfeito.`,
+        )
+      ) {
+        return;
+      }
+      setIndexOrderStatus('A excluir…', '');
+      try {
+        await fetchJson(`/api/card/${id}`, { method: 'DELETE' });
+        try {
+          localStorage.removeItem(dashSlidesStorageKey(slug));
+        } catch (_) {
+          /* ignore */
+        }
+        const o = getIndexCardOrder().filter((s) => s !== slug);
+        setIndexCardOrder(o);
+        delete dashIndexCardLabels[slug];
+        delete dashIndexCardIds[slug];
+        await syncIndexOrderPanelFromApi();
+        setIndexOrderStatus(`Card «${nome}» excluído.`, 'ok');
+      } catch (e) {
+        const extra = e?.status === 403 ? ' Apenas administrador da plataforma pode excluir.' : '';
+        setIndexOrderStatus(`Não foi possível excluir.${extra}`, 'bad');
+      }
+    }
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
 
     function mergeIndexOrderWithDashboardCards(order, cardsNorm) {
       const sorted = [...cardsNorm].sort((a, b) => a.sort_order - b.sort_order);
@@ -1578,6 +1645,7 @@ function initDashboard() {
     async function syncIndexOrderPanelFromApi() {
       try {
         const data = await fetchJson('/api/card/dashboard');
+<<<<<<< HEAD
         const arr = Array.isArray(data) ? data : [];
         dashIndexCardIds = {};
         arr.forEach((raw) => {
@@ -1592,6 +1660,21 @@ function initDashboard() {
           .filter(dashIsCardPublishedInApi)
           .map(dashNormalizeCard)
           .filter((c) => c.slug);
+=======
+        const arr = (Array.isArray(data) ? data : []).filter(dashIsCardPublishedInApi);
+        dashIndexCardIds = Object.fromEntries(
+          arr
+            .map((raw) => {
+              const slug = String(raw.slug ?? raw.Slug ?? '')
+                .trim()
+                .toLowerCase();
+              const id = Number(raw.id ?? raw.Id ?? 0);
+              return slug && id > 0 ? [slug, id] : null;
+            })
+            .filter(Boolean),
+        );
+        const cards = arr.map(dashNormalizeCard).filter((c) => c.slug);
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
         dashIndexCardLabels = Object.fromEntries(cards.map((c) => [c.slug, c.display_name || c.slug]));
         const merged = mergeIndexOrderWithDashboardCards(getIndexCardOrder(), cards);
         setIndexCardOrder(merged);
@@ -1650,8 +1733,11 @@ function initDashboard() {
         li.className = 'dash-index-order-item';
         const row = document.createElement('div');
         row.className = 'dash-index-order-row';
+        const cardId = dashIndexCardIds[slug];
+        const canDelete = getDashIsPlataformaAdmin() && Number(cardId) > 0;
         row.innerHTML = `
           <div class="dash-index-order-head">
+<<<<<<< HEAD
             <div>
               <span class="dash-index-order-title">${dashEscapeHtml(label)}</span>
               <code class="dash-index-order-slug">${dashEscapeHtml(slug)}</code>
@@ -1659,11 +1745,28 @@ function initDashboard() {
             <div class="dash-index-order-btns">
               <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="-1" ${idx === 0 ? 'disabled' : ''} title="Subir">↑</button>
               <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="1" ${idx === order.length - 1 ? 'disabled' : ''} title="Descer">↓</button>
+=======
+            <div class="dash-index-order-title">
+              <span class="dash-index-order-label">${dashEscapeHtml(label)}</span>
+              <code class="dash-index-order-slug">${dashEscapeHtml(slug)}</code>
+            </div>
+            <div class="dash-index-order-btns">
+              <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="-1" ${idx === 0 ? 'disabled' : ''}>↑</button>
+              <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="1" ${idx === order.length - 1 ? 'disabled' : ''}>↓</button>
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
             </div>
           </div>
           <div class="dash-index-order-actions">
             <button type="button" class="term-btn primary" data-edit-slug="${slug}">Editar Slide</button>
+<<<<<<< HEAD
             ${canDelete ? `<button type="button" class="term-btn ghost danger" data-delete-slug="${slug}">Excluir card</button>` : ''}
+=======
+            ${
+              canDelete
+                ? `<button type="button" class="term-btn ghost danger" data-delete-slug="${slug}" data-delete-id="${cardId}">Excluir card</button>`
+                : ''
+            }
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
           </div>
         `;
         li.appendChild(row);
@@ -1671,8 +1774,16 @@ function initDashboard() {
       });
       ul.querySelectorAll('[data-edit-slug]').forEach((btn) => {
         btn.addEventListener('click', () => {
-          const slug = btn.getAttribute('data-edit-slug');
-          if (slug) openIndexCardForDeepEdit(slug);
+          const s = btn.getAttribute('data-edit-slug');
+          if (s) openIndexCardForDeepEdit(s);
+        });
+      });
+      ul.querySelectorAll('[data-delete-slug]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const s = btn.getAttribute('data-delete-slug');
+          const id = btn.getAttribute('data-delete-id');
+          const label = dashIndexCardLabels[s] ?? s;
+          if (s) void dashDeleteCardFromList(s, id, label);
         });
       });
       ul.querySelectorAll('[data-delete-slug]').forEach((btn) => {
@@ -1757,11 +1868,21 @@ function initDashboard() {
       editSlidesSlug = slug;
       editSlides = [];
       try {
+<<<<<<< HEAD
         const meta = await dashFetchCardMetaForEditor(slug);
         const parsed = dashParseApiSlidesArrayForEditor(meta?.slides ?? meta?.Slides);
         if (parsed.length) editSlides = parsed;
       } catch (_) {
         /* fallback abaixo */
+=======
+        const raw = await dashFetchCardMetaForEditor(slug);
+        const slidesRaw = raw?.slides ?? raw?.Slides;
+        if (Array.isArray(slidesRaw) && slidesRaw.length > 0) {
+          editSlides = dashParseApiSlidesArrayForEditor(slidesRaw);
+        }
+      } catch (_) {
+        /* painel indisponível — fallback abaixo */
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
       }
       if (!dashSlidesHasEditableContent(editSlides)) {
         editSlides = await dashLoadSlidesForSlug(slug, { preferApi: true });
@@ -2013,11 +2134,17 @@ function initDashboard() {
       }
 
       const slidesParaSalvar = getEditSlidesContentOnly();
+      const syncBody = { slides: dashSlidesToSyncPayload(slidesParaSalvar) };
+      const cardId = Number(meta?.id ?? meta?.Id ?? editingCardNumericId ?? 0);
 
       try {
+<<<<<<< HEAD
         const syncBody = { slides: dashSlidesToSyncPayload(slidesParaSalvar) };
         const cardId = Number(meta?.id ?? meta?.Id ?? editingCardNumericId ?? 0);
         if (Number.isFinite(cardId) && cardId > 0) {
+=======
+        if (cardId > 0) {
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
           await fetchJson(`/api/card/${cardId}/slides/sync`, {
             method: 'PUT',
             body: JSON.stringify(syncBody),
@@ -2029,11 +2156,23 @@ function initDashboard() {
           });
         }
 
+<<<<<<< HEAD
+=======
+        slidesParaSalvar.forEach((s) => {
+          delete s._apiId;
+        });
+
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
         try {
           localStorage.setItem(dashSlidesStorageKey(editSlidesSlug), JSON.stringify(editSlides));
         } catch (_) { /* ignore */ }
 
-        setSlidesSaveStatus('Slides guardados na API com sucesso.', 'ok');
+        setSlidesSaveStatus(
+          `Trilha sincronizada na API (${slidesParaSalvar.length} slide${slidesParaSalvar.length === 1 ? '' : 's'}). Slides antigos foram substituídos.`,
+          'ok',
+        );
+
+        await loadCardEditorSlidesData(editSlidesSlug);
 
         const btn = document.getElementById('dash-slides-save');
         if (btn) {
@@ -2405,11 +2544,28 @@ function initDashboard() {
         slugNorm = effectiveSlug;
         if (!slugNorm) throw new Error('Sem slug após criar/atualizar.');
 
+<<<<<<< HEAD
         const syncBody = { slides: dashSlidesToSyncPayload(wizSlides) };
         await fetchJson(`/api/card/${encodeURIComponent(slugNorm)}/slides/sync`, {
           method: 'PUT',
           body: JSON.stringify(syncBody),
         });
+=======
+        const full = await fetchJson(dashApiCardPanelPath(slugNorm));
+        const cardId = Number(full?.id ?? full?.Id ?? 0);
+        const syncBody = { slides: dashSlidesToSyncPayload(wizSlides) };
+        if (cardId > 0) {
+          await fetchJson(`/api/card/${cardId}/slides/sync`, {
+            method: 'PUT',
+            body: JSON.stringify(syncBody),
+          });
+        } else {
+          await fetchJson(`/api/card/${encodeURIComponent(slugNorm)}/slides/sync`, {
+            method: 'PUT',
+            body: JSON.stringify(syncBody),
+          });
+        }
+>>>>>>> 0cf84a36d35a90914df7b74a8c5e5ca76b6806f7
 
         try {
           localStorage.setItem(dashSlidesStorageKey(slugNorm), JSON.stringify(wizSlides));
