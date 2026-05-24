@@ -148,6 +148,10 @@ function initStepsSlider() {
         btn.setAttribute('role', 'listitem');
         btn.textContent = `${it.num} — ${it.title}`;
         btn.addEventListener('click', () => scrollToStep(it.el));
+        if (window.matchMedia('(hover: hover) and (min-width: 769px)').matches) {
+          btn.addEventListener('mouseenter', () => scrollToStep(it.el));
+          btn.addEventListener('focus', () => scrollToStep(it.el));
+        }
         list.appendChild(btn);
       });
 

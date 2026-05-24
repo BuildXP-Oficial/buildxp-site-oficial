@@ -1276,6 +1276,17 @@ body.dash-body--authed {
   padding: 0.35rem 0.55rem;
   font-size: 0.75rem;
 }
+.dash-slide-html-toolbar .dash-slide-fmt-code-label {
+  font-family: var(--f-mono, monospace);
+  font-size: 0.7rem;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+.dash-slide-html-toolbar .dash-slide-fmt-br {
+  font-size: 0.95rem;
+  line-height: 1;
+}
 .dash-wiz-ta.mono {
   font-family: var(--f-mono);
   font-size: 0.82rem;
