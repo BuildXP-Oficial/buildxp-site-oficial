@@ -92,6 +92,18 @@ function dashComposePauseDescricaoForApi(slide) {
   return parts.join('') || '<div class="step-desc"></div>';
 }
 
+/** Payload para PUT /api/card/{slug}/slides/sync (substitui a trilha inteira, sem duplicar). */
+function dashSlidesToSyncPayload(slides) {
+  return (slides ?? []).map((slide, idx) => {
+    const body = dashSlideToApiBody(slide, idx);
+    return {
+      ordem: body.ordem,
+      titulo: body.titulo,
+      descricao: body.descricao,
+    };
+  });
+}
+
 /** Corpo JSON para POST slide na API (campos que o modelo `Slide` persiste). */
 function dashSlideToApiBody(slide, idx) {
   const ordem = idx + 1;
@@ -275,6 +287,7 @@ function dashApplyCardToForm(raw) {
   el('dash-card-btn2').value = raw.btn_secondary_label ?? raw.btnSecondaryLabel ?? '';
   el('dash-card-desc').value = raw.description_html ?? raw.descriptionHtml ?? '';
   el('dash-card-icon-layout').value = raw.icon_layout ?? raw.iconLayout ?? 'single';
+  syncDashCardIconDualLayout();
   el('dash-card-icon-pri').value = raw.icon_primary_src ?? raw.iconPrimarySrc ?? '';
   el('dash-card-icon-pri-alt').value = raw.icon_primary_alt ?? raw.iconPrimaryAlt ?? '';
   el('dash-card-icon-sec').value = raw.icon_secondary_src ?? raw.iconSecondarySrc ?? '';
@@ -324,7 +337,11 @@ function syncDashCardIconPreviewFromInput() {
     return;
   }
   dashSetCardIconPathReadout(pri);
-  img.src = pri;
+  const cardId = Number.parseInt(
+    document.getElementById('dash-card-form')?.dataset?.cardId || '0',
+    10,
+  );
+  img.src = dashIconPreviewSrc(pri, Number.isFinite(cardId) && cardId > 0 ? cardId : 0);
 }
 
 function getDashApiPath(key) {
@@ -343,16 +360,60 @@ function getDashApiPath(key) {
   return p[key] || defaults[key] || '';
 }
 
-/** Envia imagem para <code>wwwroot/imagens/</code> e devolve caminho relativo (ex.: <code>imagens/foo.png</code>). */
+/** Envia imagem para a API; devolve <code>iconRef</code> (ex.: <code>icon-temp:{guid}</code>) e URL de preview. */
 async function dashUploadCardIconFile(file) {
   if (!file) return null;
   const fd = new FormData();
   fd.append('file', file);
-  const path = getDashApiPath('uploadCardIcon') || '/api/Card/upload-icon';
+  const path = getDashApiPath('uploadCardIcon') || '/api/card/upload-icon';
   const r = await dashFetchNoThrow(path, { method: 'POST', body: fd });
-  if (!r.ok || !r.data || typeof r.data !== 'object') return null;
-  const p = r.data.path ?? r.data.Path;
-  return typeof p === 'string' && p.trim() ? p.trim() : null;
+  if (!r.ok || !r.data || typeof r.data !== 'object') {
+    const msg =
+      (typeof r.data === 'object' && r.data
+        ? r.data.message ?? r.data.Message
+        : null) ||
+      (r.status === 401 ? 'Sessão expirada — volte a entrar.' : 'Falha no upload do ícone.');
+    return { iconRef: null, previewUrl: null, error: msg };
+  }
+  const iconRef = String(
+    r.data.iconRef ?? r.data.IconRef ?? r.data.path ?? r.data.Path ?? '',
+  ).trim();
+  if (!iconRef) {
+    return { iconRef: null, previewUrl: null, error: 'Resposta inválida do servidor.' };
+  }
+  const previewUrl = String(r.data.previewUrl ?? r.data.PreviewUrl ?? '').trim();
+  return {
+    iconRef,
+    previewUrl: previewUrl || dashIconPreviewSrc(iconRef),
+  };
+}
+
+function dashIconPreviewSrc(storedRef, cardNumericId) {
+  const ref = String(storedRef || '').trim();
+  if (!ref) return '';
+  const base = String(getBuildXpApiBase() || '').replace(/\/$/, '');
+  const low = ref.toLowerCase();
+  if (low.startsWith('icon-temp:')) {
+    const id = ref.slice('icon-temp:'.length).trim();
+    return id ? `${base}/api/card/icon-upload/${id}` : '';
+  }
+  const cid = Number(cardNumericId) || 0;
+  if (low === 'db:primary' && cid > 0) return `${base}/api/card/${cid}/icon/primary`;
+  if (low === 'db:secondary' && cid > 0) return `${base}/api/card/${cid}/icon/secondary`;
+  if (ref.startsWith('http://') || ref.startsWith('https://')) return ref;
+  if (ref.startsWith('/api/')) return `${base}${ref}`;
+  return ref;
+}
+
+function dashIsCardPublishedInApi(raw) {
+  const pub = raw?.is_published ?? raw?.IsPublished ?? raw?.ativo ?? raw?.Ativo;
+  return pub !== false && pub !== 0;
+}
+
+function syncDashCardIconDualLayout() {
+  const layout = document.getElementById('dash-card-icon-layout')?.value || 'single';
+  const wrap = document.getElementById('dash-card-icon-dual-wrap');
+  if (wrap) wrap.hidden = layout !== 'dual';
 }
 
 /** Lista colaboradores e controlos de acesso (só admin da plataforma; colaborador elevado convida mas não vê a tabela). */
@@ -1502,6 +1563,8 @@ function initDashboard() {
 
     /** Labels para a lista «CARDS NO INDEX» (inclui cards criados na API). */
     let dashIndexCardLabels = {};
+    /** slug → id numérico (excluir card na API). */
+    let dashIndexCardIds = {};
 
     function mergeIndexOrderWithDashboardCards(order, cardsNorm) {
       const sorted = [...cardsNorm].sort((a, b) => a.sort_order - b.sort_order);
@@ -1516,7 +1579,19 @@ function initDashboard() {
       try {
         const data = await fetchJson('/api/card/dashboard');
         const arr = Array.isArray(data) ? data : [];
-        const cards = arr.map(dashNormalizeCard).filter((c) => c.slug);
+        dashIndexCardIds = {};
+        arr.forEach((raw) => {
+          if (!dashIsCardPublishedInApi(raw)) return;
+          const slug = String(raw.slug ?? raw.Slug ?? '')
+            .trim()
+            .toLowerCase();
+          const id = Number(raw.id ?? raw.Id ?? 0);
+          if (slug && Number.isFinite(id) && id > 0) dashIndexCardIds[slug] = id;
+        });
+        const cards = arr
+          .filter(dashIsCardPublishedInApi)
+          .map(dashNormalizeCard)
+          .filter((c) => c.slug);
         dashIndexCardLabels = Object.fromEntries(cards.map((c) => [c.slug, c.display_name || c.slug]));
         const merged = mergeIndexOrderWithDashboardCards(getIndexCardOrder(), cards);
         setIndexCardOrder(merged);
@@ -1527,11 +1602,47 @@ function initDashboard() {
       }
     }
 
+    async function dashDeleteCardFromList(slug) {
+      const id = dashIndexCardIds[slug];
+      if (!id) {
+        globalThis.alert('Card não encontrado na API ou já foi removido.');
+        return;
+      }
+      if (
+        !globalThis.confirm(
+          `Excluir o card «${slug}»? Deixa de aparecer no index (inativo na API).`,
+        )
+      ) {
+        return;
+      }
+      const st = document.getElementById('dash-index-order-status');
+      try {
+        if (st) st.textContent = 'A excluir…';
+        await fetchJson(`/api/card/${id}`, { method: 'DELETE' });
+        const o = getIndexCardOrder().filter((s) => s !== slug);
+        setIndexCardOrder(o);
+        if (st) {
+          st.textContent = 'Card excluído.';
+          st.classList.add('ok');
+        }
+        await syncIndexOrderPanelFromApi();
+      } catch (e) {
+        if (st) {
+          st.textContent =
+            e?.status === 403
+              ? 'Só o administrador da plataforma pode excluir cards.'
+              : e?.message || 'Não foi possível excluir.';
+          st.classList.add('bad');
+        }
+      }
+    }
+
     function renderIndexOrderList() {
       const ul = document.getElementById('dash-index-order-list');
       if (!ul) return;
       ul.innerHTML = '';
       const order = getIndexCardOrder();
+      const canDelete = getDashIsPlataformaAdmin();
       order.forEach((slug, idx) => {
         const def = BUILDXP_INDEX_CARD_DEFS.find((d) => d.slug === slug);
         const label = def?.label ?? dashIndexCardLabels[slug] ?? slug;
@@ -1540,13 +1651,20 @@ function initDashboard() {
         const row = document.createElement('div');
         row.className = 'dash-index-order-row';
         row.innerHTML = `
-          <span class="dash-index-order-label">${dashEscapeHtml(label)}</span>
-          <code class="dash-index-order-slug">${dashEscapeHtml(slug)}</code>
-          <div class="dash-index-order-btns">
-            <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="-1" ${idx === 0 ? 'disabled' : ''}>↑</button>
-            <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="1" ${idx === order.length - 1 ? 'disabled' : ''}>↓</button>
+          <div class="dash-index-order-head">
+            <div>
+              <span class="dash-index-order-title">${dashEscapeHtml(label)}</span>
+              <code class="dash-index-order-slug">${dashEscapeHtml(slug)}</code>
+            </div>
+            <div class="dash-index-order-btns">
+              <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="-1" ${idx === 0 ? 'disabled' : ''} title="Subir">↑</button>
+              <button type="button" class="term-btn ghost" data-idx-move="${idx}" data-dir="1" ${idx === order.length - 1 ? 'disabled' : ''} title="Descer">↓</button>
+            </div>
           </div>
-          <button type="button" class="term-btn primary" data-edit-slug="${slug}">FORM + SLIDES</button>
+          <div class="dash-index-order-actions">
+            <button type="button" class="term-btn primary" data-edit-slug="${slug}">Editar Slide</button>
+            ${canDelete ? `<button type="button" class="term-btn ghost danger" data-delete-slug="${slug}">Excluir card</button>` : ''}
+          </div>
         `;
         li.appendChild(row);
         ul.appendChild(li);
@@ -1555,6 +1673,12 @@ function initDashboard() {
         btn.addEventListener('click', () => {
           const slug = btn.getAttribute('data-edit-slug');
           if (slug) openIndexCardForDeepEdit(slug);
+        });
+      });
+      ul.querySelectorAll('[data-delete-slug]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const slug = btn.getAttribute('data-delete-slug');
+          if (slug) void dashDeleteCardFromList(slug);
         });
       });
       ul.querySelectorAll('[data-idx-move]').forEach((b) => {
@@ -1631,7 +1755,17 @@ function initDashboard() {
         return false;
       }
       editSlidesSlug = slug;
-      editSlides = await dashLoadSlidesForSlug(slug);
+      editSlides = [];
+      try {
+        const meta = await dashFetchCardMetaForEditor(slug);
+        const parsed = dashParseApiSlidesArrayForEditor(meta?.slides ?? meta?.Slides);
+        if (parsed.length) editSlides = parsed;
+      } catch (_) {
+        /* fallback abaixo */
+      }
+      if (!dashSlidesHasEditableContent(editSlides)) {
+        editSlides = await dashLoadSlidesForSlug(slug, { preferApi: true });
+      }
       renderEditSlides();
       return true;
     }
@@ -1881,33 +2015,18 @@ function initDashboard() {
       const slidesParaSalvar = getEditSlidesContentOnly();
 
       try {
-        const existingSlides = meta?.slides ?? meta?.Slides;
-        if (Array.isArray(existingSlides) && existingSlides.length > 0) {
-          const ids = [...existingSlides]
-            .map((s) => Number(s.id ?? s.Id))
-            .filter((x) => Number.isFinite(x) && x > 0)
-            .sort((a, b) => b - a);
-          for (const sid of ids) {
-            try {
-              await fetchJson(`/api/card/slides/${sid}`, { method: 'DELETE' });
-            } catch (_) {
-              /* slide já removido ou conflito — segue */
-            }
-          }
-        }
-
-        slidesParaSalvar.forEach((s) => {
-          delete s._apiId;
-        });
-
-        for (const [idx, slide] of slidesParaSalvar.entries()) {
-          const body = dashSlideToApiBody(slide, idx);
-
-          const criado = await fetchJson(`/api/card/${encodeURIComponent(editSlidesSlug)}/slides`, {
-            method: 'POST',
-            body: JSON.stringify(body),
+        const syncBody = { slides: dashSlidesToSyncPayload(slidesParaSalvar) };
+        const cardId = Number(meta?.id ?? meta?.Id ?? editingCardNumericId ?? 0);
+        if (Number.isFinite(cardId) && cardId > 0) {
+          await fetchJson(`/api/card/${cardId}/slides/sync`, {
+            method: 'PUT',
+            body: JSON.stringify(syncBody),
           });
-          slide._apiId = criado?.id ?? criado?.Id ?? null;
+        } else {
+          await fetchJson(`/api/card/${encodeURIComponent(editSlidesSlug)}/slides/sync`, {
+            method: 'PUT',
+            body: JSON.stringify(syncBody),
+          });
         }
 
         try {
@@ -2160,9 +2279,9 @@ function initDashboard() {
         img.src = blobUrl;
         img.hidden = false;
       }
-      const path = await dashUploadCardIconFile(f);
+      const up = await dashUploadCardIconFile(f);
       URL.revokeObjectURL(blobUrl);
-      if (!path) {
+      if (!up?.iconRef) {
         wizIconPrimaryPath = '';
         wizIconDataUrl = '';
         if (img) {
@@ -2171,19 +2290,20 @@ function initDashboard() {
         }
         if (wizSt) {
           wizSt.textContent =
+            up?.error ||
             'Upload do ícone falhou. Confirme sessão (JWT), tipo (PNG, JPEG, WebP, GIF, SVG) e máx. 2 MB.';
           wizSt.classList.add('bad');
         }
         return;
       }
-      wizIconPrimaryPath = path;
+      wizIconPrimaryPath = up.iconRef;
       wizIconDataUrl = '';
       if (img) {
-        img.src = path;
+        img.src = up.previewUrl || dashIconPreviewSrc(up.iconRef);
         img.hidden = false;
       }
       if (wizSt) {
-        wizSt.textContent = `Ícone guardado: ${path}`;
+        wizSt.textContent = `Ícone enviado (${up.iconRef})`;
         wizSt.classList.add('ok');
         wizSt.classList.remove('bad');
       }
@@ -2285,29 +2405,11 @@ function initDashboard() {
         slugNorm = effectiveSlug;
         if (!slugNorm) throw new Error('Sem slug após criar/atualizar.');
 
-        const full = await fetchJson(dashApiCardPanelPath(slugNorm));
-        const slideList = full.slides ?? full.Slides ?? [];
-        const sortedDel = [...slideList].sort(
-          (a, b) => (Number(b.id ?? b.Id) || 0) - (Number(a.id ?? a.Id) || 0),
-        );
-        for (const s of sortedDel) {
-          const sid = Number(s.id ?? s.Id ?? 0);
-          if (sid > 0) {
-            try {
-              await fetchJson(`/api/card/slides/${sid}`, { method: 'DELETE' });
-            } catch (_) {
-              /* ignorado */
-            }
-          }
-        }
-
-        for (const [idx, slide] of wizSlides.entries()) {
-          const slideBody = dashSlideToApiBody(slide, idx);
-          await fetchJson(`/api/card/${encodeURIComponent(slugNorm)}/slides`, {
-            method: 'POST',
-            body: JSON.stringify(slideBody),
-          });
-        }
+        const syncBody = { slides: dashSlidesToSyncPayload(wizSlides) };
+        await fetchJson(`/api/card/${encodeURIComponent(slugNorm)}/slides/sync`, {
+          method: 'PUT',
+          body: JSON.stringify(syncBody),
+        });
 
         try {
           localStorage.setItem(dashSlidesStorageKey(slugNorm), JSON.stringify(wizSlides));
@@ -2665,22 +2767,25 @@ function initDashboard() {
       img.src = dashCardIconObjectUrl;
     }
     const saved = await dashUploadCardIconFile(f);
-    if (!saved) {
+    if (!saved?.iconRef) {
       setCardFormStatus(
-        'Não foi possível gravar o ficheiro. Confirme sessão (JWT), tipo (PNG, JPEG, WebP, GIF, SVG) e tamanho máx. 2 MB.',
+        saved?.error ||
+          'Não foi possível gravar o ficheiro. Confirme sessão (JWT), tipo (PNG, JPEG, WebP, GIF, SVG) e tamanho máx. 2 MB.',
         'bad',
       );
       return;
     }
-    if (priInp) priInp.value = saved;
-    dashSetCardIconPathReadout(saved);
+    if (priInp) priInp.value = saved.iconRef;
+    dashSetCardIconPathReadout(saved.iconRef);
     revokeDashCardIconPreviewUrl();
     if (img) {
-      img.src = saved;
+      img.src = saved.previewUrl || dashIconPreviewSrc(saved.iconRef);
       img.style.display = 'block';
     }
-    setCardFormStatus('Ícone guardado em wwwroot/imagens/.', 'ok');
+    setCardFormStatus('Ícone enviado com sucesso.', 'ok');
   });
+
+  document.getElementById('dash-card-icon-layout')?.addEventListener('change', syncDashCardIconDualLayout);
 
   async function loadCardForEdit(slug) {
     setCardFormStatus('', '');
@@ -2738,7 +2843,7 @@ function initDashboard() {
   cardForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     if ((isCardsEditViewActive() || isCardEditorViewActive()) && !editingCardSlug) {
-      setCardFormStatus('Selecione um card (FORM + SLIDES na grade ou na lista «CARDS NO INDEX»). Criar card novo é só na aba «Criar card».', 'bad');
+      setCardFormStatus('Selecione um card («Editar Slide» na lista «CARDS NO INDEX»). Criar card novo é só na aba «Criar card».', 'bad');
       return;
     }
     const slugRaw = document.getElementById('dash-card-slug').value.trim().toLowerCase();
