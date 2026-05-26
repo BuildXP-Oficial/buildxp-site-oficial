@@ -25,6 +25,7 @@ public class CardService
             "npm" => "#cb3837",
             "dotnet" => "#512bd4",
             "api" => "#22d3ee",
+            "python" => "#3776ab",
             _ => "#39d353",
         };
     }

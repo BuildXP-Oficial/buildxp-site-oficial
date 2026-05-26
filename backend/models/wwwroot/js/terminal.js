@@ -1,4 +1,4 @@
-// BuildXP - terminal
+﻿// BuildXP - terminal
 /* ── TRAINING TERMINAL ──────────────────────────────────────*/
 const TRAIN_TOPICS = ['Git', 'Docker', 'NPM', '.NET'];
 const TRAIN_LEVELS = [
@@ -409,7 +409,7 @@ function initTrainingTerminal() {
           <span class="term-purple">Pontuação</span><br>
           <span class="term-good">+50 XP</span> certo · <span class="term-warn">+25 XP</span> parcialmente correto · <span class="term-bad">-1 XP</span> errado<br>
           <span class="term-purple">Nível atual:</span> Em construção.<br>
-          <span class="term-purple">Próximo desbloqueio:</span><span class="term-intro-br-mobile"><br></span> você do futuro
+          <span class="term-nowrap"><span class="term-purple">Próximo desbloqueio:</span> você do futuro</span>
         </div>`;
   }
 
