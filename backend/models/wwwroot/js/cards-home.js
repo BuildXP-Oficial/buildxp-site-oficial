@@ -222,6 +222,7 @@ const BUILDXP_THEME_PRESET_HEX = Object.freeze({
   npm: '#cb3837',
   dotnet: '#512bd4',
   api: '#22d3ee',
+  python: '#3776ab',
 });
 
 function buildxpNormalizeHexColor(raw) {

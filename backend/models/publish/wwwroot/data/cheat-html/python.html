@@ -1,0 +1,206 @@
+<div class="ref-section">
+      <div class="ref-section-title">INSTALAÇÃO &amp; VERSÃO</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">python --version</span><span class="cmd-desc">Ver versão do Python (Windows/macOS/Linux)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">python3 --version</span><span class="cmd-desc">Versão no Linux/macOS (alias comum)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">py -0</span><span class="cmd-desc">Listar versões instaladas (launcher Windows)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">py -3.12 -m pip --version</span><span class="cmd-desc">pip de uma versão específica no Windows</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">which python3</span><span class="cmd-desc">Caminho do executável (Unix)</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">VENV &amp; PROJETO</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">python -m venv .venv</span><span class="cmd-desc">Criar ambiente virtual na pasta do projeto</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">source .venv/bin/activate</span><span class="cmd-desc">Ativar venv (Linux/macOS)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">.venv\Scripts\activate</span><span class="cmd-desc">Ativar venv (Windows PowerShell/CMD)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">deactivate</span><span class="cmd-desc">Sair do ambiente virtual</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">python -m venv --upgrade-deps .venv</span><span class="cmd-desc">Criar venv já com pip/setuptools atualizados (3.12+)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip freeze &gt; requirements.txt</span><span class="cmd-desc">Exportar dependências instaladas</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip install -r requirements.txt</span><span class="cmd-desc">Instalar dependências do ficheiro</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">PIP &amp; PACOTES</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">python -m pip install --upgrade pip</span><span class="cmd-desc">Atualizar o pip</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip install &lt;pacote&gt;</span><span class="cmd-desc">Instalar pacote (última versão)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip install &lt;pacote&gt;==&lt;versão&gt;</span><span class="cmd-desc">Instalar versão exata</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip install -e .</span><span class="cmd-desc">Instalar projeto local em modo editável</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip uninstall &lt;pacote&gt;</span><span class="cmd-desc">Remover pacote</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip list</span><span class="cmd-desc">Listar pacotes instalados</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip show &lt;pacote&gt;</span><span class="cmd-desc">Metadados e versão de um pacote</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip index versions &lt;pacote&gt;</span><span class="cmd-desc">Ver versões disponíveis no PyPI</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">EXECUTAR &amp; MÓDULOS</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">python main.py</span><span class="cmd-desc">Executar script</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">python -m &lt;módulo&gt;</span><span class="cmd-desc">Executar módulo (ex.: python -m http.server)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">python -c "print('oi')"</span><span class="cmd-desc">One-liner no terminal</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">python -i script.py</span><span class="cmd-desc">Executar e abrir REPL interativo no fim</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">python -m pip install &lt;pacote&gt;</span><span class="cmd-desc">Instalar com o pip do Python ativo (recomendado)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">python -m pytest</span><span class="cmd-desc">Correr testes via módulo pytest</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">python -m compileall .</span><span class="cmd-desc">Verificar sintaxe de todos os .py</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">STDLIB — FICHEIROS &amp; OS</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">from pathlib import Path</span><span class="cmd-desc">Caminhos multiplataforma (Path('src') / 'app.py')</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">Path('f.txt').read_text(encoding='utf-8')</span><span class="cmd-desc">Ler ficheiro texto</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">Path('out.json').write_text(data, encoding='utf-8')</span><span class="cmd-desc">Escrever ficheiro texto</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">import os; os.environ.get('VAR')</span><span class="cmd-desc">Ler variável de ambiente</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">import shutil; shutil.copy2(src, dst)</span><span class="cmd-desc">Copiar ficheiro preservando metadados</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">import glob; glob.glob('**/*.py', recursive=True)</span><span class="cmd-desc">Listar ficheiros por padrão</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">import subprocess; subprocess.run(['git', 'status'])</span><span class="cmd-desc">Executar comando externo</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">STDLIB — JSON, DATAS &amp; TIPOS</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">import json; json.loads(s)</span><span class="cmd-desc">String JSON → dict/list</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">json.dumps(obj, ensure_ascii=False, indent=2)</span><span class="cmd-desc">Objeto → string JSON formatada</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">from datetime import datetime, timezone</span><span class="cmd-desc">Datas com fuso (datetime.now(timezone.utc))</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">from dataclasses import dataclass</span><span class="cmd-desc">Modelos leves com @dataclass</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">from typing import Optional, list[str]</span><span class="cmd-desc">Anotações de tipo (3.9+ use list[str])</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">from collections import defaultdict</span><span class="cmd-desc">Dict com valor padrão automático</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">import re; re.findall(r'\d+', texto)</span><span class="cmd-desc">Expressões regulares</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">STDLIB — HTTP &amp; REDE</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">from urllib.request import urlopen</span><span class="cmd-desc">GET simples sem dependências externas</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">import http.server; python -m http.server 8000</span><span class="cmd-desc">Servidor estático local rápido</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">import socket; socket.gethostbyname('exemplo.com')</span><span class="cmd-desc">Resolver hostname → IP</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">import smtplib</span><span class="cmd-desc">Enviar e-mail (SMTP) — stdlib</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">requests &amp; httpx</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">pip install requests</span><span class="cmd-desc">Cliente HTTP síncrono popular</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">import requests; r = requests.get(url, timeout=10)</span><span class="cmd-desc">GET com timeout</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">requests.post(url, json=payload, headers=h)</span><span class="cmd-desc">POST com corpo JSON</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">r.raise_for_status(); data = r.json()</span><span class="cmd-desc">Falhar em 4xx/5xx e parsear JSON</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip install httpx</span><span class="cmd-desc">Cliente HTTP moderno (sync + async)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">async with httpx.AsyncClient() as c: await c.get(url)</span><span class="cmd-desc">GET assíncrono com httpx</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">pandas &amp; numpy</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">pip install pandas numpy</span><span class="cmd-desc">Análise de dados e arrays numéricos</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">import pandas as pd; df = pd.read_csv('dados.csv')</span><span class="cmd-desc">Carregar CSV em DataFrame</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">df.head(); df.info(); df.describe()</span><span class="cmd-desc">Explorar dados rapidamente</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">df[df['col'] &gt; 0].groupby('cat').mean()</span><span class="cmd-desc">Filtrar, agrupar e agregar</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">df.to_csv('saida.csv', index=False)</span><span class="cmd-desc">Exportar DataFrame para CSV</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">import numpy as np; arr = np.array([1, 2, 3])</span><span class="cmd-desc">Criar array NumPy</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">arr.mean(); arr.reshape(3, 1)</span><span class="cmd-desc">Estatísticas e reshape</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">matplotlib &amp; seaborn</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">pip install matplotlib seaborn</span><span class="cmd-desc">Gráficos e visualização estatística</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">import matplotlib.pyplot as plt</span><span class="cmd-desc">API principal de plots</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">plt.plot(x, y); plt.xlabel('X'); plt.show()</span><span class="cmd-desc">Gráfico de linha básico</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">import seaborn as sns; sns.histplot(df['col'])</span><span class="cmd-desc">Histograma com seaborn</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">FastAPI</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">pip install "fastapi[standard]" uvicorn</span><span class="cmd-desc">API async + servidor ASGI</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">from fastapi import FastAPI; app = FastAPI()</span><span class="cmd-desc">Instância da aplicação</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">@app.get("/items/{id}")</span><span class="cmd-desc">Rota GET com path param</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">uvicorn main:app --reload --port 8000</span><span class="cmd-desc">Dev server com hot reload</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">from pydantic import BaseModel</span><span class="cmd-desc">Validação de body (integra com FastAPI)</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">Flask</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">pip install flask</span><span class="cmd-desc">Microframework web síncrono</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">from flask import Flask; app = Flask(__name__)</span><span class="cmd-desc">Criar app Flask</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">@app.route("/hello")</span><span class="cmd-desc">Definir rota</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">flask --app main run --debug</span><span class="cmd-desc">Servidor de desenvolvimento</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">from flask import request, jsonify</span><span class="cmd-desc">Request e resposta JSON</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">Django</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">pip install django</span><span class="cmd-desc">Framework full-stack (ORM, admin, auth)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">django-admin startproject meu_proj .</span><span class="cmd-desc">Criar projeto na pasta atual</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">python manage.py startapp minha_app</span><span class="cmd-desc">Criar app Django</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">python manage.py migrate</span><span class="cmd-desc">Aplicar migrations</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">python manage.py runserver</span><span class="cmd-desc">Servidor de desenvolvimento</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">python manage.py createsuperuser</span><span class="cmd-desc">Utilizador admin</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">SQLAlchemy &amp; bases de dados</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">pip install sqlalchemy</span><span class="cmd-desc">ORM / Core SQL em Python</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip install psycopg[binary]</span><span class="cmd-desc">Driver PostgreSQL (psycopg3)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">from sqlalchemy import create_engine</span><span class="cmd-desc">engine = create_engine(url)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip install alembic</span><span class="cmd-desc">Migrations para SQLAlchemy</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">alembic revision --autogenerate -m "msg"</span><span class="cmd-desc">Gerar migration automática</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">alembic upgrade head</span><span class="cmd-desc">Aplicar migrations pendentes</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">pydantic &amp; config</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">pip install pydantic pydantic-settings</span><span class="cmd-desc">Validação de dados e settings</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">class User(BaseModel): name: str; age: int</span><span class="cmd-desc">Modelo validado</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">User.model_validate({"name": "Ana", "age": 1})</span><span class="cmd-desc">Parse dict → modelo (v2)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip install python-dotenv</span><span class="cmd-desc">Carregar .env</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">from dotenv import load_dotenv; load_dotenv()</span><span class="cmd-desc">Ler variáveis do ficheiro .env</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">pytest &amp; qualidade</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">pip install pytest pytest-cov</span><span class="cmd-desc">Testes e cobertura</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pytest -v</span><span class="cmd-desc">Correr testes com output detalhado</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pytest tests/test_api.py -k "login"</span><span class="cmd-desc">Filtrar testes por nome</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pytest --cov=app --cov-report=term-missing</span><span class="cmd-desc">Relatório de cobertura</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip install ruff black</span><span class="cmd-desc">Linter rápido + formatador</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">ruff check .; black .</span><span class="cmd-desc">Lint e formatar projeto</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">asyncio &amp; aiohttp</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">import asyncio; asyncio.run(main())</span><span class="cmd-desc">Executar corrotina principal</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">async def main(): await asyncio.sleep(1)</span><span class="cmd-desc">Função async básica</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">await asyncio.gather(t1(), t2())</span><span class="cmd-desc">Correr tarefas em paralelo</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip install aiohttp</span><span class="cmd-desc">Cliente/servidor HTTP assíncrono</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">async with aiohttp.ClientSession() as s:</span><span class="cmd-desc">Sessão HTTP async (context manager)</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">Web scraping &amp; automação</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">pip install beautifulsoup4 lxml</span><span class="cmd-desc">Parse HTML/XML</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">from bs4 import BeautifulSoup; soup = BeautifulSoup(html, 'lxml')</span><span class="cmd-desc">Árvore DOM para scraping</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">soup.select('div.item a[href]')</span><span class="cmd-desc">Seletores CSS</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip install selenium webdriver-manager</span><span class="cmd-desc">Automatizar browser (sites dinâmicos)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip install scrapy</span><span class="cmd-desc">Framework de crawling em larga escala</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">Outras bibliotecas úteis</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">pip install pillow</span><span class="cmd-desc">Imagens (PIL/Pillow)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip install openpyxl</span><span class="cmd-desc">Ler/escrever Excel .xlsx</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip install typer</span><span class="cmd-desc">CLIs modernas (Click-like)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip install celery redis</span><span class="cmd-desc">Filas de tarefas em background</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip install boto3</span><span class="cmd-desc">SDK AWS (S3, Lambda, etc.)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip install cryptography</span><span class="cmd-desc">Criptografia de alto nível</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">pip install jinja2</span><span class="cmd-desc">Templates (usado por Flask/FastAPI)</span><button class="cmd-copy">copy</button></div>
+      </div>

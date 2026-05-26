@@ -1,0 +1,112 @@
+<div class="ref-section">
+      <div class="ref-section-title">SETUP & CONFIG</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">git --version</span><span class="cmd-desc">Ver versão do Git instalada</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git config --global user.name "Nome"</span><span class="cmd-desc">Definir nome do usuário</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git config --global user.email "email"</span><span class="cmd-desc">Definir e-mail do usuário</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git config --list</span><span class="cmd-desc">Listar todas as configurações</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git config --global init.defaultBranch main</span><span class="cmd-desc">Novos repos nascem com branch main</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">REPOSITÓRIO</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">git init</span><span class="cmd-desc">Inicializar repositório na pasta atual</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git clone &lt;url&gt;</span><span class="cmd-desc">Clonar repositório remoto</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git clone --depth 1 &lt;url&gt;</span><span class="cmd-desc">Clone raso (só último commit, mais rápido)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git remote -v</span><span class="cmd-desc">Listar repositórios remotos</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git remote add origin &lt;url&gt;</span><span class="cmd-desc">Conectar ao repositório remoto</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git remote set-url origin &lt;url&gt;</span><span class="cmd-desc">Trocar URL do origin (HTTPS/SSH)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git fetch origin</span><span class="cmd-desc">Baixar refs/commits sem integrar</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git fetch --prune origin</span><span class="cmd-desc">Fetch + remover refs de branches apagadas no remoto</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">GITHUB CLI (gh)</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">gh auth login</span><span class="cmd-desc">Login interativo no GitHub</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">gh repo create &lt;nome&gt; --public --source=. --remote=origin --push</span><span class="cmd-desc">Criar repo no GitHub e dar push da pasta atual</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">gh pr create</span><span class="cmd-desc">Abrir PR pelo terminal (fluxo interativo)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">gh pr checkout &lt;número&gt;</span><span class="cmd-desc">Checkout da branch do PR localmente</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">STAGE & COMMIT</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">git status</span><span class="cmd-desc">Ver estado dos arquivos</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git add .</span><span class="cmd-desc">Stage de todos os arquivos modificados</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git add &lt;arquivo&gt;</span><span class="cmd-desc">Stage de arquivo específico</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git commit -m "msg"</span><span class="cmd-desc">Commitar com mensagem</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git commit -am "msg"</span><span class="cmd-desc">Stage + commit só em arquivos já rastreados</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git commit --amend</span><span class="cmd-desc">Editar o último commit</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git commit --amend --no-edit</span><span class="cmd-desc">Incluir mudanças no último commit (mesma msg)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git log --oneline</span><span class="cmd-desc">Histórico resumido de commits</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git log --graph --oneline --all -15</span><span class="cmd-desc">Árvore de branches + últimos commits</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git show &lt;hash&gt;</span><span class="cmd-desc">Ver patch e metadados de um commit</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git diff</span><span class="cmd-desc">Ver mudanças não staged</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git diff --staged</span><span class="cmd-desc">Diff do que está no stage (antes do commit)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git blame &lt;arquivo&gt;</span><span class="cmd-desc">Quem mudou cada linha (e em qual commit)</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">BRANCHES</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">git branch</span><span class="cmd-desc">Listar branches locais</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git checkout -b &lt;nome&gt;</span><span class="cmd-desc">Criar e entrar na branch</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git switch -c &lt;nome&gt;</span><span class="cmd-desc">Criar e entrar (equivalente moderno ao checkout -b)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git switch &lt;nome&gt;</span><span class="cmd-desc">Trocar de branch (Git moderno)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git branch -a</span><span class="cmd-desc">Listar branches locais + remotas</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git merge &lt;branch&gt;</span><span class="cmd-desc">Mergear branch na atual</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git merge --no-ff &lt;branch&gt;</span><span class="cmd-desc">Merge sempre com commit de merge (histórico explícito)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git rebase &lt;branch&gt;</span><span class="cmd-desc">Reaplicar commits da branch atual em cima da base</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git rebase -i HEAD~3</span><span class="cmd-desc">Rebase interativo dos últimos 3 commits (squash/reorder)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git cherry-pick &lt;hash&gt;</span><span class="cmd-desc">Trazer um commit específico para a branch atual</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git branch -d &lt;nome&gt;</span><span class="cmd-desc">Deletar branch local</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git branch -D &lt;nome&gt;</span><span class="cmd-desc">Forçar delete de branch local não mergeada</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">PUSH & PULL</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">git push</span><span class="cmd-desc">Enviar commits ao remoto</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git push -u origin &lt;branch&gt;</span><span class="cmd-desc">Push inicial com upstream</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git pull</span><span class="cmd-desc">Puxar e mergear mudanças</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git pull --rebase</span><span class="cmd-desc">Puxar reaplicando seus commits em cima do remoto</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git fetch</span><span class="cmd-desc">Puxar sem mergear</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git push origin --delete &lt;branch&gt;</span><span class="cmd-desc">Deletar branch remota</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">TAGS & SUBMÓDULOS</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">git tag -a v1.0 -m "release"</span><span class="cmd-desc">Tag anotada (releases/versionamento)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git push origin v1.0</span><span class="cmd-desc">Enviar uma tag ao remoto</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git push origin --tags</span><span class="cmd-desc">Enviar todas as tags locais</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git submodule update --init --recursive</span><span class="cmd-desc">Baixar/atualizar submódulos após clone</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">DESFAZER & EMERGÊNCIA</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">git restore &lt;arquivo&gt;</span><span class="cmd-desc">Descartar mudanças não commitadas</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git restore --staged &lt;arquivo&gt;</span><span class="cmd-desc">Remover do stage</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git reset --soft HEAD~1</span><span class="cmd-desc">Desfazer último commit (mantém mudanças)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git reset --hard HEAD~1</span><span class="cmd-desc">Desfazer e APAGAR mudanças ⚠️</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git stash</span><span class="cmd-desc">Salvar mudanças temporariamente</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git stash push -u -m "wip"</span><span class="cmd-desc">Stash incluindo arquivos novos não rastreados</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git stash list</span><span class="cmd-desc">Listar entradas do stash</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git stash apply stash@{0}</span><span class="cmd-desc">Aplicar stash sem remover da pilha</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git stash pop</span><span class="cmd-desc">Restaurar do stash e remover o topo</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git revert &lt;hash&gt;</span><span class="cmd-desc">Reverter commit sem apagar histórico</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git reflog</span><span class="cmd-desc">Histórico de onde HEAD esteve (recuperar commits)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git clean -fd</span><span class="cmd-desc">Apagar arquivos não rastreados ⚠️ irreversível</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">DEBUG & INVESTIGAÇÃO</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">git bisect start</span><span class="cmd-desc">Iniciar busca binária do commit que quebrou algo</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git bisect bad</span><span class="cmd-desc">Marcar commit atual como ruim</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git bisect good &lt;hash&gt;</span><span class="cmd-desc">Marcar um commit conhecido como bom</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">git bisect reset</span><span class="cmd-desc">Sair do bisect e voltar ao estado anterior</span><button class="cmd-copy">copy</button></div>
+      </div>

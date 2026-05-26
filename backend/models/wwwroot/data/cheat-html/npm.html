@@ -1,0 +1,68 @@
+<div class="ref-section">
+      <div class="ref-section-title">PROJETO</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">npm init -y</span><span class="cmd-desc">Inicializar projeto com padrões</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm install</span><span class="cmd-desc">Instalar todas as dependências</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm ci</span><span class="cmd-desc">Instalação limpa via package-lock.json</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm --version</span><span class="cmd-desc">Ver versão do NPM</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">INSTALAR PACOTES</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">npm i &lt;pacote&gt;</span><span class="cmd-desc">Instalar como dependência de produção</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm i -D &lt;pacote&gt;</span><span class="cmd-desc">Instalar como devDependency</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm i -g &lt;pacote&gt;</span><span class="cmd-desc">Instalar globalmente</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm i &lt;pacote&gt;@&lt;versão&gt;</span><span class="cmd-desc">Instalar versão específica</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm i &lt;pacote1&gt; &lt;pacote2&gt;</span><span class="cmd-desc">Instalar múltiplos pacotes</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">GERENCIAR PACOTES</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">npm uninstall &lt;pacote&gt;</span><span class="cmd-desc">Remover pacote</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm update &lt;pacote&gt;</span><span class="cmd-desc">Atualizar pacote específico</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm update</span><span class="cmd-desc">Atualizar todos os pacotes</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm outdated</span><span class="cmd-desc">Ver pacotes desatualizados</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm list</span><span class="cmd-desc">Listar pacotes instalados</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm list -g --depth=0</span><span class="cmd-desc">Listar pacotes globais</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">PRISMA (via npx)</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">npm i prisma -D &amp;&amp; npm i @prisma/client</span><span class="cmd-desc">Instalar CLI (dev) e cliente no projeto</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npx prisma init</span><span class="cmd-desc">Criar prisma/schema.prisma e .env de exemplo</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npx prisma migrate dev</span><span class="cmd-desc">Gerar migration e aplicar no banco (dev)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npx prisma generate</span><span class="cmd-desc">Regenerar Prisma Client após mudar o schema</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npx prisma db push</span><span class="cmd-desc">Sincronizar schema sem arquivo de migration (protótipo)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npx prisma migrate deploy</span><span class="cmd-desc">Aplicar migrations pendentes (CI/produção)</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">SCRIPTS</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">npm start</span><span class="cmd-desc">Executar script "start"</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm test</span><span class="cmd-desc">Executar script "test"</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm run &lt;script&gt;</span><span class="cmd-desc">Executar script customizado</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm run build</span><span class="cmd-desc">Executar script "build"</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm run dev</span><span class="cmd-desc">Executar script "dev"</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">AUDITORIA & SEGURANÇA</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">npm audit</span><span class="cmd-desc">Verificar vulnerabilidades</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm audit fix</span><span class="cmd-desc">Corrigir vulnerabilidades automaticamente</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm cache clean --force</span><span class="cmd-desc">Limpar cache do NPM</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">PUBLICAR PACOTES</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">npm login</span><span class="cmd-desc">Autenticar no NPM registry</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm publish</span><span class="cmd-desc">Publicar pacote no registry</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm version patch</span><span class="cmd-desc">Incrementar versão patch (1.0.0 → 1.0.1)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm version minor</span><span class="cmd-desc">Incrementar versão minor (1.0.0 → 1.1.0)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">npm version major</span><span class="cmd-desc">Incrementar versão major (1.0.0 → 2.0.0)</span><button class="cmd-copy">copy</button></div>
+      </div>

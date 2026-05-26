@@ -1,0 +1,67 @@
+<div class="ref-section">
+      <div class="ref-section-title">INFORMAÇÕES DO SDK</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">dotnet --version</span><span class="cmd-desc">Ver versão do .NET instalada</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet --list-sdks</span><span class="cmd-desc">Listar todos os SDKs instalados</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet --list-runtimes</span><span class="cmd-desc">Listar runtimes instalados</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet --info</span><span class="cmd-desc">Informações completas do ambiente</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">CRIAR PROJETOS</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">dotnet new console -n &lt;nome&gt;</span><span class="cmd-desc">Criar aplicação console</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet new webapi -n &lt;nome&gt;</span><span class="cmd-desc">Criar Web API com ASP.NET</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet new mvc -n &lt;nome&gt;</span><span class="cmd-desc">Criar aplicação MVC</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet new classlib -n &lt;nome&gt;</span><span class="cmd-desc">Criar biblioteca de classes</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet new xunit -n &lt;nome&gt;</span><span class="cmd-desc">Criar projeto de testes xUnit</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet new list</span><span class="cmd-desc">Listar todos os templates</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet new sln -n &lt;nome&gt;</span><span class="cmd-desc">Criar arquivo de solução</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">BUILD & EXECUÇÃO</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">dotnet run</span><span class="cmd-desc">Compilar e executar o projeto</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet build</span><span class="cmd-desc">Compilar sem executar</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet build -c Release</span><span class="cmd-desc">Build de produção otimizado</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet clean</span><span class="cmd-desc">Limpar artefatos de build</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet watch run</span><span class="cmd-desc">Executar com hot reload</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">PACOTES NUGET</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">dotnet add package &lt;pacote&gt;</span><span class="cmd-desc">Instalar pacote NuGet</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet add package &lt;pacote&gt; --version &lt;x&gt;</span><span class="cmd-desc">Instalar versão específica</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet remove package &lt;pacote&gt;</span><span class="cmd-desc">Remover pacote</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet restore</span><span class="cmd-desc">Restaurar todos os pacotes</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet list package</span><span class="cmd-desc">Listar pacotes do projeto</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet list package --outdated</span><span class="cmd-desc">Ver pacotes desatualizados</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">TESTES</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">dotnet test</span><span class="cmd-desc">Rodar todos os testes</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet test --filter &lt;nome&gt;</span><span class="cmd-desc">Rodar testes específicos</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet test --logger "console;verbosity=detailed"</span><span class="cmd-desc">Testes com log detalhado</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">PUBLICAR & DEPLOY</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">dotnet publish -c Release -o ./publish</span><span class="cmd-desc">Publicar para pasta</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet publish -r linux-x64 --self-contained</span><span class="cmd-desc">Publicar executável standalone</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet publish -r win-x64 --self-contained</span><span class="cmd-desc">Executável standalone Windows</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">SOLUÇÃO & REFERÊNCIAS</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">dotnet sln add &lt;projeto.csproj&gt;</span><span class="cmd-desc">Adicionar projeto à solução</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet sln list</span><span class="cmd-desc">Listar projetos da solução</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet add reference &lt;projeto&gt;</span><span class="cmd-desc">Referenciar outro projeto</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet ef migrations add &lt;nome&gt;</span><span class="cmd-desc">Criar migration do EF Core</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">dotnet ef database update</span><span class="cmd-desc">Aplicar migrations ao banco</span><button class="cmd-copy">copy</button></div>
+      </div>

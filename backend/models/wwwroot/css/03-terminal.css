@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    TRAINING TERMINAL
    ============================================================ */
 .terminal-wrap { max-width:680px; margin:0 auto; }
@@ -48,6 +48,10 @@
   color: #b455f5;
   font-weight: 600;
   text-shadow: 0 0 18px rgba(180, 85, 245, 0.35);
+}
+.term-nowrap { white-space: nowrap; }
+@media (max-width: 768px) {
+  .term-nowrap { display: inline-block; font-size: 0.74rem; }
 }
 .term-intro-br-mobile {
   display: none;

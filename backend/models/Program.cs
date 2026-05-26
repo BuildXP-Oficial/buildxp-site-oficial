@@ -98,6 +98,7 @@ using (var scope = app.Services.CreateScope())
     await db.Database.MigrateAsync();
     var cardService = scope.ServiceProvider.GetRequiredService<CardService>();
     await cardService.FixDuplicateStaticIconPathsAsync();
+    await CardCheatCodesSync.SincronizarSeVazioAsync(db, app.Environment.WebRootPath);
 }
 
 if (app.Environment.IsDevelopment())

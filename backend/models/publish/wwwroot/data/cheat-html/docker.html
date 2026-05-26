@@ -1,0 +1,55 @@
+<div class="ref-section">
+      <div class="ref-section-title">IMAGENS</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">docker pull &lt;imagem&gt;</span><span class="cmd-desc">Baixar imagem do Docker Hub</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker images</span><span class="cmd-desc">Listar imagens locais</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker build -t &lt;nome&gt; .</span><span class="cmd-desc">Buildar imagem do Dockerfile atual</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker rmi &lt;imagem&gt;</span><span class="cmd-desc">Remover imagem local</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker image prune</span><span class="cmd-desc">Remover imagens sem uso</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">CONTAINERS</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">docker run &lt;imagem&gt;</span><span class="cmd-desc">Criar e iniciar container</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker run -d -p 8080:80 &lt;imagem&gt;</span><span class="cmd-desc">Rodar em background com porta mapeada</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker run -it &lt;imagem&gt; bash</span><span class="cmd-desc">Entrar no container interativamente</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker ps</span><span class="cmd-desc">Listar containers rodando</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker ps -a</span><span class="cmd-desc">Listar todos os containers</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker stop &lt;container&gt;</span><span class="cmd-desc">Parar container</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker start &lt;container&gt;</span><span class="cmd-desc">Iniciar container parado</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker restart &lt;container&gt;</span><span class="cmd-desc">Reiniciar container</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker rm &lt;container&gt;</span><span class="cmd-desc">Remover container</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker logs &lt;container&gt;</span><span class="cmd-desc">Ver logs do container</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker exec -it &lt;container&gt; bash</span><span class="cmd-desc">Abrir terminal no container rodando</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker inspect &lt;container&gt;</span><span class="cmd-desc">Ver detalhes do container</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">VOLUMES & REDES</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">docker volume create &lt;nome&gt;</span><span class="cmd-desc">Criar volume persistente</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker volume ls</span><span class="cmd-desc">Listar volumes</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker run -v &lt;vol&gt;:/data &lt;img&gt;</span><span class="cmd-desc">Montar volume no container</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker network ls</span><span class="cmd-desc">Listar redes</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker network create &lt;nome&gt;</span><span class="cmd-desc">Criar rede customizada</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">DOCKER COMPOSE</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">docker compose up</span><span class="cmd-desc">Subir todos os serviços</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker compose up -d</span><span class="cmd-desc">Subir em background</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker compose down</span><span class="cmd-desc">Parar e remover containers</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker compose logs</span><span class="cmd-desc">Ver logs de todos os serviços</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker compose build</span><span class="cmd-desc">Rebuildar imagens do compose</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker compose ps</span><span class="cmd-desc">Ver status dos serviços</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">LIMPEZA</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">docker system prune</span><span class="cmd-desc">Remover tudo que não está em uso</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker container prune</span><span class="cmd-desc">Remover containers parados</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">docker image prune -a</span><span class="cmd-desc">Remover todas as imagens sem uso</span><button class="cmd-copy">copy</button></div>
+      </div>
