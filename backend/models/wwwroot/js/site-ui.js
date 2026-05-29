@@ -70,12 +70,19 @@ function initCopy() {
 /* ── SLIDER (Beginner steps) ────────────────────────────────*/
 function initStepsSlider() {
   document.querySelectorAll('[data-steps-slider]').forEach(root => {
+    if (root.dataset.stepsSliderInit === '1') return;
+    root.dataset.stepsSliderInit = '1';
+
     const track = root.querySelector('.steps-track');
     const prev = root.querySelector('[data-slide-prev]');
     const next = root.querySelector('[data-slide-next]');
     if (!track || !prev || !next) return;
 
+    /** Desktop: setas + clique no índice. Mobile: arrastar o trilho ou clique no índice. Sem autoplay. */
+    const isDesktopSteps = window.matchMedia('(hover: hover) and (min-width: 769px)').matches;
     const stepEls = () => [...track.querySelectorAll('.step')];
+    let indexItems = [];
+    let indexButtons = [];
 
     function getIndexMount() {
       return root.querySelector('[data-steps-index]') ?? null;
@@ -84,6 +91,31 @@ function initStepsSlider() {
     function scrollToStep(el) {
       if (!el) return;
       track.scrollTo({ left: el.offsetLeft, behavior: 'smooth' });
+    }
+
+    function indexFromScroll() {
+      const center = track.scrollLeft + track.clientWidth * 0.5;
+      let bestIdx = 0;
+      let bestDist = Infinity;
+      indexItems.forEach((it, idx) => {
+        const mid = it.el.offsetLeft + it.el.clientWidth * 0.5;
+        const d = Math.abs(mid - center);
+        if (d < bestDist) { bestDist = d; bestIdx = idx; }
+      });
+      return bestIdx;
+    }
+
+    function setActiveIndex(bestIdx) {
+      indexButtons.forEach((b, i) => {
+        b.classList.toggle('active', i === bestIdx);
+      });
+    }
+
+    function goToIndex(idx) {
+      const it = indexItems[idx];
+      if (!it) return;
+      scrollToStep(it.el);
+      setActiveIndex(idx);
     }
 
     /** Altura do trilho = slide mais central (evita espaço vazio até o índice em slides curtos) */
@@ -123,7 +155,7 @@ function initStepsSlider() {
       if (mount.dataset.built === '1') return;
       mount.dataset.built = '1';
 
-      const items = stepEls()
+      indexItems = stepEls()
         .map((el) => {
           const numRaw = el.querySelector('.step-num')?.textContent?.trim() ?? '';
           const title = el.querySelector('.step-title')?.textContent?.trim() ?? '';
@@ -133,7 +165,7 @@ function initStepsSlider() {
         })
         .filter(Boolean);
 
-      if (!items.length) return;
+      if (!indexItems.length) return;
 
       mount.innerHTML = `
         <div class="steps-index-title">Índice do card</div>
@@ -141,50 +173,32 @@ function initStepsSlider() {
       `;
 
       const list = mount.querySelector('.steps-index-list');
-      items.forEach((it) => {
+      indexButtons = indexItems.map((it, idx) => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'steps-index-item';
         btn.setAttribute('role', 'listitem');
         btn.textContent = `${it.num} — ${it.title}`;
-        btn.addEventListener('click', () => scrollToStep(it.el));
-        if (window.matchMedia('(hover: hover) and (min-width: 769px)').matches) {
-          btn.addEventListener('mouseenter', () => scrollToStep(it.el));
-          btn.addEventListener('focus', () => scrollToStep(it.el));
-        }
+        btn.addEventListener('mousedown', (e) => e.preventDefault());
+        btn.addEventListener('click', () => goToIndex(idx));
         list.appendChild(btn);
+        return btn;
       });
 
-      const setActive = () => {
-        const center = track.scrollLeft + track.clientWidth * 0.5;
-        let bestIdx = 0;
-        let bestDist = Infinity;
-        items.forEach((it, idx) => {
-          const mid = it.el.offsetLeft + it.el.clientWidth * 0.5;
-          const d = Math.abs(mid - center);
-          if (d < bestDist) { bestDist = d; bestIdx = idx; }
-        });
-        [...list.querySelectorAll('.steps-index-item')].forEach((b, i) => {
-          b.classList.toggle('active', i === bestIdx);
-        });
-      };
-
-      track.addEventListener('scroll', () => {
-        setActive();
-        scheduleSyncTrackHeight();
-      }, { passive: true });
-      window.addEventListener('resize', () => {
-        setActive();
-        scheduleSyncTrackHeight();
-      });
-      setActive();
+      setActiveIndex(0);
       scheduleSyncTrackHeight();
     }
 
     function updateButtons() {
-      const maxScroll = Math.max(0, track.scrollWidth - track.clientWidth - 1);
-      prev.disabled = track.scrollLeft <= 0;
-      next.disabled = track.scrollLeft >= maxScroll;
+      if (!indexItems.length) {
+        const maxScroll = Math.max(0, track.scrollWidth - track.clientWidth - 1);
+        prev.disabled = track.scrollLeft <= 0;
+        next.disabled = track.scrollLeft >= maxScroll;
+        return;
+      }
+      const idx = indexFromScroll();
+      prev.disabled = idx <= 0;
+      next.disabled = idx >= indexItems.length - 1;
     }
 
     function scrollByOne(dir) {
@@ -195,15 +209,63 @@ function initStepsSlider() {
       track.scrollBy({ left: dir * width, behavior: 'smooth' });
     }
 
-    prev.addEventListener('click', () => scrollByOne(-1));
-    next.addEventListener('click', () => scrollByOne(1));
-
-    root.querySelectorAll('[data-steps-restart]').forEach(btn => {
-      btn.addEventListener('click', () => track.scrollTo({ left: 0, behavior: 'smooth' }));
+    prev.addEventListener('click', () => {
+      if (!indexItems.length) {
+        scrollByOne(-1);
+        updateButtons();
+        return;
+      }
+      goToIndex(Math.max(0, indexFromScroll() - 1));
+      updateButtons();
+    });
+    next.addEventListener('click', () => {
+      if (!indexItems.length) {
+        scrollByOne(1);
+        updateButtons();
+        return;
+      }
+      goToIndex(Math.min(indexItems.length - 1, indexFromScroll() + 1));
+      updateButtons();
     });
 
-    track.addEventListener('scroll', () => updateButtons(), { passive: true });
-    window.addEventListener('resize', () => updateButtons());
+    root.querySelectorAll('[data-steps-restart]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        track.scrollTo({ left: 0, behavior: 'smooth' });
+        setActiveIndex(0);
+        updateButtons();
+      });
+    });
+
+    track.addEventListener('scroll', () => {
+      scheduleSyncTrackHeight();
+      if (!isDesktopSteps) updateButtons();
+    }, { passive: true });
+
+    if (isDesktopSteps) {
+      track.classList.add('steps-track--click-nav');
+      track.addEventListener(
+        'wheel',
+        (e) => {
+          if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) e.preventDefault();
+        },
+        { passive: false },
+      );
+    } else {
+      track.classList.add('steps-track--touch-nav');
+      track.addEventListener(
+        'scrollend',
+        () => {
+          setActiveIndex(indexFromScroll());
+          updateButtons();
+        },
+        { passive: true },
+      );
+    }
+
+    window.addEventListener('resize', () => {
+      scheduleSyncTrackHeight();
+      updateButtons();
+    });
 
     updateButtons();
     buildIndex();

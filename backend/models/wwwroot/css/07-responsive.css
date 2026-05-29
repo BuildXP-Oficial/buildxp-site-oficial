@@ -70,7 +70,7 @@
     padding-bottom: 2.6rem;
   }
   .steps-track > .step:first-of-type::after {
-    content: 'â€ºâ€º';
+    content: '\203A\203A';
     position: absolute;
     right: 1.1rem;
     bottom: 0.85rem;
@@ -152,7 +152,7 @@
   }
   .cards-marquee-viewport.cards-strip-viewport--swipe,
   .cards-marquee-viewport.cards-strip-viewport {
-    touch-action: pan-y;
+    touch-action: pan-y pinch-zoom;
     -webkit-user-select: none;
     user-select: none;
   }

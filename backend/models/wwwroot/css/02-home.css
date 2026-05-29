@@ -24,7 +24,7 @@
   gap: 1.5rem;
 }
 
-/* Home â€” carrossel contÃ­nuo; setas sÃ³ ao hover na faixa (viewport + cards) */
+/* Home Carrossel; setas ao hover na faixa  */
 .cards-strip-wrap {
   position: relative;
   width: 100%;
@@ -128,6 +128,7 @@
 
 .cards-marquee-viewport.cards-strip-viewport--dragging {
   cursor: grabbing;
+  touch-action: none;
 }
 
 .cards-marquee-viewport.cards-strip-viewport--dragging .card {
@@ -300,7 +301,7 @@
   box-shadow:0 0 8px var(--cc, var(--git));
 }
 
-/* Card buttons â€” sempre no rodapÃ© do card (altura igual na fila do carrossel) */
+/* Card buttons(altura igual na fila do carrossel) */
 .card-actions {
   display: flex;
   gap: 0.7rem;
