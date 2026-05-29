@@ -22,7 +22,7 @@ INSERT INTO skill_cards (
   'GitHub',
   2400,
   3000,
-  '<p class="card-desc">Do primeiro <code>git init</code> até branches, P Rs e fluxos avançados. Guia completo para iniciantes e Cheat Codes para quem já usa e não lembra um comando específico.<br>Clique no botão para começar a aprender Git e GitHub.</p>',
+  '<p class="card-desc">Do primeiro <code>git init</code> até branches, P Rs e fluxos avançados. Guia completo para iniciantes e Cheap Codes para quem já usa e não lembra um comando específico.<br>Clique no botão para começar a aprender Git e GitHub.</p>',
   'git.html?tab=beginner',
   'git.html?tab=ref',
   1,

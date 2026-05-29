@@ -147,6 +147,28 @@
   scrollbar-width: none;
 }
 .steps-track::-webkit-scrollbar { display: none; }
+
+/* Desktop: slide só muda com setas ou clique no índice (sem arrastar o trilho) */
+@media (hover: hover) and (min-width: 769px) {
+  .steps-track.steps-track--click-nav {
+    overflow-x: hidden;
+    touch-action: pan-y;
+  }
+}
+
+/* Mobile: arrastar horizontalmente entre slides */
+@media (max-width: 768px) {
+  .steps-track.steps-track--touch-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+    cursor: grab;
+  }
+  .steps-track.steps-track--touch-nav:active {
+    cursor: grabbing;
+  }
+}
+
 .steps-track > .step {
   scroll-snap-align: start;
   align-self: start;

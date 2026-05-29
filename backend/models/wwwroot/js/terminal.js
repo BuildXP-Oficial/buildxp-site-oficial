@@ -1,6 +1,6 @@
 ﻿// BuildXP - terminal
 /* ── TRAINING TERMINAL ──────────────────────────────────────*/
-const TRAIN_TOPICS = ['Git', 'Docker', 'NPM', '.NET'];
+const TRAIN_TOPICS = ['Git', 'Docker', 'NPM', '.NET', 'Python'];
 const TRAIN_LEVELS = [
   { id: 'beginner', label: 'INICIANTE' },
   { id: 'advanced', label: 'AVANÇADO' },
@@ -209,6 +209,122 @@ const TRAIN_BANK = {
       },
     ],
   },
+  /** Treino Python: dados / análise simples — sem OOP; validação por estrutura. */
+  Python: {
+    beginner: [
+      {
+        kind: 'python',
+        q: '[Python · dados] Lista de notas (ex.: 7, 8, 9). Calcule a média com sum() e len() (ou /) e print(). Nomes livres. ###',
+        feedback: 'Precisa: lista de números, sum(), len() (ou divisão) e print().',
+        pyChecks: [
+          (n) => /\[[\d\s.,]+\]/.test(n) || /\blist\s*\(/.test(n),
+          (n) => /\bsum\s*\(/.test(n),
+          (n) => /\blen\s*\(/.test(n) || /\//.test(n),
+          (n) => /\bprint\s*\(/.test(n),
+        ],
+      },
+      {
+        kind: 'python',
+        q: '[Python · dados] Peça um valor com input(), converta com int() ou float() e print() o resultado. ###',
+        feedback: 'Precisa: input(), int() ou float() e print().',
+        pyChecks: [
+          (n) => /input\s*\(/.test(n),
+          (n) => /\bint\s*\(/.test(n) || /\bfloat\s*\(/.test(n),
+          (n) => /\bprint\s*\(/.test(n),
+        ],
+      },
+      {
+        kind: 'python',
+        q: '[Python · dados] Lista de nomes de colunas ou produtos; use for ... in e print() cada item. ###',
+        feedback: 'Precisa: lista (strings), for ... in e print().',
+        pyChecks: [
+          (n) => /\[[^\]]+\]/.test(n),
+          (n) => /\bfor\s+\w+\s+in\b/.test(n),
+          (n) => /\bprint\s*\(/.test(n),
+        ],
+      },
+      {
+        kind: 'python',
+        q: '[Python · dados] Uma variável numérica (ex. vendas). Use if / else para dizer se bateu meta (>= 100) e print(). ###',
+        feedback: 'Precisa: if, else e print().',
+        pyChecks: [
+          (n) => /\bif\s+/.test(n),
+          (n) => /\belse\s*:/.test(n),
+          (n) => /\bprint\s*\(/.test(n),
+          (n) => />=|>|<=|</.test(n),
+        ],
+      },
+      {
+        kind: 'python',
+        q: '[Python · dados] Lista de temperaturas: for e if para contar ou listar só as acima de 25. print() o resultado. ###',
+        feedback: 'Precisa: lista, for, if (condição com 25) e print().',
+        pyChecks: [
+          (n) => /\[[\d\s.,]+\]/.test(n),
+          (n) => /\bfor\s+\w+/.test(n),
+          (n) => /\bif\s+/.test(n),
+          (n) => /\b25\b/.test(n),
+          (n) => /\bprint\s*\(/.test(n),
+        ],
+      },
+    ],
+    advanced: [
+      {
+        kind: 'python',
+        q: '[Python · dados] Dicionário (ex. produto: preço). Acesse uma chave, use if/elif/else e print() o valor ou mensagem. ###',
+        feedback: 'Precisa: dict { }, acesso por chave, if/elif ou if/else e print().',
+        pyChecks: [
+          (n) => /\{[^}]+\}/.test(n),
+          (n) => /\[[^\]]+\]/.test(n) || /\.get\s*\(/.test(n),
+          (n) => /\bif\s+/.test(n),
+          (n) => /\belif\s+/.test(n) || /\belse\s*:/.test(n),
+          (n) => /\bprint\s*\(/.test(n),
+        ],
+      },
+      {
+        kind: 'python',
+        q: '[Python · dados] Duas listas (nomes e notas). Use zip() no for ou índice para print() cada par. ###',
+        feedback: 'Precisa: duas listas, zip() ou índice, for e print().',
+        pyChecks: [
+          (n) => (n.match(/\[[^\]]+\]/g) || []).length >= 2 || (n.match(/\blist\s*\(/g) || []).length >= 2,
+          (n) => /\bzip\s*\(/.test(n) || /\blen\s*\(/.test(n) || /\[\s*\w+\s*\]/.test(n),
+          (n) => /\bfor\s+\w+/.test(n),
+          (n) => /\bprint\s*\(/.test(n),
+        ],
+      },
+      {
+        kind: 'python',
+        q: '[Python · dados] Monte lista só com valores positivos: for, if e .append() (ou list comprehension [x for ... if]). ###',
+        feedback: 'Precisa: for, if, append ou list comprehension com if.',
+        pyChecks: [
+          (n) => /\bfor\s+\w+/.test(n),
+          (n) => /\bif\s+/.test(n),
+          (n) => /\.append\s*\(/.test(n) || /\bfor\s+[\w\s,]+in\s+[\w\s,]+\bif\b/.test(n),
+        ],
+      },
+      {
+        kind: 'python',
+        q: '[Python · ML leve] Lista de números: ache o maior com for e if (sem max()), ou use max(); print(). ###',
+        feedback: 'Precisa: lista, for+if comparando maior OU max(), e print().',
+        pyChecks: [
+          (n) => /\[[\d\s.,]+\]/.test(n),
+          (n) => /\bprint\s*\(/.test(n),
+          (n) => /\bmax\s*\(/.test(n) || (/\bfor\s+\w+/.test(n) && /\bif\s+/.test(n) && />|>=/.test(n)),
+        ],
+      },
+      {
+        kind: 'python',
+        q: '[Python · dados] try/except ao converter input() com float() (dado inválido) e print() no except. ###',
+        feedback: 'Precisa: try, except, input(), float() e print().',
+        pyChecks: [
+          (n) => /\btry\s*:/.test(n),
+          (n) => /\bexcept\b/.test(n),
+          (n) => /input\s*\(/.test(n),
+          (n) => /\bfloat\s*\(/.test(n),
+          (n) => /\bprint\s*\(/.test(n),
+        ],
+      },
+    ],
+  },
 };
 
 /** Normaliza C# para checagens flexíveis (comentários e strings neutras). */
@@ -238,6 +354,44 @@ function gradeCSharp(raw, q) {
   if (passed === total) return { result: 'correct', xp: 20 };
   if (passed >= Math.ceil(total * 0.65)) return { result: 'partial', xp: 10 };
   return { result: 'wrong', xp: 0 };
+}
+
+/** Normaliza Python para checagens flexíveis (comentários e strings neutras). */
+function normPyForMatch(raw) {
+  return String(raw)
+    .replace(/#[^\n]*/g, ' ')
+    .replace(/'''[\s\S]*?'''|"""[\s\S]*?"""/g, '""')
+    .replace(/'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"/g, '""')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function gradePython(raw, q) {
+  const checks = q.pyChecks || [];
+  const n = normPyForMatch(raw);
+  let passed = 0;
+  for (const fn of checks) {
+    try {
+      if (fn(n)) passed++;
+    } catch (_) {
+      /* ignore */
+    }
+  }
+  const total = checks.length;
+  if (total === 0) return { result: 'wrong', xp: 0 };
+  if (passed === total) return { result: 'correct', xp: 20 };
+  if (passed >= Math.ceil(total * 0.65)) return { result: 'partial', xp: 10 };
+  return { result: 'wrong', xp: 0 };
+}
+
+function isCodeBlockQuestion(q) {
+  return q?.kind === 'csharp' || q?.kind === 'python';
+}
+
+function gradeCodeBlock(raw, q) {
+  if (q.kind === 'python') return gradePython(raw, q);
+  return gradeCSharp(raw, q);
 }
 
 function initTrainingTerminal() {
@@ -362,9 +516,15 @@ function initTrainingTerminal() {
     return state.topic;
   }
 
+  function isCodeBlockBankTopic() {
+    const t = getBankTopic();
+    return t === 'C#' || t === 'Python';
+  }
+
   function termBadgeLabel() {
     if (state.topic === '.NET' && state.dotnetTrack === 'csharp') return '.NET · CÓDIGO C#';
     if (state.topic === '.NET' && state.dotnetTrack === 'cli') return '.NET · CLI';
+    if (state.topic === 'Python') return 'PYTHON · CÓDIGO';
     return state.topic;
   }
 
@@ -468,6 +628,7 @@ function initTrainingTerminal() {
         Docker: { c: '#00c8ff', g: '0 0 28px rgba(0,200,255,0.35)' },
         NPM: { c: '#ff4545', g: '0 0 28px rgba(255,69,69,0.35)' },
         '.NET': { c: '#b455f5', g: '0 0 28px rgba(180,85,245,0.35)' },
+        Python: { c: '#3776ab', g: '0 0 28px rgba(55,118,171,0.35)' },
       };
       const p = presets[t] ?? presets.Git;
       mount.style.setProperty('--term-accent', p.c);
@@ -538,10 +699,9 @@ function initTrainingTerminal() {
   }
 
   function renderTerminalShell() {
-    const inputPh =
-      state.topic === '.NET' && state.dotnetTrack === 'csharp'
-        ? 'linha de código e Enter · linha só com ### envia o bloco'
-        : 'digite o comando e pressione Enter...';
+    const inputPh = isCodeBlockBankTopic()
+      ? 'linha de código e Enter · linha só com ### envia o bloco'
+      : 'digite o comando e pressione Enter...';
     mount.innerHTML = `
       <div class="term-frame">
         <div class="term-topbar">
@@ -689,9 +849,14 @@ function initTrainingTerminal() {
       'term-dim',
     );
     line(`Objetivo: ${state.goalXp} XP.`, 'term-dim');
-    if (getBankTopic() === 'C#') {
-      line(`Modo C#: nomes de classe e variáveis livres; importa a montagem e operadores.`, 'term-dim');
-      line(`Bloco: uma linha por Enter; linha que começa com # encerra o bloco.`, 'term-dim');
+    if (isCodeBlockBankTopic()) {
+      const lang = getBankTopic() === 'Python' ? 'Python' : 'C#';
+      const hint =
+        getBankTopic() === 'Python'
+          ? 'listas, dicts, loops e dados; nomes livres — validamos a estrutura.'
+          : 'nomes de classes e variáveis livres; validamos a estrutura.';
+      line(`Modo ${lang}: ${hint}`, 'term-dim');
+      line(`Bloco: uma linha por Enter; linha só com ### envia o bloco.`, 'term-dim');
     } else {
       line(`Dica: foque na estrutura do comando.`, 'term-dim');
     }
@@ -712,7 +877,7 @@ function initTrainingTerminal() {
   function askCurrent() {
     const q = state.currentSet[state.questionIdx];
     line(`${q.q}`, '');
-    if (q.kind === 'csharp') {
+    if (isCodeBlockQuestion(q)) {
       state.codeBlockAccum = [];
       line('Bloco: uma linha por Enter; última linha só ### para enviar.', 'term-dim');
     } else {
@@ -756,7 +921,7 @@ function initTrainingTerminal() {
       return;
     }
 
-    if (q.kind === 'csharp') {
+    if (isCodeBlockQuestion(q)) {
       if (!Array.isArray(state.codeBlockAccum)) state.codeBlockAccum = [];
 
       if (raw.trim() !== '###') {
@@ -778,7 +943,7 @@ function initTrainingTerminal() {
         return;
       }
 
-      const g = gradeCSharp(full, q);
+      const g = gradeCodeBlock(full, q);
       if (g.result === 'correct') line('✔ Correto.', 'term-good');
       else if (g.result === 'partial') line('◐ Parcialmente correto.', 'term-warn');
       else line('✖ Incorreto.', 'term-bad');

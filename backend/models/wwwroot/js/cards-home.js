@@ -44,12 +44,12 @@ function buildxpEscapeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
-/** HTML do slide FIM fixo (terminal + cheat codes) — sempre o último da trilha. */
+/** HTML do slide FIM fixo (terminal + cheap codes) — sempre o último da trilha. */
 function buildxpFinSlideHtml(slug, finSlide) {
   const safeSlug = String(slug || '').trim().toLowerCase();
   let fimTitulo = 'Parabéns! 🏆';
   let fimBody =
-    '<div class="step-desc">Você concluiu a trilha iniciante. Pratique no terminal ou consulte os cheat codes.</div>';
+    '<div class="step-desc">Você concluiu a trilha iniciante. Pratique no terminal ou consulte os cheap codes.</div>';
   if (finSlide) {
     const ft = String(finSlide.titulo ?? finSlide.Titulo ?? '').trim();
     const fd = String(finSlide.descricao ?? finSlide.Descricao ?? '').trim();
@@ -71,7 +71,7 @@ function buildxpFinSlideHtml(slug, finSlide) {
         ${fimBody}
         <div class="term-actions card-fim-actions">
           <a href="index.html#terminal" class="term-btn primary">INICIAR TREINAMENTO</a>
-          <a href="${cheatHref}" class="term-btn ghost">🎮 VERIFICAR CHEAT CODES</a>
+          <a href="${cheatHref}" class="term-btn ghost">🎮 VERIFICAR CHEAP CODES</a>
         </div>
       </div>
     </div>`;
@@ -292,9 +292,9 @@ const INDEX_CARD_STATIC_DEFAULTS = {
     link_beginner: 'card.html?slug=git&tab=beginner',
     link_ref: 'card.html?slug=git&tab=ref',
     btn_primary_label: '▶ COMEÇAR',
-    btn_secondary_label: '🎮 CHEAT CODES',
+    btn_secondary_label: '🎮 CHEAP CODES',
     description_html:
-      '<p>Do primeiro <code>git init</code> até branches, PRs e fluxos avançados. Guia completo para iniciantes e Cheat Codes para quem já usa e não lembra um comando específico.<br>Clique no botão para começar a aprender Git e GitHub.</p>',
+      '<p>Do primeiro <code>git init</code> até branches, PRs e fluxos avançados. Guia completo para iniciantes e Cheap Codes para quem já usa e não lembra um comando específico.<br>Clique no botão para começar a aprender Git e GitHub.</p>',
     icon_layout: 'dual',
     icon_primary_src: 'imagens/gitlogobr.png',
     icon_primary_alt: 'Git',
@@ -314,7 +314,7 @@ const INDEX_CARD_STATIC_DEFAULTS = {
     link_beginner: 'card.html?slug=docker&tab=beginner',
     link_ref: 'card.html?slug=docker&tab=ref',
     btn_primary_label: '▶ COMEÇAR',
-    btn_secondary_label: '🎮 CHEAT CODES',
+    btn_secondary_label: '🎮 CHEAP CODES',
     description_html:
       '<p>Containers, imagens, Dockerfile e Docker Compose. Do conceito básico ao ambiente completo rodando com um comando.<br>Clique no botão para começar a aprender Docker.</p>',
     icon_layout: 'single',
@@ -336,7 +336,7 @@ const INDEX_CARD_STATIC_DEFAULTS = {
     link_beginner: 'card.html?slug=npm&tab=beginner',
     link_ref: 'card.html?slug=npm&tab=ref',
     btn_primary_label: '▶ COMEÇAR',
-    btn_secondary_label: '🎮 CHEAT CODES',
+    btn_secondary_label: '🎮 CHEAP CODES',
     description_html:
       '<p>Gerencie pacotes, scripts e dependências de projetos Node.js. Do <code>npm init</code> ao publish no registry. Inclui também Prisma como pacote npm e comandos <code>npx prisma</code> (generate e migrations).<br>Clique no botão para começar a aprender NPM e para o que ele serve.</p>',
     icon_layout: 'single',
@@ -358,7 +358,7 @@ const INDEX_CARD_STATIC_DEFAULTS = {
     link_beginner: 'card.html?slug=dotnet&tab=beginner',
     link_ref: 'card.html?slug=dotnet&tab=ref',
     btn_primary_label: '▶ COMEÇAR',
-    btn_secondary_label: '🎮 CHEAT CODES',
+    btn_secondary_label: '🎮 CHEAP CODES',
     description_html:
       '<p>CLI do .NET para criar, buildar, testar e publicar projetos. Essencial para quem trabalha com C#, ASP.NET e afins (ou quer entender como funciona).<br>Clique no botão para começar a aprender C# e .NET.</p>',
     icon_layout: 'single',
@@ -677,7 +677,7 @@ function buildxpNormalizeHomeCardFromDto(raw) {
       buildxpNormalizeLegacyCardListHref(String(raw.link_ref ?? raw.LinkRef ?? '').trim(), slug, 'ref') ||
       buildxpPublicCardHref(slug, 'ref'),
     btn_primary_label: String(raw.btn_primary_label ?? raw.BtnPrimaryLabel ?? '▶ COMEÇAR'),
-    btn_secondary_label: String(raw.btn_secondary_label ?? raw.BtnSecondaryLabel ?? '🎮 CHEAT CODES'),
+    btn_secondary_label: String(raw.btn_secondary_label ?? raw.BtnSecondaryLabel ?? '🎮 CHEAP CODES'),
     icon_layout: String(raw.icon_layout ?? raw.IconLayout ?? 'single').toLowerCase(),
     icon_primary_src: String(raw.icon_primary_src ?? raw.IconPrimarySrc ?? ''),
     icon_primary_alt: String(raw.icon_primary_alt ?? raw.IconPrimaryAlt ?? ''),
@@ -872,32 +872,99 @@ function initIndexCardsHomeMarquee() {
   tx = 0;
   applyTransform();
 
+  const desktopHoverPause = window.matchMedia('(hover: hover) and (min-width: 769px)').matches;
   let pausedByHover = false;
+  let pausedByDrag = false;
+  let dragPointerId = null;
+  let dragStartX = 0;
+  let dragStartTx = 0;
+  let dragDidMove = false;
+  let suppressCardClickUntil = 0;
+  const dragThresholdPx = 8;
+
   function bindPauseHover(el) {
+    el.addEventListener('mouseenter', () => { pausedByHover = true; }, { signal: sig });
+    el.addEventListener('mouseleave', () => { pausedByHover = false; }, { signal: sig });
+  }
+  if (desktopHoverPause) {
+    if (hoverShell) bindPauseHover(hoverShell);
+    else bindPauseHover(viewport);
+  }
+
+  function bindMarqueeDrag(el) {
     el.addEventListener(
-      'mouseenter',
-      () => {
-        pausedByHover = true;
+      'pointerdown',
+      (e) => {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        dragPointerId = e.pointerId;
+        dragStartX = e.clientX;
+        dragStartTx = tx;
+        dragDidMove = false;
+        el.setPointerCapture?.(e.pointerId);
       },
       { signal: sig },
     );
+
     el.addEventListener(
-      'mouseleave',
-      () => {
-        pausedByHover = false;
+      'pointermove',
+      (e) => {
+        if (dragPointerId !== e.pointerId) return;
+        const dx = e.clientX - dragStartX;
+        if (!dragDidMove && Math.abs(dx) < dragThresholdPx) return;
+        if (!dragDidMove) {
+          dragDidMove = true;
+          pausedByDrag = true;
+          viewport.classList.add('cards-strip-viewport--dragging');
+        }
+        e.preventDefault();
+        tx = dragStartTx + dx;
+        applyTransform();
       },
-      { signal: sig },
+      { signal: sig, passive: false },
+    );
+
+    const endDrag = (e) => {
+      if (dragPointerId === null || e.pointerId !== dragPointerId) return;
+      dragPointerId = null;
+      pausedByDrag = false;
+      viewport.classList.remove('cards-strip-viewport--dragging');
+      try {
+        el.releasePointerCapture(e.pointerId);
+      } catch {
+        /* ignore */
+      }
+      if (dragDidMove) {
+        normalizeTx();
+        applyTransform();
+        suppressCardClickUntil = Date.now() + 400;
+        e.preventDefault();
+      }
+      dragDidMove = false;
+    };
+
+    el.addEventListener('pointerup', endDrag, { signal: sig });
+    el.addEventListener('pointercancel', endDrag, { signal: sig });
+
+    el.addEventListener(
+      'click',
+      (e) => {
+        if (Date.now() < suppressCardClickUntil) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      },
+      { signal: sig, capture: true },
     );
   }
-  if (hoverShell) bindPauseHover(hoverShell);
-  else bindPauseHover(viewport);
+  bindMarqueeDrag(viewport);
+  viewport.classList.add('cards-strip-viewport--swipe');
 
   let lastTs = 0;
   const pxPerSec = 38;
 
   function tick(ts) {
     indexCardsMarqueeRafId = requestAnimationFrame(tick);
-    const animate = !prefersReduced && !pausedByHover && !document.hidden;
+    const animate = !prefersReduced && !pausedByHover && !pausedByDrag && !document.hidden;
     if (!animate) {
       lastTs = 0;
       applyTransform();

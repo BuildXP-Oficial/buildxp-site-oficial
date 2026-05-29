@@ -43,7 +43,7 @@ CREATE TABLE skill_cards (
   link_beginner   TEXT NOT NULL,
   link_ref        TEXT NOT NULL,
   btn_primary_label TEXT NOT NULL DEFAULT '▶ COMEÇAR',
-  btn_secondary_label TEXT NOT NULL DEFAULT '🎮 CHEAT CODES',
+  btn_secondary_label TEXT NOT NULL DEFAULT '🎮 CHEAP CODES',
   sort_order      INTEGER NOT NULL DEFAULT 0,
   is_published    BOOLEAN NOT NULL DEFAULT true,
   ui_features     JSONB NOT NULL DEFAULT '{"first_slide_mobile_swipe_hint": true}',

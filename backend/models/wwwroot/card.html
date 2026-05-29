@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
-  <link rel="stylesheet" href="css/site.css?v=bxp-mod-18" />
+  <link rel="stylesheet" href="css/site.css?v=bxp-mod-23" />
   <style>
     /* ── LOADING STATE ─────────────────────────────────────── */
     .card-loading {
@@ -213,7 +213,7 @@
 </div>
 
 <footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="js/main.js?v=bxp-mod-18"></script>
+<script src="js/main.js?v=bxp-mod-23"></script>
 <script>
 function escapeHtml(str) {
   return String(str ?? '')
@@ -418,7 +418,7 @@ function cardIsLikelyPauseSlide(slide) {
   if (tituloRaw) return false;
   if (/<div class="cmd-block"/i.test(desc)) return false;
   if (/<div class="step-title"/i.test(desc)) return false;
-  return /respira|relaxa|alongar|Muita coisa de uma vez|baixa a bola|Cheat Codes|Referência rápida|👏|🎯|☕|\bkk\b/i.test(
+  return /respira|relaxa|alongar|Muita coisa de uma vez|baixa a bola|Cheap Codes|Referência rápida|👏|🎯|☕|\bkk\b/i.test(
     desc,
   );
 }
@@ -567,7 +567,7 @@ function renderError(code, msg, root) {
 
     <div class="tabs">
       <button class="tab-btn ${tabParam !== 'ref' ? 'active' : ''}" data-tab="beginner">▶ INICIANTE</button>
-      <button class="tab-btn ${tabParam === 'ref' ? 'active' : ''}" data-tab="ref">🎮 CHEAT CODES</button>
+      <button class="tab-btn ${tabParam === 'ref' ? 'active' : ''}" data-tab="ref">🎮 CHEAP CODES</button>
     </div>
 
     <div class="tab-pane ${tabParam !== 'ref' ? 'active' : ''}" id="beginner">
@@ -618,10 +618,10 @@ function cardBuildFinSlideHtml(slug, finSlide) {
       <div class="step-num">🏆</div>
       <div class="card-fim-body">
         <div class="step-title">Parabéns! 🏆</div>
-        <div class="step-desc">Você concluiu a trilha iniciante. Pratique no terminal ou consulte os cheat codes.</div>
+        <div class="step-desc">Você concluiu a trilha iniciante. Pratique no terminal ou consulte os cheap codes.</div>
         <div class="term-actions card-fim-actions">
           <a href="index.html#terminal" class="term-btn primary">INICIAR TREINAMENTO</a>
-          <a href="${cheatHref}" class="term-btn ghost">🎮 VERIFICAR CHEAT CODES</a>
+          <a href="${cheatHref}" class="term-btn ghost">🎮 VERIFICAR CHEAP CODES</a>
         </div>
       </div>
     </div>`;

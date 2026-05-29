@@ -255,3 +255,4 @@ body::before {
 .bg-docker { border-color:var(--docker);color:var(--docker);background:rgba(0,200,255,0.07); }
 .bg-npm    { border-color:var(--npm);   color:var(--npm);   background:rgba(255,69,69,0.07);  }
 .bg-dotnet { border-color:var(--dotnet);color:var(--dotnet);background:rgba(180,85,245,0.07); }
+.bg-python { border-color:var(--python);color:var(--python);background:rgba(194, 208, 71, 0.23); }
