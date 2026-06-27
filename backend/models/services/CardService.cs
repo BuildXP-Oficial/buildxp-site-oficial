@@ -26,6 +26,7 @@ public class CardService
             "dotnet" => "#512bd4",
             "api" => "#22d3ee",
             "python" => "#3776ab",
+            "ia" => "#3c19e6",
             _ => "#39d353",
         };
     }
@@ -295,6 +296,32 @@ public class CardService
             if (desc != slide.Descricao)
             {
                 slide.Descricao = desc;
+                changed++;
+            }
+        }
+
+        if (changed > 0) await _context.SaveChangesAsync();
+        return changed;
+    }
+
+    /// <summary>Garante LinkBeginner/LinkRef com slug correto do card (corrige legado integrandoumaapi, etc.).</summary>
+    public async Task<int> FixPublicCardLinksAsync()
+    {
+        var changed = 0;
+        foreach (var card in await _context.SkillCards.ToListAsync())
+        {
+            if (string.IsNullOrWhiteSpace(card.Slug)) continue;
+            var sl = card.Slug.Trim().ToLowerInvariant();
+            var linkB = CardClientDto.NormalizePublicListLink(card.LinkBeginner, sl, "beginner");
+            var linkR = CardClientDto.NormalizePublicListLink(card.LinkRef, sl, "ref");
+            if (card.LinkBeginner != linkB)
+            {
+                card.LinkBeginner = linkB;
+                changed++;
+            }
+            if (card.LinkRef != linkR)
+            {
+                card.LinkRef = linkR;
                 changed++;
             }
         }

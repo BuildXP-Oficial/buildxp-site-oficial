@@ -93,7 +93,12 @@ public class CardClientDto
         l = l.TrimStart('/');
 
         if (string.IsNullOrEmpty(l)) return fallback;
-        if (l.StartsWith("card.html", StringComparison.OrdinalIgnoreCase)) return l;
+        if (l.StartsWith("card.html", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrEmpty(sl)) return link!.Trim();
+            var useTab = Regex.IsMatch(l, @"[?&]tab=ref", RegexOptions.IgnoreCase) ? "ref" : t;
+            return $"card.html?slug={sl}&tab={useTab}";
+        }
         if (l.Contains("://", StringComparison.Ordinal)) return link!.Trim();
 
         // legado: integrandoumaapi.html?tab=beginner, git.html, etc.
