@@ -190,6 +190,17 @@
   box-sizing: border-box;
 }
 
+.cards-marquee-clone {
+  pointer-events: none;
+}
+
+.cards-marquee-group.cards-grid .card-actions,
+.cards-marquee-group.cards-grid .card-btn {
+  position: relative;
+  z-index: 3;
+  pointer-events: auto;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .cards-marquee-track--animated {
     animation: none;

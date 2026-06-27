@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="imagens/xpbrowser.png" />
+  <title>Cards — BuildXP</title>
+  <meta name="description" content="Todos os cards de referência do BuildXP. Git, Docker, NPM, .NET e novos cards publicados." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
+  <link rel="stylesheet" href="css/site.css?v=bxp-mod-28" />
+  <script>window.BUILDXP_API_BASE = window.BUILDXP_API_BASE || '';</script>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="nav-logo" aria-label="BuildXP — Início">
+    <img class="nav-logo-img" src="imagens/logo2buildxpret.png" alt="BuildXP" />
+  </a>
+  <button class="hamburger" id="hamburger" aria-label="Menu">☰</button>
+  <ul class="nav-links" id="nav-links">
+    <li><a href="cards.html" class="nav-link--active" aria-current="page">Cards</a></li>
+    <li><a href="index.html#terminal">Terminal</a></li>
+    <li><a href="feedback.html">Feedback</a></li>
+    <li><a href="index.html#contact">Contato</a></li>
+  </ul>
+</nav>
+
+<main class="page-container cards-catalog-page">
+  <a href="index.html" class="back-link">← VOLTAR</a>
+
+  <div class="page-hero cards-catalog-hero">
+    <div class="page-hero-glow"></div>
+    <div class="page-icon"><span style="font-family:var(--f-display);color:var(--accent);text-shadow:var(--accent-glow)">◫</span></div>
+    <div class="page-hero-body">
+      <div class="page-class">SKILL CARDS</div>
+      <div class="page-title">Todos os cards</div>
+      <div class="page-meta">
+        <span class="lvl-badge">GIT · DOCKER · NPM · .NET · NOVOS</span>
+      </div>
+      <p class="fb-label fb-page-intro" style="margin:0;">
+        Referências, trilhas e cheap codes em um lugar só. Pesquise por comandos, nome, palavra chave ou trilha - Exemplo: biblioteca panda
+      </p>
+    </div>
+  </div>
+
+  <div class="cards-catalog-toolbar">
+    <label class="cards-catalog-search-wrap" for="cards-catalog-search">
+      <span class="cards-catalog-search-icon" aria-hidden="true">⌕</span>
+      <input
+        id="cards-catalog-search"
+        class="cards-catalog-search"
+        type="search"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="Pesquisar cards, slides, comandos…"
+        aria-describedby="cards-catalog-status"
+      />
+    </label>
+    <div id="cards-catalog-status" class="cards-catalog-status" aria-live="polite"></div>
+  </div>
+
+  <section class="cards-catalog-grid" id="cards-catalog-grid" aria-label="Lista de cards"></section>
+  <p id="cards-catalog-empty" class="cards-catalog-empty" hidden>Nenhum card encontrado para esta pesquisa.</p>
+</main>
+
+<footer><span>BUILD</span>XP — De dev pra dev.</footer>
+<script src="js/main.js?v=bxp-mod-28"></script>
+</body>
+</html>

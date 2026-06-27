@@ -93,16 +93,27 @@ function initStepsSlider() {
       track.scrollTo({ left: el.offsetLeft, behavior: 'smooth' });
     }
 
-    function indexFromScroll() {
+    function stepIndexFromScroll() {
       const center = track.scrollLeft + track.clientWidth * 0.5;
+      const steps = stepEls();
       let bestIdx = 0;
       let bestDist = Infinity;
-      indexItems.forEach((it, idx) => {
-        const mid = it.el.offsetLeft + it.el.clientWidth * 0.5;
+      steps.forEach((el, idx) => {
+        const mid = el.offsetLeft + el.clientWidth * 0.5;
         const d = Math.abs(mid - center);
-        if (d < bestDist) { bestDist = d; bestIdx = idx; }
+        if (d < bestDist) {
+          bestDist = d;
+          bestIdx = idx;
+        }
       });
       return bestIdx;
+    }
+
+    function indexFromScroll() {
+      const activeStep = stepEls()[stepIndexFromScroll()];
+      if (!activeStep || !indexItems.length) return 0;
+      const found = indexItems.findIndex((it) => it.el === activeStep);
+      return found >= 0 ? found : 0;
     }
 
     function setActiveIndex(bestIdx) {
@@ -111,11 +122,27 @@ function initStepsSlider() {
       });
     }
 
+    function syncIndexForStep(el) {
+      if (!indexItems.length) return;
+      const idx = indexItems.findIndex((it) => it.el === el);
+      if (idx >= 0) setActiveIndex(idx);
+      else indexButtons.forEach((b) => b.classList.remove('active'));
+    }
+
     function goToIndex(idx) {
       const it = indexItems[idx];
       if (!it) return;
       scrollToStep(it.el);
       setActiveIndex(idx);
+    }
+
+    function goToStepIndex(idx) {
+      const steps = stepEls();
+      if (!steps.length) return;
+      const next = Math.max(0, Math.min(steps.length - 1, idx));
+      const el = steps[next];
+      scrollToStep(el);
+      syncIndexForStep(el);
     }
 
     /** Altura do trilho = slide mais central (evita espaço vazio até o índice em slides curtos) */
@@ -155,12 +182,25 @@ function initStepsSlider() {
       if (mount.dataset.built === '1') return;
       mount.dataset.built = '1';
 
+      let pauseCount = 0;
       indexItems = stepEls()
         .map((el) => {
+          if (el.classList.contains('step--fim')) return null;
+
+          if (el.classList.contains('step-pause')) {
+            pauseCount += 1;
+            const sub = el.querySelector('.step-title')?.textContent?.trim() ?? '';
+            return {
+              el,
+              num: '⏸',
+              title: sub ? `PAUSA — ${sub}` : `PAUSA ${pauseCount}`,
+            };
+          }
+
           const numRaw = el.querySelector('.step-num')?.textContent?.trim() ?? '';
           const title = el.querySelector('.step-title')?.textContent?.trim() ?? '';
           const n = Number.parseInt(numRaw, 10);
-          if (!Number.isFinite(n) || !title) return null; // ignore "PAUSA", "FIM", etc.
+          if (!Number.isFinite(n) || !title) return null;
           return { el, num: String(n).padStart(2, '0'), title };
         })
         .filter(Boolean);
@@ -190,41 +230,23 @@ function initStepsSlider() {
     }
 
     function updateButtons() {
-      if (!indexItems.length) {
-        const maxScroll = Math.max(0, track.scrollWidth - track.clientWidth - 1);
-        prev.disabled = track.scrollLeft <= 0;
-        next.disabled = track.scrollLeft >= maxScroll;
+      const steps = stepEls();
+      if (!steps.length) {
+        prev.disabled = true;
+        next.disabled = true;
         return;
       }
-      const idx = indexFromScroll();
-      prev.disabled = idx <= 0;
-      next.disabled = idx >= indexItems.length - 1;
-    }
-
-    function scrollByOne(dir) {
-      const first = stepEls()[0];
-      if (!first) return;
-      const gap = parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap || '0') || 0;
-      const width = first.getBoundingClientRect().width + gap;
-      track.scrollBy({ left: dir * width, behavior: 'smooth' });
+      const cur = stepIndexFromScroll();
+      prev.disabled = cur <= 0;
+      next.disabled = cur >= steps.length - 1;
     }
 
     prev.addEventListener('click', () => {
-      if (!indexItems.length) {
-        scrollByOne(-1);
-        updateButtons();
-        return;
-      }
-      goToIndex(Math.max(0, indexFromScroll() - 1));
+      goToStepIndex(stepIndexFromScroll() - 1);
       updateButtons();
     });
     next.addEventListener('click', () => {
-      if (!indexItems.length) {
-        scrollByOne(1);
-        updateButtons();
-        return;
-      }
-      goToIndex(Math.min(indexItems.length - 1, indexFromScroll() + 1));
+      goToStepIndex(stepIndexFromScroll() + 1);
       updateButtons();
     });
 
@@ -255,7 +277,7 @@ function initStepsSlider() {
       track.addEventListener(
         'scrollend',
         () => {
-          setActiveIndex(indexFromScroll());
+          syncIndexForStep(stepEls()[stepIndexFromScroll()]);
           updateButtons();
         },
         { passive: true },

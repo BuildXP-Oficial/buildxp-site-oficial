@@ -74,7 +74,7 @@ public class CardClientDto
     [JsonPropertyName("slides")]
     public List<SlideClientDto> Slides { get; set; } = [];
 
-    /// <summary>Cheat codes / referência rápida (GET por slug com Include).</summary>
+    /// <summary>Cheap codes / referência rápida (GET por slug com Include).</summary>
     [JsonPropertyName("referencias")]
     public List<ReferenciaClientDto> Referencias { get; set; } = [];
 
@@ -103,23 +103,45 @@ public class CardClientDto
         return link!.Trim();
     }
 
+    private static readonly Regex CheapCodesBrandRx = new(
+        @"\bcheat(\s+codes?\b)",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    /// <summary>Marca do site: «cheat code(s)» → «cheap code(s)», preservando maiúsculas quando possível.</summary>
+    public static string NormalizeCheapCodesBranding(string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return text ?? string.Empty;
+        return CheapCodesBrandRx.Replace(text, static m =>
+        {
+            var word = m.Groups[0].Value;
+            var suffix = m.Groups[1].Value;
+            var replacement = "cheap" + suffix;
+            if (word.ToUpperInvariant() == word)
+                return replacement.ToUpperInvariant();
+            if (char.IsUpper(word[0]))
+                return char.ToUpperInvariant(replacement[0]) + replacement[1..];
+            return replacement;
+        });
+    }
+
     public static CardClientDto FromEntity(SkillCard c, bool forDashboardEdit = false) => new()
     {
         Id = c.Id,
         Slug = c.Slug,
         Theme = c.Theme,
         BorderColor = string.IsNullOrWhiteSpace(c.CorBorda) ? "#39d353" : c.CorBorda.Trim(),
-        DisplayName = c.Titulo,
+        DisplayName = NormalizeCheapCodesBranding(c.Titulo),
         RarityLabel = c.Raridade,
         CardClass = c.Classe,
-        DescriptionHtml = c.Descricao,
+        DescriptionHtml = NormalizeCheapCodesBranding(c.Descricao),
         LinkBeginner = NormalizePublicListLink(c.LinkBeginner, c.Slug, "beginner"),
         LinkRef = NormalizePublicListLink(c.LinkRef, c.Slug, "ref"),
         XpCurrent = c.XpAtual,
         XpMax = c.XpMaximo,
         SortOrder = c.Ordem,
         BtnPrimaryLabel = c.BtnPrimaryLabel,
-        BtnSecondaryLabel = c.BtnSecondaryLabel,
+        BtnSecondaryLabel = NormalizeCheapCodesBranding(
+            string.IsNullOrWhiteSpace(c.BtnSecondaryLabel) ? "🎮 CHEAP CODES" : c.BtnSecondaryLabel),
         IconLayout = string.IsNullOrEmpty(c.IconLayout) ? "single" : c.IconLayout,
         IconPrimarySrc = forDashboardEdit
             ? CardIconHelper.ResolvePrimaryStorageRef(c)
@@ -141,15 +163,15 @@ public class CardClientDto
             {
                 Id = s.Id,
                 Ordem = s.Ordem,
-                Titulo = s.Titulo ?? string.Empty,
-                Descricao = s.Descricao ?? string.Empty,
+                Titulo = NormalizeCheapCodesBranding(s.Titulo ?? string.Empty),
+                Descricao = NormalizeCheapCodesBranding(s.Descricao ?? string.Empty),
                 Conteudos = (s.Conteudos ?? [])
                     .OrderBy(c => c.Ordem)
                     .Select(c => new ConteudoSlideClientDto
                     {
                         Tipo = (int)c.Tipo,
-                        Texto = c.Texto ?? string.Empty,
-                        Descricao = c.Descricao ?? string.Empty,
+                        Texto = NormalizeCheapCodesBranding(c.Texto ?? string.Empty),
+                        Descricao = NormalizeCheapCodesBranding(c.Descricao ?? string.Empty),
                         Ordem = c.Ordem,
                     })
                     .ToList(),
