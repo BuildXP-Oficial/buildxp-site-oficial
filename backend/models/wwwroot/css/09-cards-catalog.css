@@ -1,0 +1,137 @@
+/* ============================================================
+   CARDS CATALOG PAGE (cards.html)
+   ============================================================ */
+
+.cards-catalog-page.page-container {
+  max-width: 1320px;
+}
+
+.cards-catalog-hero {
+  margin-bottom: 2rem;
+}
+
+.cards-catalog-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+}
+
+.cards-catalog-search-wrap {
+  position: relative;
+}
+
+.cards-catalog-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.85rem 1rem 0.85rem 2.75rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--f-body);
+  font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.cards-catalog-search::placeholder {
+  color: var(--text-muted);
+}
+
+.cards-catalog-search:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(57, 211, 83, 0.15);
+}
+
+.cards-catalog-search-icon {
+  position: absolute;
+  left: 0.95rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-family: var(--f-mono);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.cards-catalog-status {
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.cards-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+.cards-catalog-grid .card {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  flex: initial;
+  height: 100%;
+}
+
+.cards-catalog-grid .card-actions,
+.cards-catalog-grid .card-btn {
+  position: relative;
+  z-index: 3;
+  pointer-events: auto;
+}
+
+.cards-catalog-grid .card.cards-catalog-card--hidden,
+.cards-catalog-grid .card[hidden] {
+  display: none !important;
+}
+
+.cards-catalog-grid--filtered .card.cards-catalog-card--hidden {
+  display: none !important;
+}
+
+.cards-catalog-loading {
+  grid-column: 1 / -1;
+  font-family: var(--f-mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.cards-catalog-loading--error {
+  color: #ff8a8a;
+}
+
+.cards-catalog-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-family: var(--f-mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 1rem;
+}
+
+.cards-catalog-grid--empty .card {
+  display: none !important;
+}
+
+.nav-links a.nav-link--active {
+  color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .cards-catalog-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .cards-catalog-search {
+    font-size: 0.88rem;
+    padding-left: 2.5rem;
+  }
+}

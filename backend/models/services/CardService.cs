@@ -123,11 +123,12 @@ public class CardService
             card.Titulo = card.Slug;
         card.Raridade = (p.RarityLabel ?? card.Raridade).Trim();
         card.Classe = (p.CardClass ?? card.Classe).Trim();
-        card.Descricao = p.DescriptionHtml ?? card.Descricao;
+        card.Descricao = CardClientDto.NormalizeCheapCodesBranding(p.DescriptionHtml ?? card.Descricao);
         card.LinkBeginner = (p.LinkBeginner ?? card.LinkBeginner).Trim();
         card.LinkRef = (p.LinkRef ?? card.LinkRef).Trim();
         card.BtnPrimaryLabel = (p.BtnPrimaryLabel ?? card.BtnPrimaryLabel).Trim();
-        card.BtnSecondaryLabel = (p.BtnSecondaryLabel ?? card.BtnSecondaryLabel).Trim();
+        card.BtnSecondaryLabel = CardClientDto.NormalizeCheapCodesBranding(
+            (p.BtnSecondaryLabel ?? card.BtnSecondaryLabel).Trim());
         card.IconLayout = string.IsNullOrWhiteSpace(p.IconLayout) ? card.IconLayout : p.IconLayout!.Trim();
         card.IconPrimaryAlt = (p.IconPrimaryAlt ?? card.IconPrimaryAlt).Trim();
         card.IconSecondaryAlt = (p.IconSecondaryAlt ?? card.IconSecondaryAlt).Trim();
@@ -260,6 +261,46 @@ public class CardService
         }
         if (n > 0) await _context.SaveChangesAsync();
         return n;
+    }
+
+    /// <summary>Substitui «cheat code(s)» por «cheap code(s)» em cards e slides já gravados.</summary>
+    public async Task<int> FixCheapCodesBrandingAsync()
+    {
+        var changed = 0;
+        foreach (var card in await _context.SkillCards.ToListAsync())
+        {
+            var btn = CardClientDto.NormalizeCheapCodesBranding(card.BtnSecondaryLabel);
+            var desc = CardClientDto.NormalizeCheapCodesBranding(card.Descricao);
+            if (btn != card.BtnSecondaryLabel)
+            {
+                card.BtnSecondaryLabel = btn;
+                changed++;
+            }
+            if (desc != card.Descricao)
+            {
+                card.Descricao = desc;
+                changed++;
+            }
+        }
+
+        foreach (var slide in await _context.Slides.ToListAsync())
+        {
+            var titulo = CardClientDto.NormalizeCheapCodesBranding(slide.Titulo);
+            var desc = CardClientDto.NormalizeCheapCodesBranding(slide.Descricao);
+            if (titulo != slide.Titulo)
+            {
+                slide.Titulo = titulo;
+                changed++;
+            }
+            if (desc != slide.Descricao)
+            {
+                slide.Descricao = desc;
+                changed++;
+            }
+        }
+
+        if (changed > 0) await _context.SaveChangesAsync();
+        return changed;
     }
 
     public async Task<CardIconUpload?> GetIconUploadAsync(Guid id) =>
@@ -573,8 +614,8 @@ public class CardService
                 {
                     CardId = cardId,
                     Ordem = ordem,
-                    Titulo = item.Titulo ?? string.Empty,
-                    Descricao = item.Descricao ?? string.Empty,
+                    Titulo = CardClientDto.NormalizeCheapCodesBranding(item.Titulo ?? string.Empty),
+                    Descricao = CardClientDto.NormalizeCheapCodesBranding(item.Descricao ?? string.Empty),
                     Ativo = true,
                 });
             }

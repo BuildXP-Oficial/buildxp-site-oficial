@@ -105,7 +105,7 @@ function buildxpApiSlideToDom(slide) {
   const descricao = String(slide.descricao ?? slide.Descricao ?? '');
   const codigo = String(slide.codigo_bloco ?? slide.codigoBloco ?? '').trim() || '';
 
-  const isPause = tituloRaw === BUILDXP_SLIDE_PAUSE_TITULO || tituloRaw.trim() === '';
+  const isPause = tituloRaw === BUILDXP_SLIDE_PAUSE_TITULO || /^pausa$/i.test(titulo);
 
   const wrap = document.createElement('div');
   wrap.className = isPause ? 'step step-pause' : 'step';
@@ -251,6 +251,20 @@ function buildxpPublicCardHref(slug, tab) {
   const t = tab === 'ref' ? 'ref' : 'beginner';
   return `card.html?slug=${encodeURIComponent(s)}&tab=${t}`;
 }
+
+/** Marca do site: «cheat code(s)» → «cheap code(s)». */
+function buildxpNormalizeCheapCodesBranding(text) {
+  return String(text ?? '').replace(/\bcheat(\s+codes?\b)/gi, (match, suffix) => {
+    const replacement = `cheap${suffix}`;
+    if (match === match.toUpperCase()) return replacement.toUpperCase();
+    if (match[0] === match[0].toUpperCase()) {
+      return replacement[0].toUpperCase() + replacement.slice(1);
+    }
+    return replacement;
+  });
+}
+
+window.buildxpNormalizeCheapCodesBranding = buildxpNormalizeCheapCodesBranding;
 
 /** Migra links antigos tipo integrandoumaapi.html?tab=… para card.html?slug=… (slug do card é a fonte de verdade). */
 function buildxpNormalizeLegacyCardListHref(href, slug, tab) {
@@ -565,7 +579,7 @@ function dashParseApiSlidesArrayForEditor(slidesRaw) {
     const up = titulo.toUpperCase();
     if (up === 'FIM' || /conclusão|conclusao/i.test(titulo)) continue;
 
-    if (titulo === BUILDXP_SLIDE_PAUSE_TITULO || titulo === '') {
+    if (titulo === BUILDXP_SLIDE_PAUSE_TITULO) {
       const fields = dashParseSlideDescricaoToEditorFields(desc);
       out.push({
         id: dashNewSlideId(),
@@ -663,10 +677,12 @@ function buildxpNormalizeHomeCardFromDto(raw) {
     slug,
     theme,
     border_color,
-    display_name: String(raw.display_name ?? raw.DisplayName ?? slug),
+    display_name: buildxpNormalizeCheapCodesBranding(raw.display_name ?? raw.DisplayName ?? slug),
     rarity_label: String(raw.rarity_label ?? raw.RarityLabel ?? ''),
     card_class: String(raw.card_class ?? raw.CardClass ?? ''),
-    description_html: String(raw.description_html ?? raw.DescriptionHtml ?? ''),
+    description_html: buildxpNormalizeCheapCodesBranding(
+      raw.description_html ?? raw.DescriptionHtml ?? '',
+    ),
     link_beginner:
       buildxpNormalizeLegacyCardListHref(
         String(raw.link_beginner ?? raw.LinkBeginner ?? '').trim(),
@@ -677,7 +693,9 @@ function buildxpNormalizeHomeCardFromDto(raw) {
       buildxpNormalizeLegacyCardListHref(String(raw.link_ref ?? raw.LinkRef ?? '').trim(), slug, 'ref') ||
       buildxpPublicCardHref(slug, 'ref'),
     btn_primary_label: String(raw.btn_primary_label ?? raw.BtnPrimaryLabel ?? '▶ COMEÇAR'),
-    btn_secondary_label: String(raw.btn_secondary_label ?? raw.BtnSecondaryLabel ?? '🎮 CHEAP CODES'),
+    btn_secondary_label: buildxpNormalizeCheapCodesBranding(
+      raw.btn_secondary_label ?? raw.BtnSecondaryLabel ?? '🎮 CHEAP CODES',
+    ),
     icon_layout: String(raw.icon_layout ?? raw.IconLayout ?? 'single').toLowerCase(),
     icon_primary_src: String(raw.icon_primary_src ?? raw.IconPrimarySrc ?? ''),
     icon_primary_alt: String(raw.icon_primary_alt ?? raw.IconPrimaryAlt ?? ''),
@@ -891,10 +909,17 @@ function initIndexCardsHomeMarquee() {
     else bindPauseHover(viewport);
   }
 
+  function isMarqueeInteractiveTarget(target) {
+    return !!target?.closest?.(
+      'a, button, input, textarea, select, label, .card-btn, .card-actions',
+    );
+  }
+
   function bindMarqueeDrag(el) {
     el.addEventListener(
       'pointerdown',
       (e) => {
+        if (isMarqueeInteractiveTarget(e.target)) return;
         if (e.pointerType === 'mouse' && e.button !== 0) return;
         dragPointerId = e.pointerId;
         dragStartX = e.clientX;
@@ -948,6 +973,7 @@ function initIndexCardsHomeMarquee() {
     el.addEventListener(
       'click',
       (e) => {
+        if (isMarqueeInteractiveTarget(e.target)) return;
         if (Date.now() < suppressCardClickUntil) {
           e.preventDefault();
           e.stopPropagation();

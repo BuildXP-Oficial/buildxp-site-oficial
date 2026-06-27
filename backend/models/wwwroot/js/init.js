@@ -13,9 +13,15 @@ async function buildxpBoot() {
   initFeedback();
   initTrainingTerminal();
   initDashboard();
-  await buildxpHydrateIndexCardsFromApi();
-  applyIndexCardOrder();
-  initIndexCardsHomeMarquee();
+  if (document.getElementById('cards-catalog-grid')) {
+    if (typeof buildxpInitCardsCatalogPage === 'function') {
+      await buildxpInitCardsCatalogPage();
+    }
+  } else {
+    await buildxpHydrateIndexCardsFromApi();
+    applyIndexCardOrder();
+    initIndexCardsHomeMarquee();
+  }
   initCopy();
 }
 
