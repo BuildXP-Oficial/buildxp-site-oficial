@@ -99,6 +99,7 @@ using (var scope = app.Services.CreateScope())
     var cardService = scope.ServiceProvider.GetRequiredService<CardService>();
     await cardService.FixDuplicateStaticIconPathsAsync();
     await cardService.FixCheapCodesBrandingAsync();
+    await cardService.FixPublicCardLinksAsync();
     await CardCheatCodesSync.SincronizarSeVazioAsync(db, app.Environment.WebRootPath);
 }
 

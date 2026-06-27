@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
-  <link rel="stylesheet" href="css/site.css?v=bxp-mod-28" />
+  <link rel="stylesheet" href="css/site.css?v=bxp-mod-32" />
   <style>
     /* ── LOADING STATE ─────────────────────────────────────── */
     .card-loading {
@@ -213,7 +213,7 @@
 </div>
 
 <footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="js/main.js?v=bxp-mod-28"></script>
+<script src="js/main.js?v=bxp-mod-32"></script>
 <script>
 function escapeHtml(str) {
   return String(str ?? '')
@@ -245,28 +245,45 @@ function slideHasApiBody(s) {
   return slideConteudos(s).length > 0;
 }
 
+const CARD_PAGE_ICON_FALLBACKS = {
+  git: { dual: true, a: 'imagens/gitlogobr.png', b: 'imagens/githublogo.png', altA: 'Git', altB: 'GitHub' },
+  docker: { dual: false, a: 'imagens/dockerlogo.png', b: '', altA: 'Docker', altB: '' },
+  npm: { dual: false, a: 'imagens/npmlogo.png', b: '', altA: 'NPM', altB: '' },
+  dotnet: { dual: false, a: 'imagens/csharplogo.png', b: '', altA: '.NET', altB: '' },
+  ia: { dual: false, a: 'imagens/ia.png', b: '', altA: 'IA', altB: '' },
+  python: { dual: false, a: 'imagens/PYTHON.png', b: '', altA: 'Python', altB: '' },
+  api: { dual: false, a: 'imagens/API.png', b: '', altA: 'API', altB: '' },
+};
+
+function cardPageIconAlt(card) {
+  const raw = String(
+    card.icon_primary_alt || card.IconPrimaryAlt || card.display_name || card.DisplayName || card.slug || '',
+  ).trim();
+  const short = raw.split(':')[0].split('|')[0].trim();
+  return escapeHtml(short || String(card.display_name || card.DisplayName || card.slug || 'BuildXP'));
+}
+
 /** Hero: só imagens/caminhos válidos; emoji ou lixo na API → fallback pelo slug. */
 function buildCardPageIconHtml(card) {
   const layout = String(card.icon_layout || card.IconLayout || 'single').toLowerCase();
   const pri = String(card.icon_primary_src || card.IconPrimarySrc || '').trim();
   const sec = String(card.icon_secondary_src || card.IconSecondarySrc || '').trim();
-  const altPri = escapeHtml(card.icon_primary_alt || card.IconPrimaryAlt || card.display_name || card.slug || '');
-  const altSec = escapeHtml(card.icon_secondary_alt || card.IconSecondaryAlt || '');
+  const altPri = cardPageIconAlt(card);
+  const altSec = escapeHtml(
+    String(card.icon_secondary_alt || card.IconSecondaryAlt || '').split(':')[0].trim(),
+  );
   const slug = String(card.slug || '').trim().toLowerCase();
+  const fb = CARD_PAGE_ICON_FALLBACKS[slug];
+  const imgOnError = fb?.a
+    ? ` onerror="this.onerror=null;this.src='${escapeHtml(fb.a)}';"`
+    : '';
 
   if (layout === 'dual' && cardHtmlIsImageSrc(pri) && cardHtmlIsImageSrc(sec)) {
-    return `<div class="page-icon dual"><img class="icon-git" src="${escapeHtml(pri)}" alt="${altPri}" /><img src="${escapeHtml(sec)}" alt="${altSec}" /></div>`;
+    return `<div class="page-icon dual"><img class="icon-git" src="${escapeHtml(pri)}" alt="${altPri}"${imgOnError} /><img src="${escapeHtml(sec)}" alt="${altSec}" /></div>`;
   }
   if (cardHtmlIsImageSrc(pri)) {
-    return `<div class="page-icon"><img src="${escapeHtml(pri)}" alt="${altPri}" /></div>`;
+    return `<div class="page-icon"><img src="${escapeHtml(pri)}" alt="${altPri}"${imgOnError} /></div>`;
   }
-  const fallbacks = {
-    git: { dual: true, a: 'imagens/gitlogobr.png', b: 'imagens/githublogo.png', altA: 'Git', altB: 'GitHub' },
-    docker: { dual: false, a: 'imagens/dockerlogo.png', b: '', altA: 'Docker', altB: '' },
-    npm: { dual: false, a: 'imagens/npmlogo.png', b: '', altA: 'NPM', altB: '' },
-    dotnet: { dual: false, a: 'imagens/csharplogo.png', b: '', altA: '.NET', altB: '' },
-  };
-  const fb = fallbacks[slug];
   if (fb?.dual && fb.b) {
     return `<div class="page-icon dual"><img class="icon-git" src="${escapeHtml(fb.a)}" alt="${escapeHtml(fb.altA)}" /><img src="${escapeHtml(fb.b)}" alt="${escapeHtml(fb.altB)}" /></div>`;
   }
@@ -505,6 +522,7 @@ function renderError(code, msg, root) {
     dotnet: '#512bd4',
     api: '#22d3ee',
     python: '#3776ab',
+    ia: '#3c19e6',
   };
   const rawBorder = card.border_color ?? card.BorderColor ?? '';
   let accent = typeof rawBorder === 'string' && /^#[0-9a-fA-F]{6}$/.test(rawBorder.trim())
@@ -552,9 +570,9 @@ function renderError(code, msg, root) {
     <div class="page-hero">
       <div class="page-hero-glow"></div>
       ${buildCardPageIconHtml(card)}
-      <div>
-        <div class="page-class">${card.card_class ?? card.CardClass ?? ''}</div>
-        <div class="page-title">${card.display_name ?? card.DisplayName ?? ''}</div>
+      <div class="page-hero-body">
+        <div class="page-class">${escapeHtml(String(card.card_class ?? card.CardClass ?? ''))}</div>
+        <div class="page-title">${escapeHtml(String(card.display_name ?? card.DisplayName ?? ''))}</div>
         <div class="page-meta">
           <span class="lvl-badge">${card.rarity_label ?? card.RarityLabel ?? 'CARD'}</span>
           <div class="xp-mini">

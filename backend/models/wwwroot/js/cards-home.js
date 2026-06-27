@@ -223,6 +223,7 @@ const BUILDXP_THEME_PRESET_HEX = Object.freeze({
   dotnet: '#512bd4',
   api: '#22d3ee',
   python: '#3776ab',
+  ia: '#3c19e6',
 });
 
 function buildxpNormalizeHexColor(raw) {
@@ -275,7 +276,11 @@ function buildxpNormalizeLegacyCardListHref(href, slug, tab) {
   if (l.startsWith('./')) l = l.slice(2);
   l = l.replace(/^\/+/, '');
   if (!l) return fallback;
-  if (/^card\.html/i.test(l)) return String(href || '').trim();
+  if (/^card\.html/i.test(l)) {
+    if (!sl) return String(href || '').trim();
+    const useTab = /[?&]tab=ref/i.test(l) ? 'ref' : t;
+    return `card.html?slug=${encodeURIComponent(sl)}&tab=${useTab}`;
+  }
   if (l.includes('://')) return String(href || '').trim();
   if (/^[a-z0-9][a-z0-9_-]*\.html([\?#][^\s]*)?$/i.test(l))
     return sl ? `card.html?slug=${encodeURIComponent(sl)}&tab=${t}` : String(href || '').trim();
@@ -667,7 +672,7 @@ function buildxpNormalizeHomeCardFromDto(raw) {
   const published = raw.is_published ?? raw.IsPublished;
   if (published === false) return null;
   const themeRaw = String(raw.theme ?? 'git').toLowerCase();
-  const theme = ['docker', 'npm', 'dotnet', 'api'].includes(themeRaw) ? themeRaw : 'git';
+  const theme = ['docker', 'npm', 'dotnet', 'api', 'python', 'ia'].includes(themeRaw) ? themeRaw : 'git';
   const xpMax = Math.max(1, Number(raw.xp_max ?? raw.xpMax ?? 3000));
   const xpCurrent = Math.max(0, Number(raw.xp_current ?? raw.xpCurrent ?? 0));
   const border_color =
@@ -712,7 +717,17 @@ function buildxpRenderIndexCardEl(c) {
   const pct = Math.min(100, Math.round((c.xp_current / c.xp_max) * 100));
   const dual =
     c.icon_layout === 'dual' && String(c.icon_secondary_src ?? '').trim();
-  const primarySrc = String(c.icon_primary_src || '').trim() || 'imagens/gitlogobr.png';
+  const iconFallbackBySlug = {
+    git: 'imagens/gitlogobr.png',
+    docker: 'imagens/dockerlogo.png',
+    npm: 'imagens/npmlogo.png',
+    dotnet: 'imagens/csharplogo.png',
+    ia: 'imagens/ia.png',
+    python: 'imagens/PYTHON.png',
+    api: 'imagens/API.png',
+  };
+  const primarySrc =
+    String(c.icon_primary_src || '').trim() || iconFallbackBySlug[c.slug] || 'imagens/gitlogobr.png';
   const primaryAlt = dashEscapeHtml(c.icon_primary_alt || c.display_name || c.slug);
   let iconHtml;
   if (dual) {
