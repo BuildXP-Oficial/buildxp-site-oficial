@@ -112,6 +112,29 @@ body::before {
 }
 .nav-links a:hover { color: var(--text); background: rgba(255,255,255,0.05); }
 
+.nav-links a.nav-link--cta {
+  margin-left: 0.35rem;
+  color: #061018;
+  background: #5ec8ff;
+  border: 1px solid #7dd4ff;
+  border-radius: 999px;
+  box-shadow: 0 0 18px rgba(94, 200, 255, 0.28);
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  padding: 0.42rem 1.05rem;
+}
+.nav-links a.nav-link--cta:hover {
+  color: #061018;
+  filter: brightness(1.06);
+  background: #7dd4ff;
+  border-color: #9edfff;
+}
+.nav-links a.nav-link--cta.nav-link--active {
+  color: #061018;
+  outline: 2px solid rgba(158, 223, 255, 0.55);
+  outline-offset: 2px;
+}
+
 .hamburger {
   display:none; background:none;
   border:1px solid var(--border); border-radius: var(--radius-sm);

@@ -1,6 +1,6 @@
 ﻿// BuildXP - terminal
 /* ── TRAINING TERMINAL ──────────────────────────────────────*/
-const TRAIN_TOPICS = ['Git', 'Docker', 'NPM', '.NET', 'Python'];
+const TRAIN_TOPICS = ['Git', 'Docker', 'NPM', '.NET', 'Python', 'Java'];
 const TRAIN_LEVELS = [
   { id: 'beginner', label: 'INICIANTE' },
   { id: 'advanced', label: 'AVANÇADO' },
@@ -325,6 +325,125 @@ const TRAIN_BANK = {
       },
     ],
   },
+  /** Treino Java: só lógica de programação — sem CLI; validação por estrutura. */
+  Java: {
+    beginner: [
+      {
+        kind: 'java',
+        q: '[Java] public static void main que calcule a área de um retângulo (base 4 e altura 5), use * e System.out.println. Nomes livres. ###',
+        feedback: 'Precisa: main estático, * com 4 e 5 (ou 20) e System.out.println.',
+        javaChecks: [
+          (n) => /public\s+static\s+void\s+main\s*\(/.test(n),
+          (n) => /system\.out\.println\s*\(/.test(n),
+          (n) =>
+            /\*/.test(n) &&
+            ((/\b4\b/.test(n) && /\b5\b/.test(n)) || /\b20\b/.test(n)),
+        ],
+      },
+      {
+        kind: 'java',
+        q: '[Java] No main: if / else (ou if / else if) para classificar um número (positivo, negativo ou zero) e System.out.println em cada ramo. ###',
+        feedback: 'Precisa: main, if, else e System.out.println.',
+        javaChecks: [
+          (n) => /public\s+static\s+void\s+main\s*\(/.test(n),
+          (n) => /\bif\s*\(/.test(n),
+          (n) => /\belse\b/.test(n),
+          (n) => (n.match(/system\.out\.println/g) || []).length >= 2,
+        ],
+      },
+      {
+        kind: 'java',
+        q: '[Java] for que conta de 1 até 5 (int i = 1; i <= 5; i++) e System.out.println de cada valor. ###',
+        feedback: 'Precisa: for com int iniciando em 1, limite 5, ++ e System.out.println.',
+        javaChecks: [
+          (n) => /public\s+static\s+void\s+main\s*\(/.test(n),
+          (n) => /\bfor\s*\(\s*int\s+\w+\s*=\s*1\b/.test(n),
+          (n) => /<=\s*5\b|<\s*6\b/.test(n),
+          (n) => /\+\+/.test(n),
+          (n) => /system\.out\.println/.test(n),
+        ],
+      },
+      {
+        kind: 'java',
+        q: '[Java] while (ou do-while) que repita enquanto uma condição for verdadeira e System.out.println dentro do loop. ###',
+        feedback: 'Precisa: while (ou do+while), main e System.out.println.',
+        javaChecks: [
+          (n) => /public\s+static\s+void\s+main\s*\(/.test(n),
+          (n) => /\bwhile\s*\(/.test(n),
+          (n) => /system\.out\.println/.test(n),
+        ],
+      },
+      {
+        kind: 'java',
+        q: '[Java] Array (int[] ou String[]) e for-each (for (tipo x : arr)) imprimindo cada elemento com System.out.println. ###',
+        feedback: 'Precisa: array [], for-each com :, e System.out.println.',
+        javaChecks: [
+          (n) => /\[\s*\]/.test(n) || /new\s+\w+\s*\[/.test(n),
+          (n) => /\bfor\s*\(\s*\w+(\s*\[\s*\])?\s+\w+\s*:/.test(n),
+          (n) => /system\.out\.println/.test(n),
+          (n) => /public\s+static\s+void\s+main\s*\(/.test(n),
+        ],
+      },
+    ],
+    advanced: [
+      {
+        kind: 'java',
+        q: '[Java] Método estático com return (ex.: soma ou maior). No main: chame o método e System.out.println do resultado. ###',
+        feedback: 'Precisa: método com return, main, chamada e System.out.println.',
+        javaChecks: [
+          (n) => /\breturn\b/.test(n),
+          (n) => /static\s+\w+\s+\w+\s*\(/.test(n),
+          (n) => /public\s+static\s+void\s+main\s*\(/.test(n),
+          (n) => /system\.out\.println/.test(n),
+        ],
+      },
+      {
+        kind: 'java',
+        q: '[Java] Uma classe (além da Main) com atributo e método. No main: new, use o objeto e System.out.println. ###',
+        feedback: 'Precisa: class, new, main e System.out.println.',
+        javaChecks: [
+          (n) => (n.match(/\bclass\s+\w+/g) || []).length >= 1,
+          (n) => /\bnew\s+\w+\s*\(/.test(n),
+          (n) => /public\s+static\s+void\s+main\s*\(/.test(n),
+          (n) => /system\.out\.println/.test(n),
+        ],
+      },
+      {
+        kind: 'java',
+        q: '[Java] try { ... } catch (...) { ... } no main (ex.: Integer.parseInt inválido) e System.out.println no catch. ###',
+        feedback: 'Precisa: try, catch, main e System.out.println.',
+        javaChecks: [
+          (n) => /\btry\s*\{/.test(n),
+          (n) => /\bcatch\s*\(/.test(n),
+          (n) => /public\s+static\s+void\s+main\s*\(/.test(n),
+          (n) => /system\.out\.println/.test(n),
+        ],
+      },
+      {
+        kind: 'java',
+        q: '[Java] switch com pelo menos duas case diferentes + default, e System.out.println. Pode usar Scanner ou variável fixa. ###',
+        feedback: 'Precisa: switch, 2+ case, default e System.out.println.',
+        javaChecks: [
+          (n) => /\bswitch\s*\(/.test(n),
+          (n) => (n.match(/\bcase\b/g) || []).length >= 2,
+          (n) => /\bdefault\s*:/.test(n),
+          (n) => /system\.out\.println/.test(n),
+          (n) => /public\s+static\s+void\s+main\s*\(/.test(n),
+        ],
+      },
+      {
+        kind: 'java',
+        q: '[Java] if com && ou || (duas condições). main + System.out.println. ###',
+        feedback: 'Precisa: if com && ou || e System.out.println.',
+        javaChecks: [
+          (n) => /public\s+static\s+void\s+main\s*\(/.test(n),
+          (n) => /\bif\s*\(/.test(n),
+          (n) => /&&|\|\|/.test(n),
+          (n) => /system\.out\.println/.test(n),
+        ],
+      },
+    ],
+  },
 };
 
 /** Normaliza C# para checagens flexíveis (comentários e strings neutras). */
@@ -385,12 +504,36 @@ function gradePython(raw, q) {
   return { result: 'wrong', xp: 0 };
 }
 
+/** Normaliza Java para checagens (comentários e strings neutras). */
+function normJavaForMatch(raw) {
+  return normCsForMatch(raw);
+}
+
+function gradeJava(raw, q) {
+  const checks = q.javaChecks || [];
+  const n = normJavaForMatch(raw);
+  let passed = 0;
+  for (const fn of checks) {
+    try {
+      if (fn(n)) passed++;
+    } catch (_) {
+      /* ignore */
+    }
+  }
+  const total = checks.length;
+  if (total === 0) return { result: 'wrong', xp: 0 };
+  if (passed === total) return { result: 'correct', xp: 20 };
+  if (passed >= Math.ceil(total * 0.65)) return { result: 'partial', xp: 10 };
+  return { result: 'wrong', xp: 0 };
+}
+
 function isCodeBlockQuestion(q) {
-  return q?.kind === 'csharp' || q?.kind === 'python';
+  return q?.kind === 'csharp' || q?.kind === 'python' || q?.kind === 'java';
 }
 
 function gradeCodeBlock(raw, q) {
   if (q.kind === 'python') return gradePython(raw, q);
+  if (q.kind === 'java') return gradeJava(raw, q);
   return gradeCSharp(raw, q);
 }
 
@@ -518,13 +661,14 @@ function initTrainingTerminal() {
 
   function isCodeBlockBankTopic() {
     const t = getBankTopic();
-    return t === 'C#' || t === 'Python';
+    return t === 'C#' || t === 'Python' || t === 'Java';
   }
 
   function termBadgeLabel() {
     if (state.topic === '.NET' && state.dotnetTrack === 'csharp') return '.NET · CÓDIGO C#';
     if (state.topic === '.NET' && state.dotnetTrack === 'cli') return '.NET · CLI';
     if (state.topic === 'Python') return 'PYTHON · CÓDIGO';
+    if (state.topic === 'Java') return 'JAVA · CÓDIGO';
     return state.topic;
   }
 
@@ -629,6 +773,7 @@ function initTrainingTerminal() {
         NPM: { c: '#ff4545', g: '0 0 28px rgba(255,69,69,0.35)' },
         '.NET': { c: '#b455f5', g: '0 0 28px rgba(180,85,245,0.35)' },
         Python: { c: '#3776ab', g: '0 0 28px rgba(55,118,171,0.35)' },
+        Java: { c: '#f89820', g: '0 0 28px rgba(248,152,32,0.35)' },
       };
       const p = presets[t] ?? presets.Git;
       mount.style.setProperty('--term-accent', p.c);
@@ -850,11 +995,14 @@ function initTrainingTerminal() {
     );
     line(`Objetivo: ${state.goalXp} XP.`, 'term-dim');
     if (isCodeBlockBankTopic()) {
-      const lang = getBankTopic() === 'Python' ? 'Python' : 'C#';
+      const bank = getBankTopic();
+      const lang = bank === 'Python' ? 'Python' : bank === 'Java' ? 'Java' : 'C#';
       const hint =
-        getBankTopic() === 'Python'
+        bank === 'Python'
           ? 'listas, dicts, loops e dados; nomes livres — validamos a estrutura.'
-          : 'nomes de classes e variáveis livres; validamos a estrutura.';
+          : bank === 'Java'
+            ? 'lógica Java (main, if, for, classes); nomes livres — validamos a estrutura.'
+            : 'nomes de classes e variáveis livres; validamos a estrutura.';
       line(`Modo ${lang}: ${hint}`, 'term-dim');
       line(`Bloco: uma linha por Enter; linha só com ### envia o bloco.`, 'term-dim');
     } else {

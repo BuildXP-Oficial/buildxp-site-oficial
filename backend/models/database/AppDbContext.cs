@@ -20,6 +20,8 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
     public DbSet<Colaborador> Colaboradores { get; set; }
     public DbSet<AdminPerfil> AdminPerfis { get; set; }
     public DbSet<CardIconUpload> CardIconUploads { get; set; }
+    public DbSet<MarkdownBuilderUser> MarkdownBuilderUsers { get; set; }
+    public DbSet<MarkdownBuilderDoc> MarkdownBuilderDocs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -100,6 +102,31 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
             entity.Property(a => a.Senha).HasMaxLength(500);
             entity.Property(a => a.FotoMimeType).HasMaxLength(64);
             entity.HasIndex(a => a.Usuario).IsUnique();
+        });
+
+        modelBuilder.Entity<MarkdownBuilderUser>(entity =>
+        {
+            entity.ToTable("MarkdownBuilderUsers");
+            entity.Property(u => u.Usuario).HasMaxLength(40);
+            entity.Property(u => u.Nome).HasMaxLength(80);
+            entity.Property(u => u.SenhaHash).HasMaxLength(128);
+            entity.Property(u => u.SecurityAnswerHash).HasMaxLength(128);
+            entity.HasIndex(u => u.Usuario).IsUnique();
+            entity.HasOne(u => u.Document)
+                .WithOne(d => d.User)
+                .HasForeignKey<MarkdownBuilderDoc>(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<MarkdownBuilderDoc>(entity =>
+        {
+            entity.ToTable("MarkdownBuilderDocs");
+            entity.Property(d => d.Titulo).HasMaxLength(120);
+            entity.Property(d => d.ConteudoMarkdown).HasColumnType("text");
+            entity.Property(d => d.Pitch).HasColumnType("text");
+            entity.Property(d => d.Arquitetura).HasColumnType("text");
+            entity.Property(d => d.RegrasEvento).HasColumnType("text");
+            entity.HasIndex(d => d.UserId).IsUnique();
         });
 
     }
