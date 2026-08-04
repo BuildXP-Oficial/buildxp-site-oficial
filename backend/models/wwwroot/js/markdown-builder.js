@@ -32,9 +32,36 @@
     alertImportant: '> [!IMPORTANT]\n> Ponto importante.\n',
     alertWarning: '> [!WARNING]\n> Atenção com isto.\n',
     alertCaution: '> [!CAUTION]\n> Risco / cuidado.\n',
+    topWave:
+      '<!-- Troca: SEU_NOME / SUA_FRASE e cores hex (ex. 4db5ff) na URL -->\n' +
+      '![header](https://capsule-render.vercel.app/api?type=waving&height=200&color=0:4db5ff,100:061229&text=SEU_NOME&fontColor=ffffff&fontSize=60&desc=SUA_FRASE&descAlignY=72&descSize=18)\n',
+    topRect:
+      '<!-- Troca: SEU_NOME e cores hex (ex. 4db5ff) na URL -->\n' +
+      '![header](https://capsule-render.vercel.app/api?type=rect&height=120&color=4db5ff&text=SEU_NOME&fontColor=061229&fontSize=50&fontAlignY=45)\n',
+    topCylinder:
+      '<!-- Troca: SEU_NOME / SUA_FRASE e cores hex na URL -->\n' +
+      '![header](https://capsule-render.vercel.app/api?type=cylinder&height=180&color=0:2d7dff,100:4db5ff&text=SEU_NOME&fontColor=ffffff&fontSize=55&desc=SUA_FRASE&descAlignY=70&descSize=16)\n',
+    topTyping:
+      '<!-- Troca: SEU_NOME, cor do icone (%2300d4ff) e as frases em lines=... (separa com ;) -->\n' +
+      '## <img src="https://api.iconify.design/lucide:zap.svg?color=%2300d4ff" width="28" valign="middle" />   SEU_NOME.sys\n' +
+      '<br/>\n' +
+      '\n' +
+      '<br/>\n' +
+      '\n' +
+      '<p align="center">\n' +
+      '  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=18&pause=2000&color=00D4FF&center=true&vCenter=true&width=600&height=40&duration=500&lines=Frase+um+aqui;Frase+dois+aqui;Frase+tres+aqui" alt="Typing SVG" />\n' +
+      '</p>\n',
+    footLine:
+      '<!-- Troca: SEU_NOME, SEU_USER e os links -->\n' +
+      '\n---\n\n' +
+      '**Feito com 💙 por SEU_NOME**\n\n' +
+      '[GitHub](https://github.com/SEU_USER) · [LinkedIn](https://linkedin.com/in/SEU_USER)\n',
+    footWave:
+      '<!-- Troca: SEU_NOME e cores hex (ex. 4db5ff) na URL -->\n' +
+      '![footer](https://capsule-render.vercel.app/api?type=waving&height=120&color=0:061229,100:4db5ff&section=footer&text=Obrigado%20pela%20visita&fontSize=28&fontColor=ffffff&desc=por%20SEU_NOME&descSize=14&descAlignY=75)\n',
   };
 
-  const TUTORIAL_STEPS = [
+  const LEGEND_STEPS = [
     {
       snip: 'h1',
       badge: 'H1',
@@ -217,7 +244,51 @@
       body: 'Cuidado / risco — o alerta mais forte do GitHub.',
       example: '> [!CAUTION]\n> Cuidado.',
     },
+    {
+      snip: 'topWave',
+      badge: 'TOP1',
+      title: 'Top — onda',
+      body: 'Banner superior com onda. Na URL, troca SEU_NOME, SUA_FRASE e as cores hex (ex. 4db5ff).',
+      example: 'type=waving · text=SEU_NOME · color=4db5ff',
+    },
+    {
+      snip: 'topRect',
+      badge: 'TOP2',
+      title: 'Top — faixa',
+      body: 'Faixa reta com o teu nome. Edita SEU_NOME e o hex da cor na URL do capsule-render.',
+      example: 'type=rect · text=SEU_NOME · color=4db5ff',
+    },
+    {
+      snip: 'topCylinder',
+      badge: 'TOP3',
+      title: 'Top — cilindro',
+      body: 'Banner em cilindro com título e frase. Só mudas texto e cores na URL.',
+      example: 'type=cylinder · text=SEU_NOME · desc=SUA_FRASE',
+    },
+    {
+      snip: 'topTyping',
+      badge: 'TOP4',
+      title: 'Top — typing',
+      body: 'Cabeçalho transparente: ícone + nome + frases animadas. Edita SEU_NOME, a cor e as lines=…',
+      example: 'SEU_NOME.sys + readme-typing-svg',
+    },
+    {
+      snip: 'footLine',
+      badge: 'FOOT1',
+      title: 'Footer — linha',
+      body: 'Rodapé com frase e links. Troca SEU_NOME, SEU_USER e os URLs do GitHub/LinkedIn.',
+      example: '**Feito com 💙 por SEU_NOME**',
+    },
+    {
+      snip: 'footWave',
+      badge: 'FOOT2',
+      title: 'Footer — onda',
+      body: 'Banner inferior com onda. Edita SEU_NOME e as cores hex na URL.',
+      example: 'section=footer · desc=por SEU_NOME',
+    },
   ];
+
+  const LEGEND_BY_SNIP = Object.fromEntries(LEGEND_STEPS.map((s) => [s.snip, s]));
 
   let state = {
     mode: null, // 'guest' | 'auth'
@@ -228,13 +299,12 @@
     saving: false,
   };
 
-  let tutorialIndex = 0;
-  let tutorialBound = false;
-  let tutorialRepositionBound = false;
-  let tutorialPlaceTimer = 0;
-  let tutorialPlacing = false;
-  /** Em modo sem guardar: fecha só nesta visita; na próxima entrada o guia volta. */
-  let tutorialDismissedThisVisit = false;
+  let legendBound = false;
+  let legendHideTimer = 0;
+  let legendAutoHideTimer = 0;
+  let legendAnchor = null;
+  let legendSnip = '';
+  let legendMobileOpen = false;
 
   function apiBase() {
     return typeof getBuildXpApiBase === 'function'
@@ -281,200 +351,26 @@
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
-  function clearTutorialFocus() {
-    document.querySelectorAll('.md-tool.md-tool--tour-focus').forEach((b) => {
-      b.classList.remove('md-tool--tour-focus');
-    });
-  }
-
-  function isMobileTutorial() {
+  function isMobileLegend() {
     return window.matchMedia('(max-width: 900px)').matches;
-  }
-
-  function navOffset() {
-    const nav = document.querySelector('.navbar');
-    return (nav?.getBoundingClientRect().height || 62) + 8;
-  }
-
-  function applySpotlightRect(tool) {
-    const spot = el('md-tutorial-spotlight');
-    if (!spot || !tool) return;
-    const r = tool.getBoundingClientRect();
-    if (r.width < 2 || r.height < 2) {
-      spot.style.display = 'none';
-      return;
-    }
-    const pad = 5;
-    spot.style.display = '';
-    spot.style.top = `${r.top - pad}px`;
-    spot.style.left = `${r.left - pad}px`;
-    spot.style.width = `${r.width + pad * 2}px`;
-    spot.style.height = `${r.height + pad * 2}px`;
   }
 
   function clamp(n, min, max) {
     return Math.min(max, Math.max(min, n));
   }
 
-  /** Cartão acompanha o botão: abaixo, acima ou ao lado — sem cobrir o botão. */
-  function placeTutorialCardNear(tool) {
-    const card = el('md-tutorial-card');
-    const pin = el('md-tutorial-pin');
-    if (!card) return;
-
-    const mobile = isMobileTutorial();
-    document.body.classList.toggle('md-tutorial-mobile', mobile);
-    const margin = 12;
-    const gap = 14;
-
-    if (mobile) {
-      card.classList.add('md-tutorial-card--sheet');
-      card.style.top = '';
-      card.style.left = '12px';
-      card.style.right = '12px';
-      card.style.bottom = 'max(12px, env(safe-area-inset-bottom))';
-      card.style.width = 'auto';
-      card.style.transform = 'none';
-      if (pin) pin.textContent = '↑ Botão destacado na toolbar';
-      return;
-    }
-
-    card.classList.remove('md-tutorial-card--sheet');
-    card.style.bottom = '';
-    card.style.right = '';
-    card.style.transform = 'none';
-
-    const cardW = Math.min(400, window.innerWidth - margin * 2);
-    card.style.width = `${cardW}px`;
-
-    if (!tool) {
-      card.style.left = `${(window.innerWidth - cardW) / 2}px`;
-      card.style.top = `${navOffset() + 72}px`;
-      if (pin) pin.textContent = 'Botão da toolbar';
-      return;
-    }
-
-    const r = tool.getBoundingClientRect();
-    const cardH = Math.min(card.offsetHeight || 300, window.innerHeight * 0.7);
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const centerLeft = clamp(r.left + r.width / 2 - cardW / 2, margin, vw - cardW - margin);
-
-    const options = [
-      {
-        top: r.bottom + gap,
-        left: centerLeft,
-        pin: '↑ Este botão na toolbar',
-        ok: r.bottom + gap + cardH <= vh - margin,
-        score: 100,
-      },
-      {
-        top: r.top - gap - cardH,
-        left: centerLeft,
-        pin: '↓ Este botão na toolbar',
-        ok: r.top - gap - cardH >= margin,
-        score: 90,
-      },
-      {
-        top: clamp(r.top + r.height / 2 - cardH / 2, margin, vh - cardH - margin),
-        left: r.right + gap,
-        pin: '← Este botão na toolbar',
-        ok: r.right + gap + cardW <= vw - margin,
-        score: 80,
-      },
-      {
-        top: clamp(r.top + r.height / 2 - cardH / 2, margin, vh - cardH - margin),
-        left: r.left - gap - cardW,
-        pin: 'Este botão na toolbar →',
-        ok: r.left - gap - cardW >= margin,
-        score: 70,
-      },
-    ];
-
-    const fit = options.filter((o) => o.ok).sort((a, b) => b.score - a.score)[0];
-    const best = fit || options[0];
-    card.style.top = `${clamp(best.top, margin, Math.max(margin, vh - cardH - margin))}px`;
-    card.style.left = `${clamp(best.left, margin, Math.max(margin, vw - cardW - margin))}px`;
-    if (pin) pin.textContent = best.pin;
+  function clearLegendFocus() {
+    document.querySelectorAll('.md-tool.md-tool--legend-focus').forEach((b) => {
+      b.classList.remove('md-tool--legend-focus');
+    });
   }
 
-  function positionTutorialAround(tool, opts) {
-    const allowScroll = !opts || opts.scroll !== false;
-    const spot = el('md-tutorial-spotlight');
-    const card = el('md-tutorial-card');
-    if (!spot || !card) return;
+  function fillLegendContent(step) {
+    const badge = el('md-legend-badge');
+    const title = el('md-legend-title');
+    const body = el('md-legend-body');
+    const example = el('md-legend-example');
 
-    if (!tool) {
-      spot.style.display = 'none';
-      placeTutorialCardNear(null);
-      return;
-    }
-
-    const finish = () => {
-      applySpotlightRect(tool);
-      placeTutorialCardNear(tool);
-      // Remedeia altura real do cartão e reposiciona uma vez
-      requestAnimationFrame(() => placeTutorialCardNear(tool));
-    };
-
-    if (allowScroll && !tutorialPlacing) {
-      tutorialPlacing = true;
-      const bar = document.querySelector('.md-toolbar-bar');
-      if (bar) {
-        bar.scrollIntoView({ block: 'start', behavior: 'auto' });
-        window.scrollBy(0, -navOffset());
-      }
-      tool.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'auto' });
-      const r0 = tool.getBoundingClientRect();
-      const topNeed = navOffset() + 4;
-      if (r0.top < topNeed) {
-        window.scrollTo({
-          top: Math.max(0, window.scrollY + r0.top - topNeed - 6),
-          behavior: 'auto',
-        });
-      }
-      window.setTimeout(() => {
-        finish();
-        tutorialPlacing = false;
-      }, 50);
-    } else {
-      finish();
-    }
-  }
-
-  function setTutorialNavButtons() {
-    const total = TUTORIAL_STEPS.length;
-    const isFirst = tutorialIndex <= 0;
-    const isLast = tutorialIndex >= total - 1;
-    const prevBtn = el('md-tutorial-prev');
-    const nextBtn = el('md-tutorial-next');
-    const doneBtn = el('md-tutorial-done');
-
-    if (prevBtn) {
-      if (isFirst) prevBtn.setAttribute('hidden', '');
-      else prevBtn.removeAttribute('hidden');
-    }
-    if (nextBtn) {
-      if (isLast) nextBtn.setAttribute('hidden', '');
-      else nextBtn.removeAttribute('hidden');
-    }
-    if (doneBtn) {
-      if (isLast) doneBtn.removeAttribute('hidden');
-      else doneBtn.setAttribute('hidden', '');
-    }
-  }
-
-  function renderTutorialStep() {
-    const step = TUTORIAL_STEPS[tutorialIndex];
-    if (!step) return;
-    const total = TUTORIAL_STEPS.length;
-    const progress = el('md-tutorial-progress');
-    const badge = el('md-tutorial-badge');
-    const title = el('md-tutorial-title');
-    const body = el('md-tutorial-body');
-    const example = el('md-tutorial-example');
-
-    if (progress) progress.textContent = `${tutorialIndex + 1} / ${total}`;
     if (badge) badge.textContent = step.badge;
     if (title) title.textContent = step.title;
     if (body) body.textContent = step.body;
@@ -488,81 +384,174 @@
         example.setAttribute('hidden', '');
       }
     }
-
-    setTutorialNavButtons();
-    clearTutorialFocus();
-    const tool = document.querySelector(`#md-toolbar [data-md-snip="${step.snip}"]`);
-    tool?.classList.add('md-tool--tour-focus');
-    positionTutorialAround(tool, { scroll: true });
   }
 
-  function onTutorialViewportChange() {
-    if (el('md-tutorial')?.hasAttribute('hidden')) return;
-    if (tutorialPlacing) return;
-    window.clearTimeout(tutorialPlaceTimer);
-    tutorialPlaceTimer = window.setTimeout(() => {
-      const step = TUTORIAL_STEPS[tutorialIndex];
-      if (!step) return;
-      const tool = document.querySelector(`#md-toolbar [data-md-snip="${step.snip}"]`);
-      // Só reposiciona o spotlight — evita loop de scroll
-      positionTutorialAround(tool, { scroll: false });
-    }, 80);
-  }
+  function placeLegendNear(tool) {
+    const card = el('md-legend');
+    if (!card) return;
 
-  function openTutorial(fromGuide) {
-    tutorialIndex = 0;
-    const box = el('md-tutorial');
-    if (!box) return;
-    box.removeAttribute('hidden');
-    document.body.classList.add('md-tutorial-open');
-    document.body.classList.toggle('md-tutorial-mobile', isMobileTutorial());
-    renderTutorialStep();
-    if (fromGuide) setStatus('', '');
-  }
+    const mobile = isMobileLegend();
+    const margin = 12;
+    const gap = 10;
 
-  function closeTutorial(markDone) {
-    if (markDone) tutorialDismissedThisVisit = true;
-    clearTutorialFocus();
-    el('md-tutorial')?.setAttribute('hidden', '');
-    document.body.classList.remove('md-tutorial-open', 'md-tutorial-mobile');
-    el('md-tutorial-card')?.classList.remove('md-tutorial-card--sheet');
-  }
+    card.classList.toggle('md-legend--sheet', mobile);
+    document.body.classList.toggle('md-legend-mobile', mobile);
 
-  function maybeShowTutorial() {
-    // Com cadastro: não força o tutorial (usa o botão GUIA).
-    if (state.mode === 'auth') return;
-    // Sem guardar: mostra sempre ao entrar; se pulou nesta visita, não reabre sozinho.
-    if (tutorialDismissedThisVisit) return;
-    openTutorial(false);
-  }
-
-  function bindTutorial() {
-    if (tutorialBound) return;
-    tutorialBound = true;
-
-    el('md-btn-open-guide')?.addEventListener('click', () => openTutorial(true));
-
-    el('md-tutorial-skip')?.addEventListener('click', () => closeTutorial(true));
-
-    el('md-tutorial-prev')?.addEventListener('click', () => {
-      if (tutorialIndex <= 0) return;
-      tutorialIndex -= 1;
-      renderTutorialStep();
-    });
-
-    el('md-tutorial-next')?.addEventListener('click', () => {
-      if (tutorialIndex >= TUTORIAL_STEPS.length - 1) return;
-      tutorialIndex += 1;
-      renderTutorialStep();
-    });
-
-    el('md-tutorial-done')?.addEventListener('click', () => closeTutorial(true));
-
-    if (!tutorialRepositionBound) {
-      tutorialRepositionBound = true;
-      window.addEventListener('resize', onTutorialViewportChange);
-      window.addEventListener('scroll', onTutorialViewportChange, true);
+    if (mobile) {
+      // Faixa no fluxo sob a toolbar — CSS trata o layout
+      card.style.top = '';
+      card.style.left = '';
+      card.style.right = '';
+      card.style.bottom = '';
+      card.style.width = '';
+      card.style.transform = '';
+      return;
     }
+
+    card.style.bottom = '';
+    card.style.right = '';
+    card.style.transform = 'none';
+
+    const cardW = Math.min(340, window.innerWidth - margin * 2);
+    card.style.width = `${cardW}px`;
+
+    if (!tool) {
+      card.style.left = `${(window.innerWidth - cardW) / 2}px`;
+      card.style.top = `${margin + 72}px`;
+      return;
+    }
+
+    const r = tool.getBoundingClientRect();
+    const cardH = Math.min(card.offsetHeight || 220, window.innerHeight * 0.55);
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const centerLeft = clamp(r.left + r.width / 2 - cardW / 2, margin, vw - cardW - margin);
+
+    const below = r.bottom + gap;
+    const above = r.top - gap - cardH;
+    if (below + cardH <= vh - margin) {
+      card.style.top = `${below}px`;
+      card.style.left = `${centerLeft}px`;
+    } else if (above >= margin) {
+      card.style.top = `${above}px`;
+      card.style.left = `${centerLeft}px`;
+    } else {
+      card.style.top = `${clamp(r.top + r.height / 2 - cardH / 2, margin, vh - cardH - margin)}px`;
+      const right = r.right + gap;
+      if (right + cardW <= vw - margin) {
+        card.style.left = `${right}px`;
+      } else {
+        card.style.left = `${clamp(r.left - gap - cardW, margin, vw - cardW - margin)}px`;
+      }
+    }
+  }
+
+  function hideLegend() {
+    window.clearTimeout(legendHideTimer);
+    legendHideTimer = 0;
+    window.clearTimeout(legendAutoHideTimer);
+    legendAutoHideTimer = 0;
+    clearLegendFocus();
+    legendAnchor = null;
+    legendSnip = '';
+    legendMobileOpen = false;
+    el('md-legend')?.setAttribute('hidden', '');
+    document.body.classList.remove('md-legend-open', 'md-legend-mobile');
+    el('md-legend')?.classList.remove('md-legend--sheet');
+  }
+
+  function showLegend(snip, tool) {
+    const step = LEGEND_BY_SNIP[snip];
+    const card = el('md-legend');
+    if (!step || !card) return;
+
+    window.clearTimeout(legendHideTimer);
+    legendHideTimer = 0;
+    window.clearTimeout(legendAutoHideTimer);
+    legendAutoHideTimer = 0;
+    legendAnchor = tool || null;
+    legendSnip = snip;
+    legendMobileOpen = isMobileLegend();
+
+    fillLegendContent(step);
+    clearLegendFocus();
+    tool?.classList.add('md-tool--legend-focus');
+
+    card.removeAttribute('hidden');
+    document.body.classList.toggle('md-legend-open', legendMobileOpen);
+    placeLegendNear(tool);
+    requestAnimationFrame(() => placeLegendNear(tool));
+
+    if (legendMobileOpen) {
+      legendAutoHideTimer = window.setTimeout(() => hideLegend(), 5200);
+    }
+  }
+
+  function scheduleHideLegend() {
+    window.clearTimeout(legendHideTimer);
+    legendHideTimer = window.setTimeout(() => {
+      if (legendMobileOpen) return;
+      hideLegend();
+    }, 140);
+  }
+
+  function cancelHideLegend() {
+    window.clearTimeout(legendHideTimer);
+    legendHideTimer = 0;
+  }
+
+  function onLegendViewportChange() {
+    if (el('md-legend')?.hasAttribute('hidden')) return;
+    if (!legendAnchor) return;
+    placeLegendNear(legendAnchor);
+  }
+
+  function bindToolLegend() {
+    if (legendBound) return;
+    legendBound = true;
+
+    const toolbar = el('md-toolbar');
+    const card = el('md-legend');
+
+    toolbar?.querySelectorAll('[data-md-snip]').forEach((btn) => {
+      btn.addEventListener('pointerenter', (e) => {
+        if (isMobileLegend()) return;
+        if (e.pointerType === 'touch') return;
+        const key = btn.getAttribute('data-md-snip');
+        if (!key || !LEGEND_BY_SNIP[key]) return;
+        cancelHideLegend();
+        showLegend(key, btn);
+      });
+
+      btn.addEventListener('pointerleave', (e) => {
+        if (isMobileLegend()) return;
+        if (e.pointerType === 'touch') return;
+        scheduleHideLegend();
+      });
+    });
+
+    card?.addEventListener('pointerenter', () => {
+      if (isMobileLegend()) return;
+      cancelHideLegend();
+    });
+
+    card?.addEventListener('pointerleave', () => {
+      if (isMobileLegend()) return;
+      scheduleHideLegend();
+    });
+
+    el('md-legend-close')?.addEventListener('click', () => hideLegend());
+
+    document.addEventListener('pointerdown', (e) => {
+      if (!legendMobileOpen) return;
+      const t = e.target;
+      if (card?.contains(t)) return;
+      if (t.closest?.('[data-md-snip]')) return;
+      hideLegend();
+    });
+
+    window.addEventListener('resize', onLegendViewportChange);
+    window.addEventListener('scroll', onLegendViewportChange, true);
   }
 
   function refreshPreview() {
@@ -688,10 +677,12 @@
       const key = btn.getAttribute('data-md-snip');
       if (key === 'help-media') {
         el('md-media-help')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        if (isMobileLegend()) showLegend(key, btn);
         return;
       }
       const snip = SNIPPETS[key];
       if (snip) insertAtCursor(editor, snip);
+      if (isMobileLegend() && LEGEND_BY_SNIP[key]) showLegend(key, btn);
     });
 
     window.addEventListener('beforeunload', (e) => {
@@ -728,9 +719,8 @@
           : 'Sessão sem guardar — o conteúdo perde-se ao sair';
     }
     bindEditor();
-    bindTutorial();
+    bindToolLegend();
     refreshPreview();
-    maybeShowTutorial();
   }
 
   function showGatePanel(name) {
@@ -768,10 +758,6 @@
       state.mode = 'guest';
       sessionStorage.setItem(GUEST_KEY, '1');
       sessionStorage.removeItem(TOKEN_KEY);
-      tutorialDismissedThisVisit = false;
-      try {
-        localStorage.removeItem('buildxp_md_tutorial_done');
-      } catch (_) {}
       showWorkspace();
       setStatus('Modo sem guardar. Ao sair, o conteúdo é perdido.', 'warn');
     });

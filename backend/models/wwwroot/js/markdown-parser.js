@@ -7,8 +7,32 @@ function mdEscape(str) {
     .replace(/"/g, '&quot;');
 }
 
+/** Permite <img> HTTPS seguro em conteúdo misto (títulos README / typing SVG). */
+function mdSanitizeImgTag(tag) {
+  const src = (tag.match(/\bsrc\s*=\s*"([^"]+)"/i) || [])[1] || '';
+  if (!/^https:\/\//i.test(src)) return '';
+  const alt = (tag.match(/\balt\s*=\s*"([^"]*)"/i) || [])[1] || '';
+  const width = (tag.match(/\bwidth\s*=\s*"([^"]+)"/i) || [])[1] || '';
+  const height = (tag.match(/\bheight\s*=\s*"([^"]+)"/i) || [])[1] || '';
+  const valign = (tag.match(/\bvalign\s*=\s*"([^"]+)"/i) || [])[1] || '';
+  let out = `<img src="${mdEscape(src)}" alt="${mdEscape(alt)}" loading="lazy" referrerpolicy="no-referrer"`;
+  if (width) out += ` width="${mdEscape(width)}"`;
+  if (height) out += ` height="${mdEscape(height)}"`;
+  if (valign) out += ` style="vertical-align:${mdEscape(valign)}"`;
+  out += ' />';
+  return out;
+}
+
 function mdInline(raw) {
-  let s = mdEscape(raw);
+  const imgs = [];
+  let s = String(raw ?? '').replace(/<img\b[^>]*\/?>/gi, (tag) => {
+    const safe = mdSanitizeImgTag(tag);
+    if (!safe) return '';
+    const token = `\u0000IMG${imgs.length}\u0000`;
+    imgs.push(safe);
+    return token;
+  });
+  s = mdEscape(s);
   // images ![alt](url)
   s = s.replace(
     /!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g,
@@ -27,6 +51,9 @@ function mdInline(raw) {
   s = s.replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, '$1<em>$2</em>');
   // inline code
   s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  imgs.forEach((html, idx) => {
+    s = s.replace(`\u0000IMG${idx}\u0000`, html);
+  });
   return s;
 }
 
@@ -204,6 +231,45 @@ function buildxpRenderMarkdown(src) {
     if (!line.trim()) {
       flushList();
       i += 1;
+      continue;
+    }
+
+    // HTML comments (hidden on GitHub; skip in preview)
+    if (/^\s*<!--[\s\S]*-->\s*$/.test(line)) {
+      i += 1;
+      continue;
+    }
+
+    // <br/> solo (espaçamento em READMEs)
+    if (/^\s*<br\s*\/?>\s*$/i.test(line)) {
+      flushList();
+      out.push('<br />');
+      i += 1;
+      continue;
+    }
+
+    // <p align="...">...</p> (typing SVG / blocos centrais)
+    if (/^\s*<p\b/i.test(line)) {
+      flushList();
+      const buf = [line];
+      const openOnly = !/<\/p>\s*$/i.test(line);
+      i += 1;
+      while (openOnly && i < lines.length) {
+        buf.push(lines[i]);
+        if (/<\/p>/i.test(lines[i])) {
+          i += 1;
+          break;
+        }
+        i += 1;
+      }
+      const block = buf.join('\n');
+      const align = ((block.match(/<p\b[^>]*\balign\s*=\s*"([^"]*)"/i) || [])[1] || '').toLowerCase();
+      const style = align === 'center' ? ' text-align:center;' : '';
+      const inner = block
+        .replace(/^\s*<p\b[^>]*>/i, '')
+        .replace(/<\/p>\s*$/i, '')
+        .trim();
+      out.push(`<p style="${style}">${mdInline(inner)}</p>`);
       continue;
     }
 

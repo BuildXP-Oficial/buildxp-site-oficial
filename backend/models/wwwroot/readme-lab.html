@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
-  <link rel="stylesheet" href="css/site.css?v=bxp-mod-53" />
+  <link rel="stylesheet" href="css/site.css?v=bxp-mod-57" />
   <script>window.BUILDXP_API_BASE = window.BUILDXP_API_BASE || '';</script>
 </head>
 <body>
@@ -130,42 +130,58 @@
   <section class="md-workspace" id="md-workspace">
     <div class="md-toolbar-bar">
       <div class="md-toolbar" id="md-toolbar" role="toolbar" aria-label="Inserir markdown">
-        <button type="button" class="md-tool" data-md-snip="h1" title="H1">H1</button>
-        <button type="button" class="md-tool" data-md-snip="h2" title="H2">H2</button>
-        <button type="button" class="md-tool" data-md-snip="h3" title="H3">H3</button>
-        <button type="button" class="md-tool" data-md-snip="h4" title="H4">H4</button>
-        <button type="button" class="md-tool" data-md-snip="h5" title="H5">H5</button>
-        <button type="button" class="md-tool" data-md-snip="h6" title="H6">H6</button>
+        <button type="button" class="md-tool" data-md-snip="h1" aria-label="H1">H1</button>
+        <button type="button" class="md-tool" data-md-snip="h2" aria-label="H2">H2</button>
+        <button type="button" class="md-tool" data-md-snip="h3" aria-label="H3">H3</button>
+        <button type="button" class="md-tool" data-md-snip="h4" aria-label="H4">H4</button>
+        <button type="button" class="md-tool" data-md-snip="h5" aria-label="H5">H5</button>
+        <button type="button" class="md-tool" data-md-snip="h6" aria-label="H6">H6</button>
         <span class="md-tool-sep"></span>
-        <button type="button" class="md-tool" data-md-snip="bold" title="Negrito"><strong>B</strong></button>
-        <button type="button" class="md-tool" data-md-snip="italic" title="Itálico"><em>I</em></button>
-        <button type="button" class="md-tool" data-md-snip="boldItalic" title="Negrito+itálico"><strong><em>BI</em></strong></button>
-        <button type="button" class="md-tool" data-md-snip="codeInline" title="Código inline">&lt;/&gt;</button>
-        <button type="button" class="md-tool" data-md-snip="codeBlock" title="Bloco de código">```</button>
+        <button type="button" class="md-tool" data-md-snip="bold" aria-label="Negrito"><strong>B</strong></button>
+        <button type="button" class="md-tool" data-md-snip="italic" aria-label="Itálico"><em>I</em></button>
+        <button type="button" class="md-tool" data-md-snip="boldItalic" aria-label="Negrito e itálico"><strong><em>BI</em></strong></button>
+        <button type="button" class="md-tool" data-md-snip="codeInline" aria-label="Código inline">&lt;/&gt;</button>
+        <button type="button" class="md-tool" data-md-snip="codeBlock" aria-label="Bloco de código">```</button>
         <span class="md-tool-sep"></span>
-        <button type="button" class="md-tool" data-md-snip="ul" title="Lista">• Lista</button>
-        <button type="button" class="md-tool" data-md-snip="ol" title="Lista numerada">1. Lista</button>
-        <button type="button" class="md-tool" data-md-snip="check" title="Checklist">☑</button>
-        <button type="button" class="md-tool" data-md-snip="quote" title="Citação">”</button>
-        <button type="button" class="md-tool" data-md-snip="hr" title="Linha">―</button>
-        <button type="button" class="md-tool" data-md-snip="table" title="Tabela">Tabela</button>
+        <button type="button" class="md-tool" data-md-snip="ul" aria-label="Lista">• Lista</button>
+        <button type="button" class="md-tool" data-md-snip="ol" aria-label="Lista numerada">1. Lista</button>
+        <button type="button" class="md-tool" data-md-snip="check" aria-label="Checklist">☑</button>
+        <button type="button" class="md-tool" data-md-snip="quote" aria-label="Citação">”</button>
+        <button type="button" class="md-tool" data-md-snip="hr" aria-label="Linha">―</button>
+        <button type="button" class="md-tool" data-md-snip="table" aria-label="Tabela">Tabela</button>
         <span class="md-tool-sep"></span>
-        <button type="button" class="md-tool" data-md-snip="link" title="Link">Link</button>
-        <button type="button" class="md-tool" data-md-snip="image" title="Inserir imagem">IMG</button>
-        <button type="button" class="md-tool" data-md-snip="gif" title="Inserir GIF">GIF</button>
-        <button type="button" class="md-tool" data-md-snip="help-media" title="Onde pegar URLs de imagem e GIF">?</button>
+        <button type="button" class="md-tool" data-md-snip="link" aria-label="Link">Link</button>
+        <button type="button" class="md-tool" data-md-snip="image" aria-label="Inserir imagem">IMG</button>
+        <button type="button" class="md-tool" data-md-snip="gif" aria-label="Inserir GIF">GIF</button>
+        <button type="button" class="md-tool" data-md-snip="help-media" aria-label="Onde pegar URLs de imagem e GIF">?</button>
         <span class="md-tool-sep"></span>
-        <button type="button" class="md-tool" data-md-snip="alertNote">NOTE</button>
-        <button type="button" class="md-tool" data-md-snip="alertTip">TIP</button>
-        <button type="button" class="md-tool" data-md-snip="alertImportant">IMP</button>
-        <button type="button" class="md-tool" data-md-snip="alertWarning">WARN</button>
-        <button type="button" class="md-tool" data-md-snip="alertCaution">CAUT</button>
+        <button type="button" class="md-tool" data-md-snip="alertNote" aria-label="Alerta NOTE">NOTE</button>
+        <button type="button" class="md-tool" data-md-snip="alertTip" aria-label="Alerta TIP">TIP</button>
+        <button type="button" class="md-tool" data-md-snip="alertImportant" aria-label="Alerta IMPORTANT">IMP</button>
+        <button type="button" class="md-tool" data-md-snip="alertWarning" aria-label="Alerta WARNING">WARN</button>
+        <button type="button" class="md-tool" data-md-snip="alertCaution" aria-label="Alerta CAUTION">CAUT</button>
         <span class="md-tool-sep"></span>
-        <button type="button" class="md-tool md-tool--guide" id="md-btn-open-guide" title="Guia dos botões">GUIA</button>
+        <button type="button" class="md-tool" data-md-snip="topWave" aria-label="Modelo de topo onda">TOP1</button>
+        <button type="button" class="md-tool" data-md-snip="topRect" aria-label="Modelo de topo faixa">TOP2</button>
+        <button type="button" class="md-tool" data-md-snip="topCylinder" aria-label="Modelo de topo cilindro">TOP3</button>
+        <button type="button" class="md-tool" data-md-snip="topTyping" aria-label="Modelo de topo transparente com typing">TOP4</button>
+        <button type="button" class="md-tool" data-md-snip="footLine" aria-label="Modelo de rodapé com links">FOOT1</button>
+        <button type="button" class="md-tool" data-md-snip="footWave" aria-label="Modelo de rodapé onda">FOOT2</button>
       </div>
       <div class="md-toolbar-side">
         <span class="md-xp">XP <strong id="md-xp-total">0</strong></span>
       </div>
+    </div>
+
+    <!-- Legenda: no mobile fica aqui, compacta sob a toolbar -->
+    <div class="md-legend" id="md-legend" hidden role="tooltip" aria-labelledby="md-legend-title">
+      <div class="md-legend-head">
+        <div class="md-legend-badge" id="md-legend-badge"></div>
+        <h2 class="md-legend-title" id="md-legend-title">Legenda</h2>
+        <button type="button" class="md-legend-close" id="md-legend-close" aria-label="Fechar">×</button>
+      </div>
+      <p class="md-legend-body" id="md-legend-body"></p>
+      <pre class="md-code md-legend-example" id="md-legend-example" hidden><code></code></pre>
     </div>
 
     <label class="fb-label md-title-field">Título do documento
@@ -204,34 +220,15 @@
       <ul>
         <li><strong>Imagens:</strong> repo GitHub (arrasta no editor do README e copia o URL), Imgur, Cloudinary, ou CDN HTTPS (ex.: <a href="https://skillicons.dev" target="_blank" rel="noopener noreferrer">skillicons.dev</a>, <a href="https://shields.io" target="_blank" rel="noopener noreferrer">shields.io</a>, <a href="https://capsule-render.vercel.app" target="_blank" rel="noopener noreferrer">capsule-render</a>).</li>
         <li><strong>GIFs:</strong> <a href="https://giphy.com" target="_blank" rel="noopener noreferrer">Giphy</a> → Share → Copy Link (media), ou <a href="https://tenor.com" target="_blank" rel="noopener noreferrer">Tenor</a>.</li>
+        <li><strong>Tops / footers (TOP1–4, FOOT1–2):</strong> TOP1–3 usam <a href="https://capsule-render.vercel.app" target="_blank" rel="noopener noreferrer">capsule-render</a>; TOP4 usa ícone + <a href="https://github.com/DenverCoder1/readme-typing-svg" target="_blank" rel="noopener noreferrer">typing SVG</a> — edita <code>SEU_NOME</code>, cores e as frases em <code>lines=</code>.</li>
         <li>Usa sempre HTTPS — URLs HTTP podem ser bloqueadas.</li>
       </ul>
     </aside>
   </section>
 
-  <!-- Tutorial dos botões da toolbar -->
-  <section class="md-tutorial" id="md-tutorial" hidden role="dialog" aria-modal="true" aria-labelledby="md-tutorial-title">
-    <div class="md-tutorial-spotlight" id="md-tutorial-spotlight" aria-hidden="true"></div>
-    <div class="md-tutorial-card" id="md-tutorial-card">
-      <p class="md-tutorial-progress" id="md-tutorial-progress">1 / 1</p>
-      <div class="md-tutorial-badge" id="md-tutorial-badge"></div>
-      <p class="md-tutorial-pin" id="md-tutorial-pin">Botão destacado na toolbar</p>
-      <h2 class="md-tutorial-title" id="md-tutorial-title">Guia</h2>
-      <p class="md-tutorial-body" id="md-tutorial-body"></p>
-      <pre class="md-code md-tutorial-example" id="md-tutorial-example" hidden><code></code></pre>
-      <div class="md-tutorial-actions">
-        <button type="button" class="term-btn ghost" id="md-tutorial-skip">Pular tutorial</button>
-        <div class="md-tutorial-nav">
-          <button type="button" class="term-btn ghost" id="md-tutorial-prev" hidden>Anterior</button>
-          <button type="button" class="term-btn primary md-gate-btn-primary" id="md-tutorial-next">Próximo</button>
-          <button type="button" class="term-btn primary md-gate-btn-primary" id="md-tutorial-done" hidden>Concluir</button>
-        </div>
-      </div>
-    </div>
-  </section>
 </main>
 
 <footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="js/main.js?v=bxp-mod-53"></script>
+<script src="js/main.js?v=bxp-mod-57"></script>
 </body>
 </html>
