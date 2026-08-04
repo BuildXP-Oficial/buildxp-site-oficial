@@ -183,7 +183,7 @@ Novos cards criados no dashboard entram na home (carrossel) e em **`cards.html`*
 
 ## Contribuindo
 
-Sugestões, bugs e pedidos de novos cards podem ser enviados pela página **Feedback** do site ou via **Issues** neste repositório.
+Sugestões, bugs e pedidos de novos cards podem ser enviados pela página **Feedback** do site ou via **Fork + PR** neste repositório.
 
 ---
 
