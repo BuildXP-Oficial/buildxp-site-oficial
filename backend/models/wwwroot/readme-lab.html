@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="imagens/xpbrowser.png" />
+  <title>README Lab — BuildXP</title>
+  <meta name="description" content="README Lab: editor de markdown com preview ao vivo. Guarde opcionalmente com utilizador e senha." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
+  <link rel="stylesheet" href="css/site.css?v=bxp-mod-53" />
+  <script>window.BUILDXP_API_BASE = window.BUILDXP_API_BASE || '';</script>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="nav-logo" aria-label="BuildXP — Início">
+    <img class="nav-logo-img" src="imagens/logo2buildxpret.png" alt="BuildXP" />
+  </a>
+  <button class="hamburger" id="hamburger" aria-label="Menu">☰</button>
+  <ul class="nav-links" id="nav-links">
+    <li><a href="cards.html">Cards</a></li>
+    <li><a href="index.html#terminal">Terminal</a></li>
+    <li><a href="feedback.html">Feedback</a></li>
+    <li><a href="index.html#contact">Contato</a></li>
+    <li><a href="readme-lab.html" class="nav-link--cta nav-link--active" aria-current="page">README Lab</a></li>
+  </ul>
+</nav>
+
+<main class="page-container md-page" id="md-app">
+  <a href="index.html" class="back-link">← VOLTAR</a>
+
+  <div class="page-hero">
+    <div class="page-hero-glow"></div>
+    <div class="page-hero-body">
+      <div class="page-class">MARKDOWN · PREVIEW · XP</div>
+      <div class="page-title">README Lab</div>
+      <div class="page-meta">
+        <span class="lvl-badge">EDITOR · PREVIEW · XP</span>
+        <span class="lvl-badge" id="md-session-badge">Escolha como entrar</span>
+      </div>
+      <p class="fb-label fb-page-intro" style="margin:0;">
+        Monta a tua apresentação no GitHub (profile README).
+        Copia e cola no repositório com o teu username — ou guarda com cadastro para voltar depois.
+      </p>
+    </div>
+  </div>
+
+  <!-- GATE (modal) -->
+  <section class="md-gate" id="md-gate" role="dialog" aria-modal="true" aria-labelledby="md-gate-title">
+    <div class="md-gate-card" id="md-gate-home">
+      <h2 class="md-gate-title" id="md-gate-title">Salve seu projeto</h2>
+      <p class="md-gate-copy">através de um cadastro simples, você salvará todo seu progresso no lab, ou construa sem salvar</p>
+      <div class="md-gate-actions">
+        <button type="button" class="term-btn primary md-gate-btn-primary" id="md-btn-show-register">Criar cadastro</button>
+        <button type="button" class="term-btn ghost" id="md-btn-show-login">Já tenho cadastro</button>
+        <button type="button" class="term-btn ghost" id="md-btn-guest">Construir sem salvar</button>
+      </div>
+    </div>
+
+    <div class="md-gate-card" id="md-gate-register" hidden>
+      <h2 class="md-gate-title">Criar cadastro</h2>
+      <form id="md-form-register" class="md-form">
+        <label class="fb-label">Utilizador
+          <input class="fb-input" id="md-reg-user" required minlength="3" maxlength="40" autocomplete="username" placeholder="ex: nova_dev" />
+        </label>
+        <label class="fb-label">Nome
+          <input class="fb-input" id="md-reg-name" required minlength="2" maxlength="80" autocomplete="name" />
+        </label>
+        <label class="fb-label">Senha
+          <input class="fb-input" id="md-reg-pass" type="password" required minlength="6" maxlength="72" autocomplete="new-password" />
+        </label>
+        <label class="fb-label">Pergunta de segurança
+          <select class="fb-input" id="md-reg-question" required></select>
+        </label>
+        <label class="fb-label">Resposta
+          <input class="fb-input" id="md-reg-answer" required minlength="2" maxlength="120" autocomplete="off" />
+        </label>
+        <div class="md-gate-actions">
+          <button type="submit" class="term-btn primary">Cadastrar e entrar</button>
+          <button type="button" class="term-btn ghost" data-md-gate-back>← Voltar</button>
+        </div>
+        <p class="md-form-error" id="md-reg-error" role="alert"></p>
+      </form>
+    </div>
+
+    <div class="md-gate-card" id="md-gate-login" hidden>
+      <h2 class="md-gate-title">Já tenho cadastro</h2>
+      <form id="md-form-login" class="md-form">
+        <label class="fb-label">Utilizador
+          <input class="fb-input" id="md-login-user" required autocomplete="username" />
+        </label>
+        <label class="fb-label">Senha
+          <input class="fb-input" id="md-login-pass" type="password" required autocomplete="current-password" />
+        </label>
+        <div class="md-gate-actions">
+          <button type="submit" class="term-btn primary">Entrar</button>
+          <button type="button" class="term-btn ghost" id="md-btn-show-recover">Esqueci a senha</button>
+          <button type="button" class="term-btn ghost" data-md-gate-back>← Voltar</button>
+        </div>
+        <p class="md-form-error" id="md-login-error" role="alert"></p>
+      </form>
+    </div>
+
+    <div class="md-gate-card" id="md-gate-recover" hidden>
+      <h2 class="md-gate-title">Recuperar senha</h2>
+      <form id="md-form-recover" class="md-form">
+        <label class="fb-label">Utilizador
+          <input class="fb-input" id="md-recover-user" required />
+        </label>
+        <button type="button" class="term-btn ghost" id="md-recover-load-q">Carregar pergunta</button>
+        <p class="md-recover-q" id="md-recover-qtext"></p>
+        <label class="fb-label">Resposta de segurança
+          <input class="fb-input" id="md-recover-answer" required />
+        </label>
+        <label class="fb-label">Nova senha
+          <input class="fb-input" id="md-recover-pass" type="password" required minlength="6" />
+        </label>
+        <div class="md-gate-actions">
+          <button type="submit" class="term-btn primary">Atualizar senha</button>
+          <button type="button" class="term-btn ghost" data-md-gate-back>← Voltar</button>
+        </div>
+        <p class="md-form-error" id="md-recover-error" role="alert"></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- WORKSPACE (fica por baixo do modal com blur) -->
+  <section class="md-workspace" id="md-workspace">
+    <div class="md-toolbar-bar">
+      <div class="md-toolbar" id="md-toolbar" role="toolbar" aria-label="Inserir markdown">
+        <button type="button" class="md-tool" data-md-snip="h1" title="H1">H1</button>
+        <button type="button" class="md-tool" data-md-snip="h2" title="H2">H2</button>
+        <button type="button" class="md-tool" data-md-snip="h3" title="H3">H3</button>
+        <button type="button" class="md-tool" data-md-snip="h4" title="H4">H4</button>
+        <button type="button" class="md-tool" data-md-snip="h5" title="H5">H5</button>
+        <button type="button" class="md-tool" data-md-snip="h6" title="H6">H6</button>
+        <span class="md-tool-sep"></span>
+        <button type="button" class="md-tool" data-md-snip="bold" title="Negrito"><strong>B</strong></button>
+        <button type="button" class="md-tool" data-md-snip="italic" title="Itálico"><em>I</em></button>
+        <button type="button" class="md-tool" data-md-snip="boldItalic" title="Negrito+itálico"><strong><em>BI</em></strong></button>
+        <button type="button" class="md-tool" data-md-snip="codeInline" title="Código inline">&lt;/&gt;</button>
+        <button type="button" class="md-tool" data-md-snip="codeBlock" title="Bloco de código">```</button>
+        <span class="md-tool-sep"></span>
+        <button type="button" class="md-tool" data-md-snip="ul" title="Lista">• Lista</button>
+        <button type="button" class="md-tool" data-md-snip="ol" title="Lista numerada">1. Lista</button>
+        <button type="button" class="md-tool" data-md-snip="check" title="Checklist">☑</button>
+        <button type="button" class="md-tool" data-md-snip="quote" title="Citação">”</button>
+        <button type="button" class="md-tool" data-md-snip="hr" title="Linha">―</button>
+        <button type="button" class="md-tool" data-md-snip="table" title="Tabela">Tabela</button>
+        <span class="md-tool-sep"></span>
+        <button type="button" class="md-tool" data-md-snip="link" title="Link">Link</button>
+        <button type="button" class="md-tool" data-md-snip="image" title="Inserir imagem">IMG</button>
+        <button type="button" class="md-tool" data-md-snip="gif" title="Inserir GIF">GIF</button>
+        <button type="button" class="md-tool" data-md-snip="help-media" title="Onde pegar URLs de imagem e GIF">?</button>
+        <span class="md-tool-sep"></span>
+        <button type="button" class="md-tool" data-md-snip="alertNote">NOTE</button>
+        <button type="button" class="md-tool" data-md-snip="alertTip">TIP</button>
+        <button type="button" class="md-tool" data-md-snip="alertImportant">IMP</button>
+        <button type="button" class="md-tool" data-md-snip="alertWarning">WARN</button>
+        <button type="button" class="md-tool" data-md-snip="alertCaution">CAUT</button>
+        <span class="md-tool-sep"></span>
+        <button type="button" class="md-tool md-tool--guide" id="md-btn-open-guide" title="Guia dos botões">GUIA</button>
+      </div>
+      <div class="md-toolbar-side">
+        <span class="md-xp">XP <strong id="md-xp-total">0</strong></span>
+      </div>
+    </div>
+
+    <label class="fb-label md-title-field">Título do documento
+      <input class="fb-input" id="md-title" maxlength="120" value="Minha apresentação" />
+    </label>
+
+    <div class="md-split">
+      <div class="md-pane">
+        <div class="md-pane-head">
+          <div class="md-pane-label">MARKDOWN</div>
+          <div class="md-copy-wrap">
+            <span class="md-copy-feedback" id="md-copy-feedback" hidden>COLE NO SEU GITHUB</span>
+            <button type="button" class="md-copy-icon-btn" id="md-copy" title="Copiar markdown" aria-label="Copiar markdown">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <textarea id="md-editor" class="md-editor" spellcheck="false" placeholder="# Olá, eu sou [Seu Nome]&#10;&#10;Uma frase sobre quem és e o que estás a construir.&#10;&#10;## Sobre mim&#10;- …&#10;&#10;## Tech&#10;| Front | Back | Tools |&#10;| --- | --- | --- |&#10;| … | … | … |&#10;&#10;## Projetos&#10;- …&#10;&#10;## Contato&#10;[LinkedIn](https://…)"></textarea>
+        <div class="md-word-count" id="md-word-count">0 palavras</div>
+      </div>
+      <div class="md-pane">
+        <div class="md-pane-head">
+          <div class="md-pane-label">PREVIEW</div>
+        </div>
+        <div id="md-preview" class="md-preview" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <div class="md-status" id="md-status" aria-live="polite"></div>
+
+    <aside class="md-media-help" id="md-media-help">
+      <h3>Onde pegar URLs de imagem e GIF</h3>
+      <ul>
+        <li><strong>Imagens:</strong> repo GitHub (arrasta no editor do README e copia o URL), Imgur, Cloudinary, ou CDN HTTPS (ex.: <a href="https://skillicons.dev" target="_blank" rel="noopener noreferrer">skillicons.dev</a>, <a href="https://shields.io" target="_blank" rel="noopener noreferrer">shields.io</a>, <a href="https://capsule-render.vercel.app" target="_blank" rel="noopener noreferrer">capsule-render</a>).</li>
+        <li><strong>GIFs:</strong> <a href="https://giphy.com" target="_blank" rel="noopener noreferrer">Giphy</a> → Share → Copy Link (media), ou <a href="https://tenor.com" target="_blank" rel="noopener noreferrer">Tenor</a>.</li>
+        <li>Usa sempre HTTPS — URLs HTTP podem ser bloqueadas.</li>
+      </ul>
+    </aside>
+  </section>
+
+  <!-- Tutorial dos botões da toolbar -->
+  <section class="md-tutorial" id="md-tutorial" hidden role="dialog" aria-modal="true" aria-labelledby="md-tutorial-title">
+    <div class="md-tutorial-spotlight" id="md-tutorial-spotlight" aria-hidden="true"></div>
+    <div class="md-tutorial-card" id="md-tutorial-card">
+      <p class="md-tutorial-progress" id="md-tutorial-progress">1 / 1</p>
+      <div class="md-tutorial-badge" id="md-tutorial-badge"></div>
+      <p class="md-tutorial-pin" id="md-tutorial-pin">Botão destacado na toolbar</p>
+      <h2 class="md-tutorial-title" id="md-tutorial-title">Guia</h2>
+      <p class="md-tutorial-body" id="md-tutorial-body"></p>
+      <pre class="md-code md-tutorial-example" id="md-tutorial-example" hidden><code></code></pre>
+      <div class="md-tutorial-actions">
+        <button type="button" class="term-btn ghost" id="md-tutorial-skip">Pular tutorial</button>
+        <div class="md-tutorial-nav">
+          <button type="button" class="term-btn ghost" id="md-tutorial-prev" hidden>Anterior</button>
+          <button type="button" class="term-btn primary md-gate-btn-primary" id="md-tutorial-next">Próximo</button>
+          <button type="button" class="term-btn primary md-gate-btn-primary" id="md-tutorial-done" hidden>Concluir</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><span>BUILD</span>XP — De dev pra dev.</footer>
+<script src="js/main.js?v=bxp-mod-53"></script>
+</body>
+</html>

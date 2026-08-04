@@ -46,7 +46,7 @@ Em Java: pacotes equivalentes (`…controller`, `…service`, `…repository`, `
 | `xp_current` / `xp_max` | Barra XP; percentual pode ser calculado (`xp_current / xp_max`). |
 | `description_html` | Corpo do texto (HTML seguro/sanitizado no dashboard); pode incluir `<code>`. |
 | `link_beginner` / `link_ref` | URLs relativas para abas iniciante / referência. |
-| `btn_primary_label` / `btn_secondary_label` | Textos dos botões (padrão: ▶ COMEÇAR / CHEAT CODES). |
+| `btn_primary_label` / `btn_secondary_label` | Textos dos botões (padrão: ▶ COMEÇAR / CHEAP CODES). |
 | `sort_order` | Ordem na grelha. |
 | `ui_features` | JSON, ex.: `{"first_slide_mobile_swipe_hint": true}` — alinha com a seta animada **só no 1º slide** (CSS já trata `.steps-track > .step:first-of-type`). |
 
@@ -134,7 +134,7 @@ Para o dashboard filtrar/editar linhas sem depender só da ordem:
 
 ## Referência rápida (`ref_sections` + `ref_commands`)
 
-Espelha abas “Cheat codes”: seções e linhas `cmd_text` + `description`; `ref_key` opcional.
+Espelha abas “Cheap codes”: seções e linhas `cmd_text` + `description`; `ref_key` opcional.
 
 ---
 
@@ -162,6 +162,6 @@ Espelha abas “Cheat codes”: seções e linhas `cmd_text` + `description`; `r
 | POST | `/api/cards` | Cria linha em `skill_cards` (payload compatível com a tabela). |
 | PATCH | `/api/cards/:slug` | Atualiza card existente. |
 
-**Dashboard (`frontend/dashboard.html`):** não aparece no menu do site. Na busca da **referência rápida** (Cheat Codes), ao digitar **`eu sou admin`** (maiúsculas/minúsculas iguais após normalização), o navegador vai para o login do dashboard; só após login válido o painel aparece. Sessão: `sessionStorage`. Para testar sem backend de login, em `dashboard.html` defina `window.BUILDXP_ADMIN_DEV_PIN = 'pin'` antes de `main.js`; string vazia = só API (`POST /api/admin/login` com `{ "ok": true }`).
+**Dashboard (`frontend/dashboard.html`):** não aparece no menu do site. Na busca da **referência rápida** (Cheap Codes), ao digitar **`eu sou admin`** (maiúsculas/minúsculas iguais após normalização), o navegador vai para o login do dashboard; só após login válido o painel aparece. Sessão: `sessionStorage`. Para testar sem backend de login, em `dashboard.html` defina `window.BUILDXP_ADMIN_DEV_PIN = 'pin'` antes de `main.js`; string vazia = só API (`POST /api/admin/login` com `{ "ok": true }`).
 
 **Banco:** criar BD PostgreSQL → `psql … -f database/schema.sql` → `psql … -f database/seed.sql`. Servir o site estático continua podendo ser Nginx/IIS ou `wwwroot` do ASP.NET Core.
