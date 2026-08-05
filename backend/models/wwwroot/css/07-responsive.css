@@ -217,6 +217,24 @@
     min-height: 0;
   }
 
+  .ranking-layout {
+    grid-template-columns: 1fr;
+  }
+  .ranking-panel--board { order: 2; }
+  .ranking-panel--hero,
+  .ranking-panel--board { padding: 1.05rem; }
+  .ranking-form-row { grid-template-columns: 1fr; }
+  .ranking-submit { width: 100%; }
+  .ranking-tip-row { grid-template-columns: 1fr; }
+  .ranking-item {
+    grid-template-columns: auto minmax(0, 1fr);
+    row-gap: 0.45rem;
+  }
+  .ranking-score {
+    grid-column: 2;
+    justify-self: start;
+  }
+
   /* Blocos de comando (slides): evita coluna de comentÃ¡rio com largura ~0 + wrap letra a letra */
   .cmd-lines {
     padding-right: 0;

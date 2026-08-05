@@ -394,6 +394,232 @@ function gradeCodeBlock(raw, q) {
   return gradeCSharp(raw, q);
 }
 
+const BUILDXP_RANKING_LEADERBOARD_KEY = 'buildxp_ranking_leaderboard';
+const BUILDXP_RANKING_CURRENT_USER_KEY = 'buildxp_ranking_current_user';
+const BUILDXP_RANKING_META_KEY = 'buildxp_ranking_meta';
+const BUILDXP_RANKING_RESET_DAYS = 3;
+const BUILDXP_RANKING_RESET_MS = BUILDXP_RANKING_RESET_DAYS * 24 * 60 * 60 * 1000;
+
+function buildxpIsReloadNavigation() {
+  try {
+    const nav = performance.getEntriesByType?.('navigation')?.[0];
+    if (nav && nav.type === 'reload') return true;
+    return typeof performance.navigation !== 'undefined' && performance.navigation.type === 1;
+  } catch (_) {
+    return false;
+  }
+}
+
+function buildxpIsHomePage() {
+  try {
+    const path = String(window.location.pathname || '').toLowerCase();
+    return /(^|\/)index\.html$/.test(path) || path === '/' || path.endsWith('/');
+  } catch (_) {
+    return true;
+  }
+}
+
+function buildxpNormalizeRankingName(raw) {
+  return String(raw ?? '').replace(/\s+/g, ' ').trim().slice(0, 24);
+}
+
+function buildxpReadRankingMeta() {
+  try {
+    const raw = localStorage.getItem(BUILDXP_RANKING_META_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const nextResetAt = Number(parsed?.nextResetAt ?? 0) || 0;
+    return Number.isFinite(nextResetAt) && nextResetAt > 0 ? { nextResetAt } : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function buildxpWriteRankingMeta(meta) {
+  try {
+    localStorage.setItem(BUILDXP_RANKING_META_KEY, JSON.stringify(meta));
+  } catch (_) {}
+}
+
+function buildxpEnsureRankingReset() {
+  const now = Date.now();
+  const meta = buildxpReadRankingMeta();
+  if (!meta || !Number.isFinite(meta.nextResetAt) || meta.nextResetAt <= 0) {
+    buildxpWriteRankingMeta({ nextResetAt: now + BUILDXP_RANKING_RESET_MS });
+    return false;
+  }
+
+  if (now >= meta.nextResetAt) {
+    buildxpWriteLeaderboard([]);
+    buildxpWriteRankingMeta({ nextResetAt: now + BUILDXP_RANKING_RESET_MS });
+    return true;
+  }
+
+  return false;
+}
+
+function buildxpReadLeaderboard() {
+  try {
+    buildxpEnsureRankingReset();
+    const raw = localStorage.getItem(BUILDXP_RANKING_LEADERBOARD_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(list)) return [];
+    return list
+      .map((item) => ({
+        username: buildxpNormalizeRankingName(item?.username ?? ''),
+        xp: Number(item?.xp ?? 0) || 0,
+        lastModule: String(item?.lastModule ?? '').trim(),
+        updatedAt: Number(item?.updatedAt ?? 0) || 0,
+      }))
+      .filter((item) => item.username);
+  } catch (_) {
+    return [];
+  }
+}
+
+function buildxpWriteLeaderboard(list) {
+  try {
+    localStorage.setItem(BUILDXP_RANKING_LEADERBOARD_KEY, JSON.stringify(list));
+  } catch (_) {}
+}
+
+function buildxpGetCurrentRankingUser() {
+  try {
+    return buildxpNormalizeRankingName(sessionStorage.getItem(BUILDXP_RANKING_CURRENT_USER_KEY) || '');
+  } catch (_) {
+    return '';
+  }
+}
+
+function buildxpSetCurrentRankingUser(name) {
+  const clean = buildxpNormalizeRankingName(name);
+  try {
+    if (clean) sessionStorage.setItem(BUILDXP_RANKING_CURRENT_USER_KEY, clean);
+    else sessionStorage.removeItem(BUILDXP_RANKING_CURRENT_USER_KEY);
+  } catch (_) {}
+  return clean;
+}
+
+function buildxpClearRankingUserOnReload() {
+  if (!buildxpIsHomePage() || !buildxpIsReloadNavigation()) return;
+  try {
+    sessionStorage.removeItem(BUILDXP_RANKING_CURRENT_USER_KEY);
+  } catch (_) {}
+}
+
+function buildxpAwardRankingPoints(username, xp, lastModule = '') {
+  const clean = buildxpNormalizeRankingName(username);
+  const amount = Math.max(0, Number(xp) || 0);
+  if (!clean) return false;
+
+  const list = buildxpReadLeaderboard();
+  const now = Date.now();
+  const key = clean.toLowerCase();
+  const current = list.find((item) => item.username.toLowerCase() === key);
+  if (current) {
+    current.xp += amount;
+    current.lastModule = String(lastModule || current.lastModule || '').trim();
+    current.updatedAt = now;
+  } else {
+    list.push({ username: clean, xp: amount, lastModule: String(lastModule || '').trim(), updatedAt: now });
+  }
+
+  list.sort((a, b) => b.xp - a.xp || b.updatedAt - a.updatedAt || a.username.localeCompare(b.username));
+  buildxpWriteLeaderboard(list.slice(0, 10));
+  return true;
+}
+
+function buildxpRenderRanking() {
+  const listEl = document.getElementById('ranking-list');
+  const pillEl = document.getElementById('ranking-current-pill');
+  const inputEl = document.getElementById('ranking-username');
+  if (!listEl && !pillEl && !inputEl) return;
+
+  const current = buildxpGetCurrentRankingUser();
+  if (pillEl) pillEl.textContent = current || '—';
+  if (inputEl && document.activeElement !== inputEl && !inputEl.value.trim()) {
+    inputEl.value = current;
+  }
+
+  if (!listEl) return;
+
+  const list = buildxpReadLeaderboard();
+  if (!list.length) {
+    listEl.innerHTML = `
+      <div class="ranking-empty">
+        Ainda não há pontuação registrada. Crie um username acima e abra um card ou conclua o terminal para entrar no placar.
+      </div>
+    `;
+    return;
+  }
+
+  listEl.innerHTML = list.slice(0, 8).map((item, index) => {
+    const rank = index + 1;
+    const moduleLabel = item.lastModule ? `última ação: ${item.lastModule}` : 'ativa na sessão';
+    return `
+      <article class="ranking-item ${rank === 1 ? 'ranking-item--top1' : ''}">
+        <div class="ranking-rank">#${rank}</div>
+        <div class="ranking-player">
+          <span class="ranking-player-name">${item.username}</span>
+          <div class="ranking-player-meta">${moduleLabel}</div>
+        </div>
+        <div class="ranking-score"><strong>${item.xp}</strong><span>XP</span></div>
+      </article>
+    `;
+  }).join('');
+}
+
+function initRanking() {
+  const form = document.getElementById('ranking-form');
+  const input = document.getElementById('ranking-username');
+  if (!form || !input) return;
+
+  buildxpClearRankingUserOnReload();
+
+  const syncFromSession = () => {
+    const current = buildxpGetCurrentRankingUser();
+    input.value = current;
+    buildxpRenderRanking();
+  };
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = buildxpNormalizeRankingName(input.value);
+    if (!name) {
+      input.focus();
+      buildxpSetCurrentRankingUser('');
+      buildxpRenderRanking();
+      return;
+    }
+    buildxpSetCurrentRankingUser(name);
+    buildxpAwardRankingPoints(name, 0, 'novo usuário');
+    buildxpRenderRanking();
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      input.value = '';
+      buildxpSetCurrentRankingUser('');
+      buildxpRenderRanking();
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target?.closest?.('.card[data-card-slug] .card-btn[href]');
+    if (!btn) return;
+    const card = btn.closest('.card[data-card-slug]');
+    const slug = String(card?.dataset?.cardSlug || '').trim();
+    const username = buildxpGetCurrentRankingUser();
+    if (!username) return;
+    const pointsMap = { git: 120, docker: 100, npm: 90, dotnet: 110, python: 110 };
+    const points = pointsMap[slug] ?? 80;
+    buildxpAwardRankingPoints(username, points, slug || 'módulo');
+    buildxpRenderRanking();
+  }, true);
+
+  syncFromSession();
+}
+
 function initTrainingTerminal() {
   const mount = document.getElementById('terminal');
   if (!mount) return;
@@ -949,6 +1175,11 @@ function initTrainingTerminal() {
       else line('✖ Incorreto.', 'term-bad');
 
       if (g.xp > 0) animateXpGain(g.xp);
+      const currentUserCodeBlock = buildxpGetCurrentRankingUser();
+      if (g.xp > 0 && currentUserCodeBlock) {
+        buildxpAwardRankingPoints(currentUserCodeBlock, g.xp, `${termBadgeLabel()} · ${state.levelMode}`);
+        buildxpRenderRanking();
+      }
 
       line(q.feedback || 'Confira o enunciado e os elementos obrigatórios.', 'term-dim');
       line('', '');
@@ -968,6 +1199,11 @@ function initTrainingTerminal() {
     else line('✖ Incorreto.', 'term-bad');
 
     if (g.xp > 0) animateXpGain(g.xp);
+    const currentUserAnswer = buildxpGetCurrentRankingUser();
+    if (g.xp > 0 && currentUserAnswer) {
+      buildxpAwardRankingPoints(currentUserAnswer, g.xp, `${termBadgeLabel()} · ${state.levelMode}`);
+      buildxpRenderRanking();
+    }
 
     if (q.accept?.length) line(`Resposta esperada: ${q.accept[0]}`, 'term-dim');
     line('', '');
@@ -984,6 +1220,11 @@ function initTrainingTerminal() {
     line(`Fim do treino. XP total: ${state.totalXp}`, 'term-good');
     line(state.totalXp >= state.goalXp ? 'Meta batida. Boa!' : `Meta não batida (obj: ${state.goalXp} XP).`, state.totalXp >= state.goalXp ? 'term-good' : 'term-warn');
     line('', '');
+
+    const currentUser = buildxpGetCurrentRankingUser();
+    if (currentUser) {
+      buildxpRenderRanking();
+    }
 
     const nextMode = getNextTrainLevelMode(state.levelMode);
     const actions = document.createElement('div');

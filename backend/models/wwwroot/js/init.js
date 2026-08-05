@@ -12,6 +12,7 @@ async function buildxpBoot() {
   if (typeof resetGlobalSiteAccent === 'function') resetGlobalSiteAccent();
   initFeedback();
   initTrainingTerminal();
+  initRanking();
   initDashboard();
   if (document.getElementById('cards-catalog-grid')) {
     if (typeof buildxpInitCardsCatalogPage === 'function') {

@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
-  <link rel="stylesheet" href="css/site.css?v=bxp-mod-32" />
+  <link rel="stylesheet" href="css/site.css?v=bxp-mod-33" />
   
   <script>window.BUILDXP_API_BASE = window.BUILDXP_API_BASE || '';</script>
 </head>
@@ -24,6 +24,7 @@
   <ul class="nav-links" id="nav-links">
     <li><a href="cards.html">Cards</a></li>
     <li><a href="#terminal">Terminal</a></li>
+    <li><a href="#ranking">Ranking</a></li>
     <li><a href="feedback.html">Feedback</a></li>
     <li><a href="#contact">Contato</a></li>
   </ul>
@@ -190,6 +191,54 @@
   </div>
 </section>
 
+<!-- ═══════════════════════════════ RANKING ════════════════════ -->
+<section id="ranking" class="section-wrap ranking-wrap">
+  <div class="container">
+    <div class="section-label">// RANKING</div>
+    <h2 class="section-title">TOP PLAYERS</h2>
+
+    <div class="ranking-layout">
+      <div class="ranking-panel ranking-panel--hero">
+        <div class="ranking-float-badge">LIVE RANKING</div>
+        <p class="ranking-kicker">Username flutuante por sessão</p>
+        <h3 class="ranking-title">Defina seu nome e conquiste espaço no placar</h3>
+        <p class="ranking-copy">
+          O username fica ativo neste navegador até você recarregar a home. Ao entrar em outro módulo, ele continua disponível para pontuar sem perder o progresso.
+        </p>
+
+        <form id="ranking-form" class="ranking-form" autocomplete="off">
+          <label class="ranking-label" for="ranking-username">Nome para rankear</label>
+          <div class="ranking-form-row">
+            <input id="ranking-username" class="ranking-input" type="text" maxlength="24" placeholder="Ex.: BuildXPNinja" autocomplete="username" spellcheck="false" />
+            <button type="submit" class="ranking-submit">ATIVAR</button>
+          </div>
+        </form>
+
+        <div class="ranking-current-box">
+          <span class="ranking-current-label">Nome ativo</span>
+          <span id="ranking-current-pill" class="ranking-current-pill">—</span>
+        </div>
+
+        <div class="ranking-tip-row">
+          <div class="ranking-tip">Ganhe XP ao abrir cards e completar o terminal.</div>
+          <div class="ranking-tip">Recarregou a home? O nome zera e você registra outro.</div>
+        </div>
+      </div>
+
+      <aside class="ranking-panel ranking-panel--board" aria-label="Ranking de jogadores">
+        <div class="ranking-board-head">
+          <div>
+            <span class="ranking-board-eyebrow">// LEADERBOARD</span>
+            <h3 class="ranking-board-title">Quem domina o BuildXP</h3>
+          </div>
+          <span class="ranking-board-chip">compacto</span>
+        </div>
+        <div id="ranking-list" class="ranking-list"></div>
+      </aside>
+    </div>
+  </div>
+</section>
+
 <!-- ═══════════════════════════════ CONTACT ═════════════════ -->
 <section id="contact" class="section-wrap">
   <div class="container contact-wrap">
@@ -225,6 +274,6 @@
   <span>BUILD</span>XP — Feito com 💻 e muito café. De dev pra dev.
 </footer>
 
-<script src="js/main.js?v=bxp-mod-32"></script>
+<script src="js/main.js?v=bxp-mod-33"></script>
 </body>
 </html>

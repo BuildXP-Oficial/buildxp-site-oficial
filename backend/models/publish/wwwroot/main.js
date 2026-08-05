@@ -1368,6 +1368,12 @@ function initTrainingTerminal() {
     line('Quer continuar? Suba o nível e faça mais 5.', 'term-dim');
     line('', '');
 
+    const currentUser = buildxpGetCurrentRankingUser();
+    if (currentUser) {
+      buildxpAwardRankingPoints(currentUser, state.totalXp, `${termBadgeLabel()} · ${state.levelMode}`);
+      buildxpRenderRanking();
+    }
+
     const actions = document.createElement('div');
     actions.className = 'term-actions';
     actions.innerHTML = `
