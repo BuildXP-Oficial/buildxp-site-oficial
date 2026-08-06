@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
-  <link rel="stylesheet" href="css/site.css?v=bxp-mod-57" />
+  <link rel="stylesheet" href="css/site.css?v=bxp-mod-59" />
   <script>window.BUILDXP_API_BASE = window.BUILDXP_API_BASE || '';</script>
 </head>
 <body>
@@ -213,6 +213,13 @@
       </div>
     </div>
 
+    <div class="md-share-row" id="md-share-wrap" hidden>
+      <button type="button" class="term-btn ghost" id="md-share-btn" aria-pressed="false">
+        Compartilhar modelo
+      </button>
+      <p class="md-share-hint">Publica uma versão sem os teus dados pessoais para outros usarem como base.</p>
+    </div>
+
     <div class="md-status" id="md-status" aria-live="polite"></div>
 
     <aside class="md-media-help" id="md-media-help">
@@ -224,11 +231,20 @@
         <li>Usa sempre HTTPS — URLs HTTP podem ser bloqueadas.</li>
       </ul>
     </aside>
+
+    <aside class="md-templates" id="md-templates">
+      <div class="md-templates-head">
+        <h3>Modelos da comunidade</h3>
+        <button type="button" class="term-btn ghost" id="md-templates-refresh">Atualizar</button>
+      </div>
+      <p class="md-templates-hint">Usa um modelo como base (sem dados pessoais do autor). Contas autenticadas podem partilhar o seu via “Compartilhar modelo”.</p>
+      <div class="md-templates-list" id="md-templates-list" aria-live="polite"></div>
+    </aside>
   </section>
 
 </main>
 
 <footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="js/main.js?v=bxp-mod-57"></script>
+<script src="js/main.js?v=bxp-mod-59"></script>
 </body>
 </html>

@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using BuildXP.API.Data;
 using BuildXP.API.Models;
 using Microsoft.EntityFrameworkCore;
@@ -53,6 +54,11 @@ public sealed class MarkdownDocSaveRequest
     public string? Pitch { get; set; }
     public string? Arquitetura { get; set; }
     public string? RegrasEvento { get; set; }
+}
+
+public sealed class MarkdownShareRequest
+{
+    public bool Compartilhado { get; set; }
 }
 
 public sealed class MarkdownXpAwardDto
@@ -295,7 +301,176 @@ public class MarkdownBuilderService
         }
 
         await _db.SaveChangesAsync(ct);
+
+        // Se o modelo está partilhado, atualiza o snapshot sanitizado
+        await SyncSharedTemplateIfActiveAsync(userId, doc, ct);
+
         return (true, null, new { doc = MapDoc(doc), awards, word_count = words, heading_count = headings });
+    }
+
+    public async Task<object> GetShareStateAsync(int userId, CancellationToken ct = default)
+    {
+        var t = await _db.MarkdownSharedTemplates.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.OwnerUserId == userId, ct);
+        return new
+        {
+            compartilhado = t is { Ativo: true },
+            template_id = t is { Ativo: true } ? t.Id : (int?)null,
+            atualizado_em = t?.AtualizadoEm,
+        };
+    }
+
+    public async Task<(bool Ok, string? Error, object? Payload)> SetShareAsync(
+        int userId,
+        MarkdownShareRequest req,
+        CancellationToken ct = default)
+    {
+        var user = await _db.MarkdownBuilderUsers
+            .Include(u => u.Document)
+            .FirstOrDefaultAsync(u => u.Id == userId, ct);
+        if (user is null) return (false, "user_not_found", null);
+
+        var existing = await _db.MarkdownSharedTemplates
+            .FirstOrDefaultAsync(t => t.OwnerUserId == userId, ct);
+
+        if (!req.Compartilhado)
+        {
+            if (existing is not null)
+            {
+                existing.Ativo = false;
+                existing.AtualizadoEm = DateTime.UtcNow;
+                await _db.SaveChangesAsync(ct);
+            }
+            return (true, null, new { compartilhado = false, template_id = (int?)null });
+        }
+
+        var doc = user.Document;
+        if (doc is null || string.IsNullOrWhiteSpace(doc.ConteudoMarkdown))
+            return (false, "Escreve algum markdown antes de partilhar o modelo.", null);
+
+        var (titulo, markdown) = SanitizeTemplate(doc.Titulo, doc.ConteudoMarkdown, user.Usuario, user.Nome);
+        if (string.IsNullOrWhiteSpace(markdown))
+            return (false, "Depois da sanitização o modelo ficou vazio.", null);
+
+        if (existing is null)
+        {
+            existing = new MarkdownSharedTemplate
+            {
+                OwnerUserId = userId,
+                CriadoEm = DateTime.UtcNow,
+            };
+            _db.MarkdownSharedTemplates.Add(existing);
+        }
+
+        existing.TituloModelo = titulo;
+        existing.ConteudoMarkdown = markdown;
+        existing.Ativo = true;
+        existing.AtualizadoEm = DateTime.UtcNow;
+        await _db.SaveChangesAsync(ct);
+
+        return (true, null, new
+        {
+            compartilhado = true,
+            template_id = existing.Id,
+            atualizado_em = existing.AtualizadoEm,
+        });
+    }
+
+    public async Task<object> ListTemplatesAsync(CancellationToken ct = default)
+    {
+        var list = await _db.MarkdownSharedTemplates.AsNoTracking()
+            .Where(t => t.Ativo)
+            .OrderByDescending(t => t.AtualizadoEm)
+            .Take(100)
+            .Select(t => new
+            {
+                id = t.Id,
+                titulo = t.TituloModelo,
+                preview = t.ConteudoMarkdown.Length > 160
+                    ? t.ConteudoMarkdown.Substring(0, 160) + "…"
+                    : t.ConteudoMarkdown,
+                atualizado_em = t.AtualizadoEm,
+            })
+            .ToListAsync(ct);
+        return list;
+    }
+
+    public async Task<object?> GetTemplateAsync(int id, CancellationToken ct = default)
+    {
+        var t = await _db.MarkdownSharedTemplates.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == id && x.Ativo, ct);
+        if (t is null) return null;
+        return new
+        {
+            id = t.Id,
+            titulo = t.TituloModelo,
+            conteudo_markdown = t.ConteudoMarkdown,
+            atualizado_em = t.AtualizadoEm,
+        };
+    }
+
+    private async Task SyncSharedTemplateIfActiveAsync(int userId, MarkdownBuilderDoc doc, CancellationToken ct)
+    {
+        var existing = await _db.MarkdownSharedTemplates
+            .FirstOrDefaultAsync(t => t.OwnerUserId == userId && t.Ativo, ct);
+        if (existing is null) return;
+
+        var user = await _db.MarkdownBuilderUsers.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId, ct);
+        if (user is null) return;
+
+        var (titulo, markdown) = SanitizeTemplate(doc.Titulo, doc.ConteudoMarkdown, user.Usuario, user.Nome);
+        if (string.IsNullOrWhiteSpace(markdown))
+        {
+            existing.Ativo = false;
+            existing.AtualizadoEm = DateTime.UtcNow;
+            await _db.SaveChangesAsync(ct);
+            return;
+        }
+
+        existing.TituloModelo = titulo;
+        existing.ConteudoMarkdown = markdown;
+        existing.AtualizadoEm = DateTime.UtcNow;
+        await _db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>Remove dados da conta do dono; mantém estrutura/temas do README.</summary>
+    internal static (string Titulo, string Markdown) SanitizeTemplate(
+        string? titulo,
+        string? markdown,
+        string usuario,
+        string nome)
+    {
+        var userKey = (usuario ?? string.Empty).Trim();
+        var nameKey = (nome ?? string.Empty).Trim();
+
+        string Scrub(string input)
+        {
+            var s = input ?? string.Empty;
+            if (!string.IsNullOrEmpty(nameKey) && nameKey.Length >= 2)
+                s = Regex.Replace(s, Regex.Escape(nameKey), "SEU_NOME", RegexOptions.IgnoreCase);
+            if (!string.IsNullOrEmpty(userKey) && userKey.Length >= 2)
+            {
+                s = Regex.Replace(s, Regex.Escape(userKey), "SEU_USER", RegexOptions.IgnoreCase);
+                s = Regex.Replace(
+                    s,
+                    $@"(?i)(https?://)?(www\.)?github\.com/{Regex.Escape(userKey)}(/[^\s)\]]*)?",
+                    "https://github.com/SEU_USER");
+                s = Regex.Replace(
+                    s,
+                    $@"(?i)(https?://)?(www\.)?linkedin\.com/in/{Regex.Escape(userKey)}(/[^\s)\]]*)?",
+                    "https://linkedin.com/in/SEU_USER");
+            }
+            return s;
+        }
+
+        var cleanTitle = Clamp(Scrub(titulo ?? string.Empty), 120, "Modelo README");
+        if (string.IsNullOrWhiteSpace(cleanTitle) ||
+            cleanTitle.Equals("Meu README", StringComparison.OrdinalIgnoreCase))
+            cleanTitle = "Modelo README";
+
+        var cleanMd = Clamp(Scrub(markdown ?? string.Empty), 200_000, string.Empty);
+        return (cleanTitle, cleanMd);
     }
 
     public async Task<object?> GetSecurityQuestionForUserAsync(string usuario, CancellationToken ct = default)

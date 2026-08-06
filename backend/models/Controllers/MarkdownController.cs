@@ -94,6 +94,41 @@ public class MarkdownController : ControllerBase
         return Ok(payload);
     }
 
+    [HttpGet("templates")]
+    public async Task<IActionResult> ListTemplates(CancellationToken ct)
+    {
+        var list = await _service.ListTemplatesAsync(ct);
+        return Ok(list);
+    }
+
+    [HttpGet("templates/{id:int}")]
+    public async Task<IActionResult> GetTemplate(int id, CancellationToken ct)
+    {
+        var t = await _service.GetTemplateAsync(id, ct);
+        if (t is null) return NotFound(new { message = "Modelo não encontrado." });
+        return Ok(t);
+    }
+
+    [HttpGet("share")]
+    [Authorize(Roles = MarkdownBuilderService.JwtRole)]
+    public async Task<IActionResult> GetShare(CancellationToken ct)
+    {
+        var userId = ResolveUserId();
+        if (userId is null) return Unauthorized();
+        return Ok(await _service.GetShareStateAsync(userId.Value, ct));
+    }
+
+    [HttpPut("share")]
+    [Authorize(Roles = MarkdownBuilderService.JwtRole)]
+    public async Task<IActionResult> SetShare([FromBody] MarkdownShareRequest req, CancellationToken ct)
+    {
+        var userId = ResolveUserId();
+        if (userId is null) return Unauthorized();
+        var (ok, error, payload) = await _service.SetShareAsync(userId.Value, req, ct);
+        if (!ok) return BadRequest(new { message = error });
+        return Ok(payload);
+    }
+
     private int? ResolveUserId()
     {
         var raw = User.FindFirstValue(ClaimTypes.NameIdentifier);

@@ -297,9 +297,12 @@
     nome: '',
     dirty: false,
     saving: false,
+    sharing: false,
   };
 
   let legendBound = false;
+  let shareUiBound = false;
+  let editorBound = false;
   let legendHideTimer = 0;
   let legendAutoHideTimer = 0;
   let legendAnchor = null;
@@ -630,6 +633,8 @@
   }
 
   function bindEditor() {
+    if (editorBound) return;
+    editorBound = true;
     const editor = el('md-editor');
     if (!editor) return;
 
@@ -706,6 +711,182 @@
     });
   }
 
+  function updateShareUi() {
+    const wrap = el('md-share-wrap');
+    const btn = el('md-share-btn');
+    if (!wrap || !btn) return;
+    if (state.mode === 'auth') {
+      wrap.removeAttribute('hidden');
+      btn.setAttribute('aria-pressed', state.sharing ? 'true' : 'false');
+      btn.classList.toggle('md-share-btn--on', !!state.sharing);
+      btn.classList.toggle('primary', !!state.sharing);
+      btn.classList.toggle('ghost', !state.sharing);
+      btn.textContent = state.sharing ? 'Modelo partilhado ✓' : 'Compartilhar modelo';
+    } else {
+      wrap.setAttribute('hidden', '');
+      state.sharing = false;
+      btn.setAttribute('aria-pressed', 'false');
+      btn.classList.remove('md-share-btn--on', 'primary');
+      btn.classList.add('ghost');
+      btn.textContent = 'Compartilhar modelo';
+    }
+  }
+
+  async function loadShareState() {
+    if (state.mode !== 'auth' || !state.token) {
+      state.sharing = false;
+      updateShareUi();
+      return;
+    }
+    try {
+      const res = await fetch(`${apiBase()}/api/markdown/share`, {
+        headers: { Accept: 'application/json', Authorization: `Bearer ${state.token}` },
+        credentials: 'same-origin',
+        cache: 'no-store',
+      });
+      const data = await res.json().catch(() => ({}));
+      state.sharing = !!(res.ok && data.compartilhado);
+    } catch (_) {
+      state.sharing = false;
+    }
+    updateShareUi();
+  }
+
+  async function setShare(compartilhado) {
+    if (state.mode !== 'auth' || !state.token) return;
+    if (compartilhado) {
+      const ok = window.confirm(
+        'O modelo é publicado sem o teu nome de conta. Confere se o texto não tem dados pessoais (nome, links, emails). Continuar?',
+      );
+      if (!ok) {
+        updateShareUi();
+        return;
+      }
+      // Guarda o doc atual antes de partilhar
+      if (state.dirty) await saveDoc('share');
+    }
+    try {
+      const res = await fetch(`${apiBase()}/api/markdown/share`, {
+        method: 'PUT',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${state.token}`,
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ compartilhado: !!compartilhado }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        state.sharing = false;
+        updateShareUi();
+        setStatus(data.message || 'Não foi possível atualizar a partilha.', 'bad');
+        return;
+      }
+      state.sharing = !!data.compartilhado;
+      updateShareUi();
+      setStatus(
+        state.sharing
+          ? 'Modelo partilhado com a comunidade (versão sanitizada).'
+          : 'Modelo removido da galeria.',
+        'ok',
+      );
+      void loadTemplates();
+    } catch (_) {
+      state.sharing = false;
+      updateShareUi();
+      setStatus('Sem ligação à API. Tente novamente.', 'bad');
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  async function loadTemplates() {
+    const list = el('md-templates-list');
+    if (!list) return;
+    list.innerHTML = '<p class="md-templates-empty">A carregar modelos…</p>';
+    try {
+      const res = await fetch(`${apiBase()}/api/markdown/templates`, {
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+      });
+      const data = await res.json().catch(() => []);
+      if (!res.ok || !Array.isArray(data)) {
+        list.innerHTML = '<p class="md-templates-empty">Não foi possível carregar os modelos.</p>';
+        return;
+      }
+      if (!data.length) {
+        list.innerHTML =
+          '<p class="md-templates-empty">Ainda não há modelos partilhados. Sê o primeiro (com conta).</p>';
+        return;
+      }
+      list.innerHTML = data
+        .map(
+          (t) => `
+        <article class="md-template-item" data-template-id="${Number(t.id)}">
+          <div class="md-template-meta">
+            <h4 class="md-template-title">${escapeHtml(t.titulo || 'Modelo README')}</h4>
+            <pre class="md-template-preview">${escapeHtml(t.preview || '')}</pre>
+          </div>
+          <button type="button" class="term-btn primary md-gate-btn-primary md-template-use">Usar este modelo</button>
+        </article>`,
+        )
+        .join('');
+    } catch (_) {
+      list.innerHTML = '<p class="md-templates-empty">Sem ligação à API.</p>';
+    }
+  }
+
+  async function applyTemplate(id) {
+    try {
+      const res = await fetch(`${apiBase()}/api/markdown/templates/${id}`, {
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setStatus(data.message || 'Modelo não encontrado.', 'bad');
+        return;
+      }
+      if (el('md-title')) el('md-title').value = data.titulo || 'Modelo README';
+      if (el('md-editor')) el('md-editor').value = data.conteudo_markdown || '';
+      state.dirty = true;
+      refreshPreview();
+      setStatus('Modelo carregado no editor. Edita e guarda se tiveres conta.', 'ok');
+      el('md-editor')?.focus();
+    } catch (_) {
+      setStatus('Sem ligação à API. Tente novamente.', 'bad');
+    }
+  }
+
+  function bindShareUi() {
+    if (shareUiBound) return;
+    shareUiBound = true;
+
+    el('md-share-btn')?.addEventListener('click', () => {
+      void setShare(!state.sharing);
+    });
+
+    el('md-templates-refresh')?.addEventListener('click', () => {
+      void loadTemplates();
+    });
+
+    el('md-templates-list')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.md-template-use');
+      if (!btn) return;
+      const item = btn.closest('[data-template-id]');
+      const id = Number(item?.getAttribute('data-template-id'));
+      if (!id) return;
+      void applyTemplate(id);
+    });
+  }
+
   function showWorkspace() {
     el('md-gate')?.setAttribute('hidden', '');
     document.body.classList.remove('md-gate-open');
@@ -720,6 +901,10 @@
     }
     bindEditor();
     bindToolLegend();
+    bindShareUi();
+    updateShareUi();
+    void loadShareState();
+    void loadTemplates();
     refreshPreview();
   }
 

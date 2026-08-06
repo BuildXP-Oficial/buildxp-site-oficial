@@ -37,3 +37,18 @@ public class MarkdownBuilderDoc
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
     public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow;
 }
+
+/// <summary>Modelo anônimo publicado pela comunidade (sem dados pessoais do dono na API pública).</summary>
+public class MarkdownSharedTemplate
+{
+    public int Id { get; set; }
+    public int OwnerUserId { get; set; }
+    public MarkdownBuilderUser? Owner { get; set; }
+
+    public string TituloModelo { get; set; } = "Modelo README";
+    public string ConteudoMarkdown { get; set; } = string.Empty;
+    public bool Ativo { get; set; } = true;
+
+    public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
+    public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow;
+}

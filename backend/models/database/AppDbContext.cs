@@ -22,6 +22,7 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
     public DbSet<CardIconUpload> CardIconUploads { get; set; }
     public DbSet<MarkdownBuilderUser> MarkdownBuilderUsers { get; set; }
     public DbSet<MarkdownBuilderDoc> MarkdownBuilderDocs { get; set; }
+    public DbSet<MarkdownSharedTemplate> MarkdownSharedTemplates { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -127,6 +128,19 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
             entity.Property(d => d.Arquitetura).HasColumnType("text");
             entity.Property(d => d.RegrasEvento).HasColumnType("text");
             entity.HasIndex(d => d.UserId).IsUnique();
+        });
+
+        modelBuilder.Entity<MarkdownSharedTemplate>(entity =>
+        {
+            entity.ToTable("MarkdownSharedTemplates");
+            entity.Property(t => t.TituloModelo).HasMaxLength(120);
+            entity.Property(t => t.ConteudoMarkdown).HasColumnType("text");
+            entity.HasIndex(t => t.OwnerUserId).IsUnique();
+            entity.HasIndex(t => t.Ativo);
+            entity.HasOne(t => t.Owner)
+                .WithMany()
+                .HasForeignKey(t => t.OwnerUserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
     }
