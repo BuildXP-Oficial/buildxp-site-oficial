@@ -46,8 +46,11 @@ public class MarkdownSharedTemplate
     public MarkdownBuilderUser? Owner { get; set; }
 
     public string TituloModelo { get; set; } = "Modelo README";
+    public string Descricao { get; set; } = string.Empty;
     public string ConteudoMarkdown { get; set; } = string.Empty;
     public bool Ativo { get; set; } = true;
+    /// <summary>Quantas vezes o modelo foi carregado no editor por outros (ou o dono).</summary>
+    public int UsosCount { get; set; }
 
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
     public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow;

@@ -2,14 +2,14 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
   <link rel="icon" type="image/png" href="imagens/xpbrowser.png" />
   <title>README Lab — BuildXP</title>
   <meta name="description" content="README Lab: editor de markdown com preview ao vivo. Guarde opcionalmente com utilizador e senha." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
-  <link rel="stylesheet" href="css/site.css?v=bxp-mod-59" />
+  <link rel="stylesheet" href="css/site.css?v=bxp-mod-63" />
   <script>window.BUILDXP_API_BASE = window.BUILDXP_API_BASE || '';</script>
 </head>
 <body>
@@ -184,12 +184,36 @@
       <pre class="md-code md-legend-example" id="md-legend-example" hidden><code></code></pre>
     </div>
 
+    <details class="md-templates" id="md-templates">
+      <summary class="md-templates-summary">Modelos da comunidade</summary>
+      <div class="md-templates-body">
+        <div class="md-templates-head">
+          <button type="button" class="term-btn ghost" id="md-templates-refresh">Atualizar</button>
+        </div>
+        <p class="md-templates-hint">Usa um modelo como base (sem dados pessoais do autor). Com conta podes publicar vários modelos.</p>
+        <div class="md-templates-slider" id="md-templates-slider">
+          <button type="button" class="md-templates-nav md-templates-nav--prev" id="md-templates-prev" aria-label="Modelos anteriores">‹</button>
+          <div class="md-templates-track" id="md-templates-list" role="list" aria-label="Modelos da comunidade" tabindex="0"></div>
+          <button type="button" class="md-templates-nav md-templates-nav--next" id="md-templates-next" aria-label="Próximos modelos">›</button>
+        </div>
+        <div class="md-my-templates" id="md-my-templates" hidden>
+          <h4 class="md-my-templates-title">Meus modelos</h4>
+          <div class="md-templates-list" id="md-my-templates-list"></div>
+        </div>
+      </div>
+    </details>
+
     <label class="fb-label md-title-field">Título do documento
       <input class="fb-input" id="md-title" maxlength="120" value="Minha apresentação" />
     </label>
 
-    <div class="md-split">
-      <div class="md-pane">
+    <div class="md-view-tabs" id="md-view-tabs" role="tablist" aria-label="Markdown ou Preview">
+      <button type="button" class="md-view-tab is-active" data-md-view="editor" role="tab" aria-selected="true">Markdown</button>
+      <button type="button" class="md-view-tab" data-md-view="preview" role="tab" aria-selected="false">Preview</button>
+    </div>
+
+    <div class="md-split" id="md-split">
+      <div class="md-pane md-pane--editor is-active" id="md-pane-editor">
         <div class="md-pane-head">
           <div class="md-pane-label">MARKDOWN</div>
           <div class="md-copy-wrap">
@@ -205,22 +229,52 @@
         <textarea id="md-editor" class="md-editor" spellcheck="false" placeholder="# Olá, eu sou [Seu Nome]&#10;&#10;Uma frase sobre quem és e o que estás a construir.&#10;&#10;## Sobre mim&#10;- …&#10;&#10;## Tech&#10;| Front | Back | Tools |&#10;| --- | --- | --- |&#10;| … | … | … |&#10;&#10;## Projetos&#10;- …&#10;&#10;## Contato&#10;[LinkedIn](https://…)"></textarea>
         <div class="md-word-count" id="md-word-count">0 palavras</div>
       </div>
-      <div class="md-pane">
+      <div class="md-pane md-pane--preview" id="md-pane-preview">
         <div class="md-pane-head">
           <div class="md-pane-label">PREVIEW</div>
         </div>
-        <div id="md-preview" class="md-preview" aria-live="polite"></div>
+        <div id="md-preview" class="md-preview markdown-body" aria-live="polite"></div>
       </div>
     </div>
 
     <div class="md-share-row" id="md-share-wrap" hidden>
-      <button type="button" class="term-btn ghost" id="md-share-btn" aria-pressed="false">
-        Compartilhar modelo
+      <button type="button" class="term-btn ghost" id="md-share-btn" data-md-share-action="novo">
+        Publicar como novo modelo
       </button>
-      <p class="md-share-hint">Publica uma versão sem os teus dados pessoais para outros usarem como base.</p>
+      <button type="button" class="term-btn ghost" id="md-share-update-btn" hidden>
+        Atualizar modelo em edição
+      </button>
+      <p class="md-share-hint">Publica uma versão sanitizada (sem os teus dados pessoais) na galeria. Podes publicar vários.</p>
     </div>
 
     <div class="md-status" id="md-status" aria-live="polite"></div>
+
+    <!-- Modal: preparar modelo anonimizado -->
+    <div class="md-prepare" id="md-prepare" hidden role="dialog" aria-modal="true" aria-labelledby="md-prepare-title">
+      <div class="md-prepare-card">
+        <div class="md-prepare-head">
+          <h2 class="md-prepare-title" id="md-prepare-title">Preparar modelo</h2>
+          <button type="button" class="md-prepare-close" id="md-prepare-close" aria-label="Fechar">×</button>
+        </div>
+        <p class="md-prepare-intro">Revê a versão anonimizada. Trechos substituídos aparecem destacados — podes reverter ou editar cada um. O servidor volta a sanitizar ao publicar.</p>
+        <label class="fb-label">Título do modelo
+          <input class="fb-input" id="md-prepare-titulo" maxlength="120" />
+        </label>
+        <label class="fb-label">Descrição curta (visível no card)
+          <input class="fb-input" id="md-prepare-desc" maxlength="280" placeholder="Ex.: README profile com tops animados e secção tech" />
+        </label>
+        <div class="md-prepare-preview-wrap">
+          <div class="md-prepare-label">Preview anonimizado</div>
+          <div id="md-prepare-preview" class="md-prepare-preview markdown-body md-preview"></div>
+        </div>
+        <div class="md-prepare-repls" id="md-prepare-repls"></div>
+        <div class="md-prepare-actions">
+          <button type="button" class="term-btn ghost" id="md-prepare-cancel">Cancelar</button>
+          <button type="button" class="term-btn primary" id="md-prepare-confirm">Confirmar publicação</button>
+        </div>
+        <p class="md-form-error" id="md-prepare-error" role="alert"></p>
+      </div>
+    </div>
 
     <aside class="md-media-help" id="md-media-help">
       <h3>Onde pegar URLs de imagem e GIF</h3>
@@ -231,20 +285,11 @@
         <li>Usa sempre HTTPS — URLs HTTP podem ser bloqueadas.</li>
       </ul>
     </aside>
-
-    <aside class="md-templates" id="md-templates">
-      <div class="md-templates-head">
-        <h3>Modelos da comunidade</h3>
-        <button type="button" class="term-btn ghost" id="md-templates-refresh">Atualizar</button>
-      </div>
-      <p class="md-templates-hint">Usa um modelo como base (sem dados pessoais do autor). Contas autenticadas podem partilhar o seu via “Compartilhar modelo”.</p>
-      <div class="md-templates-list" id="md-templates-list" aria-live="polite"></div>
-    </aside>
   </section>
 
 </main>
 
 <footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="js/main.js?v=bxp-mod-59"></script>
+<script src="js/main.js?v=bxp-mod-63"></script>
 </body>
 </html>

@@ -1,10 +1,162 @@
-// BuildXP — parser markdown (subconjunto GFM) para "Construa aqui"
+// BuildXP — parser markdown (GFM + HTML sanitizado estilo GitHub README)
+// Nota: GitHub não executa JS no README — este preview também não.
+
 function mdEscape(str) {
   return String(str ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+const MD_ALLOWED_TAGS = new Set([
+  'a', 'abbr', 'b', 'blockquote', 'br', 'code', 'dd', 'del', 'details', 'div', 'dl', 'dt',
+  'em', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'i', 'img', 'ins', 'kbd', 'li', 'mark',
+  'ol', 'p', 'pre', 'q', 's', 'samp', 'small', 'span', 'strong', 'sub', 'summary', 'sup',
+  'table', 'tbody', 'td', 'tfoot', 'th', 'thead', 'tr', 'u', 'ul',
+]);
+
+const MD_VOID_TAGS = new Set(['br', 'hr', 'img']);
+
+const MD_ALLOWED_ATTRS = {
+  '*': ['align', 'class', 'id', 'title', 'dir', 'lang'],
+  a: ['href', 'name', 'target', 'rel'],
+  img: ['src', 'alt', 'title', 'width', 'height', 'align', 'loading', 'referrerpolicy'],
+  td: ['align', 'colspan', 'rowspan', 'width', 'height'],
+  th: ['align', 'colspan', 'rowspan', 'width', 'height'],
+  table: ['align', 'border', 'cellpadding', 'cellspacing', 'width'],
+  div: ['align'],
+  p: ['align'],
+  details: ['open'],
+};
+
+function mdIsSafeUrl(url, kind) {
+  const u = String(url || '').trim();
+  if (!u) return false;
+  if (/^#/i.test(u)) return kind === 'href';
+  if (/^mailto:/i.test(u)) return kind === 'href';
+  if (/^https?:\/\//i.test(u)) return true;
+  return false;
+}
+
+function mdSanitizeStyle(raw) {
+  const s = String(raw || '');
+  const allowed = [];
+  const parts = s.split(';');
+  for (const part of parts) {
+    const m = part.match(/^\s*([a-zA-Z-]+)\s*:\s*(.+)\s*$/);
+    if (!m) continue;
+    const prop = m[1].toLowerCase();
+    let val = m[2].trim();
+    if (/expression|url\s*\(|javascript:|@import|behavior/i.test(val)) continue;
+    if (
+      [
+        'color',
+        'background',
+        'background-color',
+        'text-align',
+        'width',
+        'height',
+        'max-width',
+        'max-height',
+        'margin',
+        'padding',
+        'border',
+        'border-radius',
+        'font-size',
+        'font-weight',
+        'display',
+        'vertical-align',
+        'opacity',
+      ].includes(prop)
+    ) {
+      // só valores “simples”
+      if (/^[^;{}]+$/.test(val) && val.length < 80) allowed.push(`${prop}:${val}`);
+    }
+  }
+  return allowed.join(';');
+}
+
+function mdAllowedAttrsFor(tag) {
+  const base = MD_ALLOWED_ATTRS['*'] || [];
+  const extra = MD_ALLOWED_ATTRS[tag] || [];
+  return new Set([...base, ...extra, 'style']);
+}
+
+/** Sanitiza fragmento HTML (allowlist GitHub-like). Sem script/eventos. */
+function mdSanitizeHtml(html) {
+  if (typeof DOMParser === 'undefined') {
+    return mdEscape(html);
+  }
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div id="md-root">${html}</div>`, 'text/html');
+  const root = doc.getElementById('md-root');
+  if (!root) return '';
+
+  const walk = (node, outParent) => {
+    const children = Array.from(node.childNodes);
+    for (const child of children) {
+      if (child.nodeType === 3) {
+        outParent.appendChild(document.createTextNode(child.textContent || ''));
+        continue;
+      }
+      if (child.nodeType !== 1) continue;
+      const tag = child.tagName.toLowerCase();
+      if (tag === 'script' || tag === 'style' || tag === 'iframe' || tag === 'object' || tag === 'embed') {
+        continue;
+      }
+      if (!MD_ALLOWED_TAGS.has(tag)) {
+        walk(child, outParent);
+        continue;
+      }
+
+      const el = document.createElement(tag);
+      const allow = mdAllowedAttrsFor(tag);
+      for (const attr of Array.from(child.attributes)) {
+        const name = attr.name.toLowerCase();
+        if (name.startsWith('on')) continue;
+        if (!allow.has(name)) continue;
+        let val = attr.value;
+        if (name === 'href' || name === 'src') {
+          if (!mdIsSafeUrl(val, name === 'src' ? 'src' : 'href')) continue;
+          if (name === 'href' && /^https?:/i.test(val)) {
+            el.setAttribute('target', '_blank');
+            el.setAttribute('rel', 'noopener noreferrer');
+          }
+        }
+        if (name === 'style') {
+          const safeStyle = mdSanitizeStyle(val);
+          if (!safeStyle) continue;
+          el.setAttribute('style', safeStyle);
+          continue;
+        }
+        if (name === 'class') {
+          val = String(val)
+            .split(/\s+/)
+            .filter((c) => /^[a-zA-Z0-9_-]+$/.test(c))
+            .join(' ');
+          if (!val) continue;
+        }
+        el.setAttribute(name, val);
+      }
+
+      if (tag === 'img') {
+        el.setAttribute('loading', 'lazy');
+        el.setAttribute('referrerpolicy', 'no-referrer');
+        const w = el.getAttribute('width');
+        const h = el.getAttribute('height');
+        if (w || h) el.classList.add('md-img--sized');
+        else el.classList.add('md-img--auto');
+      }
+
+      if (!MD_VOID_TAGS.has(tag)) walk(child, el);
+      outParent.appendChild(el);
+    }
+  };
+
+  const holder = document.createElement('div');
+  walk(root, holder);
+  return holder.innerHTML;
 }
 
 /** Permite <img> HTTPS seguro em conteúdo misto (títulos README / typing SVG). */
@@ -15,12 +167,128 @@ function mdSanitizeImgTag(tag) {
   const width = (tag.match(/\bwidth\s*=\s*"([^"]+)"/i) || [])[1] || '';
   const height = (tag.match(/\bheight\s*=\s*"([^"]+)"/i) || [])[1] || '';
   const valign = (tag.match(/\bvalign\s*=\s*"([^"]+)"/i) || [])[1] || '';
-  let out = `<img src="${mdEscape(src)}" alt="${mdEscape(alt)}" loading="lazy" referrerpolicy="no-referrer"`;
+  const sized = !!(width || height);
+  let out = `<img src="${mdEscape(src)}" alt="${mdEscape(alt)}" loading="lazy" referrerpolicy="no-referrer" class="${sized ? 'md-img--sized' : 'md-img--auto'}"`;
   if (width) out += ` width="${mdEscape(width)}"`;
   if (height) out += ` height="${mdEscape(height)}"`;
-  if (valign) out += ` style="vertical-align:${mdEscape(valign)}"`;
+  if (valign) out += ` align="${mdEscape(valign)}"`;
   out += ' />';
   return out;
+}
+
+function mdSanitizeOpenTag(raw) {
+  const m = String(raw ?? '').match(/^\s*<([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>/);
+  if (!m) return '';
+  const tag = m[1].toLowerCase();
+  if (!MD_ALLOWED_TAGS.has(tag)) return '';
+  const allow = mdAllowedAttrsFor(tag);
+  const attrs = [];
+  const attrRe = /([a-zA-Z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g;
+  let am;
+  const attrStr = m[2] || '';
+  while ((am = attrRe.exec(attrStr))) {
+    const name = am[1].toLowerCase();
+    if (name.startsWith('on') || !allow.has(name)) continue;
+    let val = am[2] ?? am[3] ?? am[4] ?? '';
+    if (name === 'href' || name === 'src') {
+      if (!mdIsSafeUrl(val, name === 'src' ? 'src' : 'href')) continue;
+    }
+    if (name === 'style') {
+      val = mdSanitizeStyle(val);
+      if (!val) continue;
+    }
+    if (name === 'class') {
+      val = String(val)
+        .split(/\s+/)
+        .filter((c) => /^[a-zA-Z0-9_-]+$/.test(c))
+        .join(' ');
+      if (!val) continue;
+    }
+    attrs.push(` ${name}="${mdEscape(val)}"`);
+  }
+  if (tag === 'a') {
+    attrs.push(' target="_blank"', ' rel="noopener noreferrer"');
+  }
+  return `<${tag}${attrs.join('')}>`;
+}
+
+function mdSanitizeCloseTag(raw) {
+  const m = String(raw ?? '').match(/^\s*<\/\s*([a-zA-Z][a-zA-Z0-9]*)\s*>/);
+  if (!m) return '';
+  const tag = m[1].toLowerCase();
+  if (!MD_ALLOWED_TAGS.has(tag)) return '';
+  return `</${tag}>`;
+}
+
+/** GitHub: markdown dentro de HTML com linha em branco após abrir / antes de fechar. */
+function mdHtmlInnerShouldParseMarkdown(openLine, innerLines) {
+  if (!innerLines.length) return false;
+  const openAlone = /^\s*<[a-zA-Z][^>]*>\s*$/.test(openLine);
+  const blankAfterOpen = !String(innerLines[0] ?? '').trim();
+  const blankBeforeClose = !String(innerLines[innerLines.length - 1] ?? '').trim();
+  const inner = innerLines.join('\n');
+  const looksMd =
+    /(?:^|\n)\s*(?:#{1,6}\s|[-*+]\s|\d+\.\s|!\[|\[[^\]]+\]\(|\*\*[^*]|\*[^*]|```|>\s)/m.test(inner);
+  // Padrão README: <div> sozinho + conteúdo markdown (com ou sem blank lines)
+  if (openAlone && looksMd) return true;
+  return blankAfterOpen || blankBeforeClose;
+}
+
+/**
+ * Renderiza bloco HTML; se o GitHub permitiria markdown no interior, processa o miolo.
+ * @param {string[]} bufLines
+ * @param {(src: string) => string} renderMd
+ */
+function mdRenderHtmlBlock(bufLines, renderMd) {
+  if (!bufLines.length) return '';
+  const openLine = bufLines[0];
+  const openTagName = (openLine.match(/^\s*<([a-zA-Z][a-zA-Z0-9]*)\b/) || [])[1];
+  if (!openTagName) return mdSanitizeHtml(bufLines.join('\n'));
+
+  const tag = openTagName.toLowerCase();
+  if (MD_VOID_TAGS.has(tag)) {
+    return mdSanitizeHtml(bufLines.join('\n'));
+  }
+
+  const closerRe = new RegExp(`</${tag}\\s*>`, 'i');
+  const closedSame = closerRe.test(openLine);
+  if (closedSame && bufLines.length === 1) {
+    // <p>texto</p> numa linha — sanitiza e aplica inline no texto interior se possível
+    const one = bufLines[0];
+    const parts = one.match(new RegExp(`^(\\s*<${tag}\\b[^>]*>)([\\s\\S]*)(</${tag}\\s*>)\\s*$`, 'i'));
+    if (parts) {
+      const open = mdSanitizeOpenTag(parts[1]);
+      const close = mdSanitizeCloseTag(parts[3]);
+      if (!open || !close) return mdSanitizeHtml(one);
+      const inner = parts[2];
+      if (/[*_`!\[]/.test(inner) || /https?:\/\//.test(inner)) {
+        return open + mdInline(inner) + close;
+      }
+      return mdSanitizeHtml(one);
+    }
+    return mdSanitizeHtml(one);
+  }
+
+  const closeLine = bufLines[bufLines.length - 1];
+  const hasClose = closerRe.test(closeLine);
+  const innerLines = hasClose ? bufLines.slice(1, -1) : bufLines.slice(1);
+
+  if (!mdHtmlInnerShouldParseMarkdown(openLine, innerLines)) {
+    return mdSanitizeHtml(bufLines.join('\n'));
+  }
+
+  const open = mdSanitizeOpenTag(openLine);
+  const close = hasClose ? mdSanitizeCloseTag(closeLine) : '';
+  if (!open) return mdSanitizeHtml(bufLines.join('\n'));
+
+  // Remove blank lines de borda (regra GitHub) só para o parse; estrutura visual via CSS align
+  let start = 0;
+  let end = innerLines.length;
+  while (start < end && !String(innerLines[start]).trim()) start += 1;
+  while (end > start && !String(innerLines[end - 1]).trim()) end -= 1;
+  const innerMd = innerLines.slice(start, end).join('\n');
+  const innerHtml = innerMd.trim() ? renderMd(innerMd) : '';
+  return `${open}\n${innerHtml}\n${close}`;
 }
 
 function mdInline(raw) {
@@ -32,38 +300,76 @@ function mdInline(raw) {
     imgs.push(safe);
     return token;
   });
+
+  const htmlBits = [];
+  s = s.replace(/<(br|hr)\s*\/?>/gi, (tag) => {
+    const token = `\u0000H${htmlBits.length}\u0000`;
+    htmlBits.push(mdSanitizeHtml(tag));
+    return token;
+  });
+  s = s.replace(
+    /<(span|strong|em|b|i|u|s|sub|sup|mark|kbd|samp|small|a|code)\b[^>]*>[\s\S]*?<\/\1>/gi,
+    (block) => {
+      const safe = mdSanitizeHtml(block);
+      if (!safe) return '';
+      const token = `\u0000H${htmlBits.length}\u0000`;
+      htmlBits.push(safe);
+      return token;
+    },
+  );
+
   s = mdEscape(s);
+
+  // Imagem clicável: [![alt](imgUrl)](href) — comum em badges / typing SVG
+  // URLs com query (?a=1&b=2) entram em [^)\s]+ sem cortar nos &
+  s = s.replace(
+    /\[!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)\]\((https?:\/\/[^)\s]+)\)/g,
+    '<a href="$3" target="_blank" rel="noopener noreferrer"><img src="$2" alt="$1" loading="lazy" referrerpolicy="no-referrer" class="md-img--auto" /></a>',
+  );
   // images ![alt](url)
   s = s.replace(
     /!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g,
-    '<img src="$2" alt="$1" loading="lazy" referrerpolicy="no-referrer" />',
+    '<img src="$2" alt="$1" loading="lazy" referrerpolicy="no-referrer" class="md-img--auto" />',
   );
   // links [text](url)
   s = s.replace(
     /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,
     '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
   );
-  // bold+italic ***
   s = s.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
-  // bold **
   s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  // italic *
   s = s.replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, '$1<em>$2</em>');
-  // inline code
   s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
   imgs.forEach((html, idx) => {
     s = s.replace(`\u0000IMG${idx}\u0000`, html);
   });
+  htmlBits.forEach((html, idx) => {
+    s = s.replace(`\u0000H${idx}\u0000`, html);
+  });
   return s;
 }
 
+let mdRenderDepth = 0;
+
 function buildxpRenderMarkdown(src) {
+  if (mdRenderDepth > 10) {
+    return mdEscape(src);
+  }
+  mdRenderDepth += 1;
+  try {
+    return buildxpRenderMarkdownInner(src);
+  } finally {
+    mdRenderDepth -= 1;
+  }
+}
+
+function buildxpRenderMarkdownInner(src) {
   const lines = String(src ?? '').replace(/\r\n/g, '\n').split('\n');
   const out = [];
   let i = 0;
   let inCode = false;
   let codeBuf = [];
-  let listType = null; // 'ul' | 'ol' | 'check'
+  let listType = null;
   let listBuf = [];
 
   const flushList = () => {
@@ -107,7 +413,51 @@ function buildxpRenderMarkdown(src) {
       continue;
     }
 
-    // GitHub alerts: > [!NOTE] etc.
+    // HTML comments
+    if (/^\s*<!--/.test(line)) {
+      flushList();
+      if (/-->/.test(line)) {
+        i += 1;
+        continue;
+      }
+      i += 1;
+      while (i < lines.length && !/-->/.test(lines[i])) i += 1;
+      if (i < lines.length) i += 1;
+      continue;
+    }
+
+    // Bloco HTML — markdown no interior (estilo GitHub) quando aplicável
+    if (/^\s*<\/?[a-zA-Z]/.test(line) && !/^\s*<br\s*\/?>\s*$/i.test(line)) {
+      flushList();
+      const buf = [line];
+      i += 1;
+      const openTag = (line.match(/^\s*<([a-zA-Z][a-zA-Z0-9]*)\b/) || [])[1];
+      const isVoid = openTag && MD_VOID_TAGS.has(openTag.toLowerCase());
+      const isCloseOnly = /^\s*<\//.test(line);
+      const closedSame = openTag && new RegExp(`</${openTag}\\s*>`, 'i').test(line);
+      if (!isVoid && !isCloseOnly && openTag && !closedSame) {
+        const closer = new RegExp(`</${openTag}\\s*>`, 'i');
+        while (i < lines.length) {
+          buf.push(lines[i]);
+          if (closer.test(lines[i])) {
+            i += 1;
+            break;
+          }
+          i += 1;
+          if (buf.length > 200) break;
+        }
+      }
+      out.push(mdRenderHtmlBlock(buf, buildxpRenderMarkdown));
+      continue;
+    }
+
+    if (/^\s*<br\s*\/?>\s*$/i.test(line)) {
+      flushList();
+      out.push('<br />');
+      i += 1;
+      continue;
+    }
+
     const alertMatch = line.match(/^>\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*$/i);
     if (alertMatch) {
       flushList();
@@ -124,7 +474,6 @@ function buildxpRenderMarkdown(src) {
       continue;
     }
 
-    // blockquote
     if (/^>\s?/.test(line)) {
       flushList();
       const body = [];
@@ -136,7 +485,6 @@ function buildxpRenderMarkdown(src) {
       continue;
     }
 
-    // table
     if (
       /^\|.+\|/.test(line) &&
       i + 1 < lines.length &&
@@ -160,7 +508,7 @@ function buildxpRenderMarkdown(src) {
         );
         i += 1;
       }
-      let html = '<table class="md-table"><thead><tr>';
+      let html = '<div class="md-table-wrap"><table class="md-table"><thead><tr>';
       headerCells.forEach((c) => {
         html += `<th>${mdInline(c)}</th>`;
       });
@@ -172,12 +520,11 @@ function buildxpRenderMarkdown(src) {
         });
         html += '</tr>';
       });
-      html += '</tbody></table>';
+      html += '</tbody></table></div>';
       out.push(html);
       continue;
     }
 
-    // HR
     if (/^(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) {
       flushList();
       out.push('<hr />');
@@ -185,7 +532,6 @@ function buildxpRenderMarkdown(src) {
       continue;
     }
 
-    // headings
     const h = line.match(/^(#{1,6})\s+(.+)$/);
     if (h) {
       flushList();
@@ -195,7 +541,6 @@ function buildxpRenderMarkdown(src) {
       continue;
     }
 
-    // checklist
     const check = line.match(/^[-*]\s+\[([ xX])\]\s+(.+)$/);
     if (check) {
       if (listType && listType !== 'check') flushList();
@@ -208,7 +553,6 @@ function buildxpRenderMarkdown(src) {
       continue;
     }
 
-    // ul
     const ul = line.match(/^[-*]\s+(.+)$/);
     if (ul) {
       if (listType && listType !== 'ul') flushList();
@@ -218,7 +562,6 @@ function buildxpRenderMarkdown(src) {
       continue;
     }
 
-    // ol
     const ol = line.match(/^\d+\.\s+(.+)$/);
     if (ol) {
       if (listType && listType !== 'ol') flushList();
@@ -234,45 +577,6 @@ function buildxpRenderMarkdown(src) {
       continue;
     }
 
-    // HTML comments (hidden on GitHub; skip in preview)
-    if (/^\s*<!--[\s\S]*-->\s*$/.test(line)) {
-      i += 1;
-      continue;
-    }
-
-    // <br/> solo (espaçamento em READMEs)
-    if (/^\s*<br\s*\/?>\s*$/i.test(line)) {
-      flushList();
-      out.push('<br />');
-      i += 1;
-      continue;
-    }
-
-    // <p align="...">...</p> (typing SVG / blocos centrais)
-    if (/^\s*<p\b/i.test(line)) {
-      flushList();
-      const buf = [line];
-      const openOnly = !/<\/p>\s*$/i.test(line);
-      i += 1;
-      while (openOnly && i < lines.length) {
-        buf.push(lines[i]);
-        if (/<\/p>/i.test(lines[i])) {
-          i += 1;
-          break;
-        }
-        i += 1;
-      }
-      const block = buf.join('\n');
-      const align = ((block.match(/<p\b[^>]*\balign\s*=\s*"([^"]*)"/i) || [])[1] || '').toLowerCase();
-      const style = align === 'center' ? ' text-align:center;' : '';
-      const inner = block
-        .replace(/^\s*<p\b[^>]*>/i, '')
-        .replace(/<\/p>\s*$/i, '')
-        .trim();
-      out.push(`<p style="${style}">${mdInline(inner)}</p>`);
-      continue;
-    }
-
     flushList();
     out.push(`<p>${mdInline(line)}</p>`);
     i += 1;
@@ -285,3 +589,5 @@ function buildxpRenderMarkdown(src) {
 
 window.buildxpRenderMarkdown = buildxpRenderMarkdown;
 window.mdEscape = mdEscape;
+window.mdSanitizeHtml = mdSanitizeHtml;
+window.mdInline = mdInline;

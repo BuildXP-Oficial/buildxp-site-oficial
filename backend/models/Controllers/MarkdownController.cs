@@ -101,6 +101,38 @@ public class MarkdownController : ControllerBase
         return Ok(list);
     }
 
+    [HttpGet("templates/mine")]
+    [Authorize(Roles = MarkdownBuilderService.JwtRole)]
+    public async Task<IActionResult> ListMyTemplates(CancellationToken ct)
+    {
+        var userId = ResolveUserId();
+        if (userId is null) return Unauthorized();
+        return Ok(await _service.ListMyTemplatesAsync(userId.Value, ct));
+    }
+
+    [HttpPost("templates/preview-anon")]
+    [Authorize(Roles = MarkdownBuilderService.JwtRole)]
+    public async Task<IActionResult> PreviewAnonymize(CancellationToken ct)
+    {
+        var userId = ResolveUserId();
+        if (userId is null) return Unauthorized();
+        var payload = await _service.PreviewAnonymizeAsync(userId.Value, ct);
+        if (payload is null)
+            return BadRequest(new { message = "Escreve algum markdown antes de preparar o modelo." });
+        return Ok(payload);
+    }
+
+    [HttpGet("templates/mine/{id:int}")]
+    [Authorize(Roles = MarkdownBuilderService.JwtRole)]
+    public async Task<IActionResult> GetMyTemplate(int id, CancellationToken ct)
+    {
+        var userId = ResolveUserId();
+        if (userId is null) return Unauthorized();
+        var t = await _service.GetMyTemplateAsync(userId.Value, id, ct);
+        if (t is null) return NotFound(new { message = "Modelo não encontrado." });
+        return Ok(t);
+    }
+
     [HttpGet("templates/{id:int}")]
     public async Task<IActionResult> GetTemplate(int id, CancellationToken ct)
     {
@@ -125,6 +157,58 @@ public class MarkdownController : ControllerBase
         var userId = ResolveUserId();
         if (userId is null) return Unauthorized();
         var (ok, error, payload) = await _service.SetShareAsync(userId.Value, req, ct);
+        if (!ok) return BadRequest(new { message = error });
+        return Ok(payload);
+    }
+
+    [HttpPost("templates/mine")]
+    [Authorize(Roles = MarkdownBuilderService.JwtRole)]
+    public async Task<IActionResult> PublishMyTemplate([FromBody] MarkdownShareRequest? req, CancellationToken ct)
+    {
+        var userId = ResolveUserId();
+        if (userId is null) return Unauthorized();
+        var body = req ?? new MarkdownShareRequest();
+        body.Acao = "novo";
+        var (ok, error, payload) = await _service.SetShareAsync(userId.Value, body, ct);
+        if (!ok) return BadRequest(new { message = error });
+        return Ok(payload);
+    }
+
+    [HttpPut("templates/mine/{id:int}")]
+    [Authorize(Roles = MarkdownBuilderService.JwtRole)]
+    public async Task<IActionResult> UpdateMyTemplate(int id, [FromBody] MarkdownShareRequest? req, CancellationToken ct)
+    {
+        var userId = ResolveUserId();
+        if (userId is null) return Unauthorized();
+        var body = req ?? new MarkdownShareRequest();
+        body.Acao = "atualizar";
+        body.TemplateId = id;
+        var (ok, error, payload) = await _service.SetShareAsync(userId.Value, body, ct);
+        if (!ok) return BadRequest(new { message = error });
+        return Ok(payload);
+    }
+
+    [HttpPut("templates/mine/{id:int}/status")]
+    [Authorize(Roles = MarkdownBuilderService.JwtRole)]
+    public async Task<IActionResult> SetMyTemplateStatus(
+        int id,
+        [FromBody] MarkdownTemplateStatusRequest req,
+        CancellationToken ct)
+    {
+        var userId = ResolveUserId();
+        if (userId is null) return Unauthorized();
+        var (ok, error, payload) = await _service.SetMyTemplateActiveAsync(userId.Value, id, req.Ativo, ct);
+        if (!ok) return BadRequest(new { message = error });
+        return Ok(payload);
+    }
+
+    [HttpDelete("templates/mine/{id:int}")]
+    [Authorize(Roles = MarkdownBuilderService.JwtRole)]
+    public async Task<IActionResult> DeleteMyTemplate(int id, CancellationToken ct)
+    {
+        var userId = ResolveUserId();
+        if (userId is null) return Unauthorized();
+        var (ok, error, payload) = await _service.DeleteMyTemplateAsync(userId.Value, id, ct);
         if (!ok) return BadRequest(new { message = error });
         return Ok(payload);
     }
