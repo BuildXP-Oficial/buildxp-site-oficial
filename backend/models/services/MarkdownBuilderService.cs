@@ -58,7 +58,20 @@ public sealed class MarkdownDocSaveRequest
 
 public sealed class MarkdownShareRequest
 {
-    public bool Compartilhado { get; set; }
+    /// <summary>novo | atualizar | despublicar | republicar | excluir. Legacy: use Compartilhado.</summary>
+    public string? Acao { get; set; }
+    public int? TemplateId { get; set; }
+    public string? TituloModelo { get; set; }
+    public string? Descricao { get; set; }
+    /// <summary>Markdown revisto pelo autor no modal "Preparar modelo". O servidor ainda aplica scrub de PII.</summary>
+    public string? ConteudoMarkdown { get; set; }
+    /// <summary>Compat: true = publicar novo; false = despublicar TemplateId (ou o mais recente).</summary>
+    public bool? Compartilhado { get; set; }
+}
+
+public sealed class MarkdownTemplateStatusRequest
+{
+    public bool Ativo { get; set; }
 }
 
 public sealed class MarkdownXpAwardDto
@@ -302,25 +315,94 @@ public class MarkdownBuilderService
 
         await _db.SaveChangesAsync(ct);
 
-        // Se o modelo está partilhado, atualiza o snapshot sanitizado
-        await SyncSharedTemplateIfActiveAsync(userId, doc, ct);
-
         return (true, null, new { doc = MapDoc(doc), awards, word_count = words, heading_count = headings });
     }
 
     public async Task<object> GetShareStateAsync(int userId, CancellationToken ct = default)
     {
-        var t = await _db.MarkdownSharedTemplates.AsNoTracking()
-            .FirstOrDefaultAsync(x => x.OwnerUserId == userId, ct);
+        var mine = await _db.MarkdownSharedTemplates.AsNoTracking()
+            .Where(x => x.OwnerUserId == userId)
+            .OrderByDescending(x => x.AtualizadoEm)
+            .Select(x => new { x.Id, x.Ativo, x.AtualizadoEm })
+            .ToListAsync(ct);
+        var published = mine.Count(x => x.Ativo);
         return new
         {
-            compartilhado = t is { Ativo: true },
-            template_id = t is { Ativo: true } ? t.Id : (int?)null,
-            atualizado_em = t?.AtualizadoEm,
+            compartilhado = published > 0,
+            published_count = published,
+            total_count = mine.Count,
+            template_id = mine.FirstOrDefault(x => x.Ativo)?.Id,
+            atualizado_em = mine.FirstOrDefault()?.AtualizadoEm,
+        };
+    }
+
+    public async Task<object> ListMyTemplatesAsync(int userId, CancellationToken ct = default)
+    {
+        var rows = await _db.MarkdownSharedTemplates.AsNoTracking()
+            .Where(t => t.OwnerUserId == userId)
+            .OrderByDescending(t => t.AtualizadoEm)
+            .ToListAsync(ct);
+        return rows.Select(t => new
+        {
+            id = t.Id,
+            titulo = t.TituloModelo,
+            descricao = t.Descricao,
+            ativo = t.Ativo,
+            preview = MarkdownTemplateAnonymizer.BuildCardPreview(t.Descricao, t.ConteudoMarkdown),
+            usos = t.UsosCount,
+            criado_em = t.CriadoEm,
+            atualizado_em = t.AtualizadoEm,
+        }).ToList();
+    }
+
+    public async Task<object?> PreviewAnonymizeAsync(int userId, CancellationToken ct = default)
+    {
+        var user = await _db.MarkdownBuilderUsers
+            .Include(u => u.Document)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId, ct);
+        if (user?.Document is null || string.IsNullOrWhiteSpace(user.Document.ConteudoMarkdown))
+            return null;
+
+        var (markdown, replacements) = MarkdownTemplateAnonymizer.Anonymize(
+            user.Document.ConteudoMarkdown,
+            user.Usuario,
+            user.Nome);
+
+        return new
+        {
+            titulo_sugerido = Clamp(user.Document.Titulo, 120, "Modelo README"),
+            markdown,
+            replacements,
+            original_markdown = user.Document.ConteudoMarkdown,
         };
     }
 
     public async Task<(bool Ok, string? Error, object? Payload)> SetShareAsync(
+        int userId,
+        MarkdownShareRequest req,
+        CancellationToken ct = default)
+    {
+        var acao = (req.Acao ?? string.Empty).Trim().ToLowerInvariant();
+        if (string.IsNullOrEmpty(acao))
+        {
+            if (req.Compartilhado == true) acao = "novo";
+            else if (req.Compartilhado == false) acao = "despublicar";
+            else acao = "novo";
+        }
+
+        return acao switch
+        {
+            "novo" or "publicar" => await PublishNewTemplateAsync(userId, req, ct),
+            "atualizar" => await UpdateMyTemplateAsync(userId, req.TemplateId, req, ct),
+            "despublicar" => await SetMyTemplateActiveAsync(userId, req.TemplateId, false, ct),
+            "republicar" => await SetMyTemplateActiveAsync(userId, req.TemplateId, true, ct),
+            "excluir" => await DeleteMyTemplateAsync(userId, req.TemplateId, ct),
+            _ => (false, "Ação inválida. Use: novo, atualizar, despublicar, republicar, excluir.", null),
+        };
+    }
+
+    public async Task<(bool Ok, string? Error, object? Payload)> PublishNewTemplateAsync(
         int userId,
         MarkdownShareRequest req,
         CancellationToken ct = default)
@@ -330,148 +412,206 @@ public class MarkdownBuilderService
             .FirstOrDefaultAsync(u => u.Id == userId, ct);
         if (user is null) return (false, "user_not_found", null);
 
-        var existing = await _db.MarkdownSharedTemplates
-            .FirstOrDefaultAsync(t => t.OwnerUserId == userId, ct);
-
-        if (!req.Compartilhado)
-        {
-            if (existing is not null)
-            {
-                existing.Ativo = false;
-                existing.AtualizadoEm = DateTime.UtcNow;
-                await _db.SaveChangesAsync(ct);
-            }
-            return (true, null, new { compartilhado = false, template_id = (int?)null });
-        }
-
         var doc = user.Document;
         if (doc is null || string.IsNullOrWhiteSpace(doc.ConteudoMarkdown))
             return (false, "Escreve algum markdown antes de partilhar o modelo.", null);
 
-        var (titulo, markdown) = SanitizeTemplate(doc.Titulo, doc.ConteudoMarkdown, user.Usuario, user.Nome);
+        var titleRaw = string.IsNullOrWhiteSpace(req.TituloModelo) ? doc.Titulo : req.TituloModelo!;
+        var titulo = Clamp(titleRaw.Trim(), 120, "Modelo README");
+        if (string.IsNullOrWhiteSpace(titulo))
+            return (false, "Indica um título para o modelo.", null);
+
+        var titleTaken = await _db.MarkdownSharedTemplates.AsNoTracking()
+            .AnyAsync(t => t.OwnerUserId == userId && t.TituloModelo.ToLower() == titulo.ToLower(), ct);
+        if (titleTaken)
+            return (false, "Já tens um modelo com este título. Escolhe outro ou atualiza o existente.", null);
+
+        var markdown = MarkdownTemplateAnonymizer.ApplyReviewedMarkdown(
+            doc.ConteudoMarkdown,
+            req.ConteudoMarkdown,
+            user.Usuario,
+            user.Nome);
         if (string.IsNullOrWhiteSpace(markdown))
             return (false, "Depois da sanitização o modelo ficou vazio.", null);
 
-        if (existing is null)
+        var entity = new MarkdownSharedTemplate
         {
-            existing = new MarkdownSharedTemplate
-            {
-                OwnerUserId = userId,
-                CriadoEm = DateTime.UtcNow,
-            };
-            _db.MarkdownSharedTemplates.Add(existing);
-        }
+            OwnerUserId = userId,
+            TituloModelo = titulo,
+            Descricao = Truncate((req.Descricao ?? string.Empty).Trim(), 280),
+            ConteudoMarkdown = Clamp(markdown, 200_000, string.Empty),
+            Ativo = true,
+            UsosCount = 0,
+            CriadoEm = DateTime.UtcNow,
+            AtualizadoEm = DateTime.UtcNow,
+        };
+        _db.MarkdownSharedTemplates.Add(entity);
+        await _db.SaveChangesAsync(ct);
+
+        return (true, null, MapTemplateOwner(entity));
+    }
+
+    public async Task<(bool Ok, string? Error, object? Payload)> UpdateMyTemplateAsync(
+        int userId,
+        int? templateId,
+        MarkdownShareRequest req,
+        CancellationToken ct = default)
+    {
+        if (templateId is null or <= 0)
+            return (false, "Indica o template_id a atualizar.", null);
+
+        var user = await _db.MarkdownBuilderUsers
+            .Include(u => u.Document)
+            .FirstOrDefaultAsync(u => u.Id == userId, ct);
+        if (user is null) return (false, "user_not_found", null);
+
+        var existing = await _db.MarkdownSharedTemplates
+            .FirstOrDefaultAsync(t => t.Id == templateId && t.OwnerUserId == userId, ct);
+        if (existing is null) return (false, "Modelo não encontrado ou sem permissão.", null);
+
+        var doc = user.Document;
+        if (doc is null || string.IsNullOrWhiteSpace(doc.ConteudoMarkdown))
+            return (false, "Escreve algum markdown antes de atualizar o modelo.", null);
+
+        var titleRaw = string.IsNullOrWhiteSpace(req.TituloModelo) ? doc.Titulo : req.TituloModelo!;
+        var titulo = Clamp(titleRaw.Trim(), 120, "Modelo README");
+        var titleTaken = await _db.MarkdownSharedTemplates.AsNoTracking()
+            .AnyAsync(t => t.OwnerUserId == userId && t.Id != existing.Id && t.TituloModelo.ToLower() == titulo.ToLower(), ct);
+        if (titleTaken)
+            return (false, "Já tens outro modelo com este título. Escolhe um título diferente.", null);
+
+        var markdown = MarkdownTemplateAnonymizer.ApplyReviewedMarkdown(
+            doc.ConteudoMarkdown,
+            req.ConteudoMarkdown,
+            user.Usuario,
+            user.Nome);
+        if (string.IsNullOrWhiteSpace(markdown))
+            return (false, "Depois da sanitização o modelo ficou vazio.", null);
 
         existing.TituloModelo = titulo;
-        existing.ConteudoMarkdown = markdown;
-        existing.Ativo = true;
+        if (req.Descricao is not null)
+            existing.Descricao = Truncate(req.Descricao.Trim(), 280);
+        existing.ConteudoMarkdown = Clamp(markdown, 200_000, string.Empty);
         existing.AtualizadoEm = DateTime.UtcNow;
         await _db.SaveChangesAsync(ct);
 
-        return (true, null, new
+        return (true, null, MapTemplateOwner(existing));
+    }
+
+    public async Task<(bool Ok, string? Error, object? Payload)> SetMyTemplateActiveAsync(
+        int userId,
+        int? templateId,
+        bool ativo,
+        CancellationToken ct = default)
+    {
+        MarkdownSharedTemplate? existing;
+        if (templateId is > 0)
         {
-            compartilhado = true,
-            template_id = existing.Id,
-            atualizado_em = existing.AtualizadoEm,
-        });
+            existing = await _db.MarkdownSharedTemplates
+                .FirstOrDefaultAsync(t => t.Id == templateId && t.OwnerUserId == userId, ct);
+        }
+        else
+        {
+            // Legacy: despublicar o mais recente ativo
+            existing = await _db.MarkdownSharedTemplates
+                .Where(t => t.OwnerUserId == userId && t.Ativo)
+                .OrderByDescending(t => t.AtualizadoEm)
+                .FirstOrDefaultAsync(ct);
+        }
+
+        if (existing is null) return (false, "Modelo não encontrado ou sem permissão.", null);
+
+        existing.Ativo = ativo;
+        existing.AtualizadoEm = DateTime.UtcNow;
+        await _db.SaveChangesAsync(ct);
+        return (true, null, MapTemplateOwner(existing));
+    }
+
+    public async Task<(bool Ok, string? Error, object? Payload)> DeleteMyTemplateAsync(
+        int userId,
+        int? templateId,
+        CancellationToken ct = default)
+    {
+        if (templateId is null or <= 0)
+            return (false, "Indica o template_id a excluir.", null);
+
+        var existing = await _db.MarkdownSharedTemplates
+            .FirstOrDefaultAsync(t => t.Id == templateId && t.OwnerUserId == userId, ct);
+        if (existing is null) return (false, "Modelo não encontrado ou sem permissão.", null);
+
+        _db.MarkdownSharedTemplates.Remove(existing);
+        await _db.SaveChangesAsync(ct);
+        return (true, null, new { deleted = true, template_id = templateId });
+    }
+
+    public async Task<object?> GetMyTemplateAsync(int userId, int id, CancellationToken ct = default)
+    {
+        var t = await _db.MarkdownSharedTemplates.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == id && x.OwnerUserId == userId, ct);
+        return t is null ? null : MapTemplateOwnerFull(t);
     }
 
     public async Task<object> ListTemplatesAsync(CancellationToken ct = default)
     {
-        var list = await _db.MarkdownSharedTemplates.AsNoTracking()
+        var rows = await _db.MarkdownSharedTemplates.AsNoTracking()
             .Where(t => t.Ativo)
             .OrderByDescending(t => t.AtualizadoEm)
             .Take(100)
-            .Select(t => new
-            {
-                id = t.Id,
-                titulo = t.TituloModelo,
-                preview = t.ConteudoMarkdown.Length > 160
-                    ? t.ConteudoMarkdown.Substring(0, 160) + "…"
-                    : t.ConteudoMarkdown,
-                atualizado_em = t.AtualizadoEm,
-            })
             .ToListAsync(ct);
-        return list;
+        return rows.Select(t => new
+        {
+            id = t.Id,
+            titulo = t.TituloModelo,
+            descricao = t.Descricao,
+            preview = MarkdownTemplateAnonymizer.BuildCardPreview(t.Descricao, t.ConteudoMarkdown),
+            usos = t.UsosCount,
+            atualizado_em = t.AtualizadoEm,
+            criado_em = t.CriadoEm,
+        }).ToList();
     }
 
     public async Task<object?> GetTemplateAsync(int id, CancellationToken ct = default)
     {
-        var t = await _db.MarkdownSharedTemplates.AsNoTracking()
+        var t = await _db.MarkdownSharedTemplates
             .FirstOrDefaultAsync(x => x.Id == id && x.Ativo, ct);
         if (t is null) return null;
+        t.UsosCount += 1;
+        await _db.SaveChangesAsync(ct);
         return new
         {
             id = t.Id,
             titulo = t.TituloModelo,
+            descricao = t.Descricao,
             conteudo_markdown = t.ConteudoMarkdown,
+            usos = t.UsosCount,
             atualizado_em = t.AtualizadoEm,
         };
     }
 
-    private async Task SyncSharedTemplateIfActiveAsync(int userId, MarkdownBuilderDoc doc, CancellationToken ct)
+    private static object MapTemplateOwner(MarkdownSharedTemplate t) => new
     {
-        var existing = await _db.MarkdownSharedTemplates
-            .FirstOrDefaultAsync(t => t.OwnerUserId == userId && t.Ativo, ct);
-        if (existing is null) return;
+        compartilhado = t.Ativo,
+        template_id = t.Id,
+        titulo = t.TituloModelo,
+        descricao = t.Descricao,
+        ativo = t.Ativo,
+        usos = t.UsosCount,
+        atualizado_em = t.AtualizadoEm,
+    };
 
-        var user = await _db.MarkdownBuilderUsers.AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Id == userId, ct);
-        if (user is null) return;
-
-        var (titulo, markdown) = SanitizeTemplate(doc.Titulo, doc.ConteudoMarkdown, user.Usuario, user.Nome);
-        if (string.IsNullOrWhiteSpace(markdown))
-        {
-            existing.Ativo = false;
-            existing.AtualizadoEm = DateTime.UtcNow;
-            await _db.SaveChangesAsync(ct);
-            return;
-        }
-
-        existing.TituloModelo = titulo;
-        existing.ConteudoMarkdown = markdown;
-        existing.AtualizadoEm = DateTime.UtcNow;
-        await _db.SaveChangesAsync(ct);
-    }
-
-    /// <summary>Remove dados da conta do dono; mantém estrutura/temas do README.</summary>
-    internal static (string Titulo, string Markdown) SanitizeTemplate(
-        string? titulo,
-        string? markdown,
-        string usuario,
-        string nome)
+    private static object MapTemplateOwnerFull(MarkdownSharedTemplate t) => new
     {
-        var userKey = (usuario ?? string.Empty).Trim();
-        var nameKey = (nome ?? string.Empty).Trim();
+        id = t.Id,
+        titulo = t.TituloModelo,
+        descricao = t.Descricao,
+        conteudo_markdown = t.ConteudoMarkdown,
+        ativo = t.Ativo,
+        criado_em = t.CriadoEm,
+        atualizado_em = t.AtualizadoEm,
+    };
 
-        string Scrub(string input)
-        {
-            var s = input ?? string.Empty;
-            if (!string.IsNullOrEmpty(nameKey) && nameKey.Length >= 2)
-                s = Regex.Replace(s, Regex.Escape(nameKey), "SEU_NOME", RegexOptions.IgnoreCase);
-            if (!string.IsNullOrEmpty(userKey) && userKey.Length >= 2)
-            {
-                s = Regex.Replace(s, Regex.Escape(userKey), "SEU_USER", RegexOptions.IgnoreCase);
-                s = Regex.Replace(
-                    s,
-                    $@"(?i)(https?://)?(www\.)?github\.com/{Regex.Escape(userKey)}(/[^\s)\]]*)?",
-                    "https://github.com/SEU_USER");
-                s = Regex.Replace(
-                    s,
-                    $@"(?i)(https?://)?(www\.)?linkedin\.com/in/{Regex.Escape(userKey)}(/[^\s)\]]*)?",
-                    "https://linkedin.com/in/SEU_USER");
-            }
-            return s;
-        }
-
-        var cleanTitle = Clamp(Scrub(titulo ?? string.Empty), 120, "Modelo README");
-        if (string.IsNullOrWhiteSpace(cleanTitle) ||
-            cleanTitle.Equals("Meu README", StringComparison.OrdinalIgnoreCase))
-            cleanTitle = "Modelo README";
-
-        var cleanMd = Clamp(Scrub(markdown ?? string.Empty), 200_000, string.Empty);
-        return (cleanTitle, cleanMd);
-    }
+    private static string Truncate(string s, int max) =>
+        string.IsNullOrEmpty(s) ? string.Empty : (s.Length <= max ? s : s[..max]);
 
     public async Task<object?> GetSecurityQuestionForUserAsync(string usuario, CancellationToken ct = default)
     {

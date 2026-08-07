@@ -332,6 +332,11 @@ namespace models.Migrations
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasMaxLength(280)
+                        .HasColumnType("character varying(280)");
+
                     b.Property<int>("OwnerUserId")
                         .HasColumnType("integer");
 
@@ -340,12 +345,14 @@ namespace models.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
 
+                    b.Property<int>("UsosCount")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Ativo");
 
-                    b.HasIndex("OwnerUserId")
-                        .IsUnique();
+                    b.HasIndex("OwnerUserId");
 
                     b.ToTable("MarkdownSharedTemplates", (string)null);
                 });
