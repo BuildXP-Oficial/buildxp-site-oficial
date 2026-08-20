@@ -1,6 +1,9 @@
 .env
 *.log
 .DS_Store
-**/appsettings.Development.json
 **/bin/
 **/obj/
+
+# Segredos e pasta publicada — não vão para o GitHub
+**/appsettings.Development.json
+backend/models/publish/
