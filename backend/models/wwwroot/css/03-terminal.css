@@ -271,6 +271,10 @@
   background: rgba(77, 181, 255, 0.06);
   color: var(--text);
   white-space: pre-wrap;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 .term-mentor-tip-label {
   color: var(--term-accent, var(--blue));

@@ -1142,15 +1142,14 @@ function initTrainingTerminal() {
     btn.disabled = true;
     const original = label.textContent;
     label.textContent = 'Consultando o Agente Mentor…';
+    bloquearInputDoTerminal();
 
     try {
       const explicacao = await consultarAgenteMentor(comandoUsuario, comandoEsperado);
-      label.textContent = 'Ajuda do Agente Mentor';
-      btn.classList.add('is-used');
-      btn.setAttribute('aria-label', 'Ajuda do Agente Mentor');
 
       const tip = document.createElement('div');
       tip.className = 'term-line term-mentor-tip';
+      tip.setAttribute('unselectable', 'on');
       const tipLabel = document.createElement('span');
       tipLabel.className = 'term-mentor-tip-label';
       tipLabel.textContent = 'Agente Mentor: ';
@@ -1158,10 +1157,16 @@ function initTrainingTerminal() {
       body.textContent = explicacao;
       tip.appendChild(tipLabel);
       tip.appendChild(body);
+      ['copy', 'cut', 'contextmenu', 'selectstart', 'dragstart'].forEach((evt) => {
+        tip.addEventListener(evt, (e) => e.preventDefault());
+      });
 
       const actions = btn.closest('.term-retry-actions');
       if (actions) actions.insertAdjacentElement('beforebegin', tip);
       else btn.parentElement?.insertAdjacentElement('afterend', tip);
+
+      btn.remove();
+      bloquearInputDoTerminal();
 
       const screen = mount.querySelector('#term-screen');
       if (screen) screen.scrollTop = screen.scrollHeight;
@@ -1170,11 +1175,23 @@ function initTrainingTerminal() {
       label.textContent = original;
       const msg = err instanceof Error ? err.message : 'Não foi possível consultar o mentor agora.';
       line(msg, 'term-bad');
+      liberarInputDoTerminal();
     }
   }
 
   function removerAcoesPosErro() {
     mount.querySelectorAll('.term-retry-actions').forEach((el) => el.remove());
+  }
+
+  function bloquearInputDoTerminal() {
+    const input = mount.querySelector('#term-input');
+    const send = mount.querySelector('#term-send');
+    if (input) {
+      input.blur();
+      input.value = '';
+      input.disabled = true;
+    }
+    if (send) send.disabled = true;
   }
 
   function liberarInputDoTerminal() {
@@ -1477,7 +1494,7 @@ function initTrainingTerminal() {
 
   async function submitAnswer() {
     const input = mount.querySelector('#term-input');
-    if (!input) return;
+    if (!input || input.disabled) return;
     const raw = input.value;
     if (!raw.trim()) return;
 
