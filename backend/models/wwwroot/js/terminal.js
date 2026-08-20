@@ -665,7 +665,11 @@ async function carregarDesafioTerminal(tema, nivel) {
   }
 }
 
-async function consultarAgenteMentor(comandoUsuario, comandoEsperado) {
+async function consultarAgenteMentor(comandoUsuario, comandoEsperado, meta) {
+  const extra = meta && typeof meta === 'object' ? meta : {};
+  const criterios = Array.isArray(extra.criterios)
+    ? extra.criterios.map((c) => String(c).trim()).filter(Boolean)
+    : [];
   const res = await fetch(`${terminalApiBase()}/api/terminal/mentor`, {
     method: 'POST',
     credentials: 'same-origin',
@@ -677,6 +681,10 @@ async function consultarAgenteMentor(comandoUsuario, comandoEsperado) {
     body: JSON.stringify({
       comandoUsuario: String(comandoUsuario ?? ''),
       comandoEsperado: String(comandoEsperado ?? ''),
+      linguagem: String(extra.linguagem ?? ''),
+      enunciado: String(extra.enunciado ?? ''),
+      feedback: String(extra.feedback ?? ''),
+      criterios,
     }),
   });
   if (!res.ok) {
@@ -693,6 +701,22 @@ async function consultarAgenteMentor(comandoUsuario, comandoEsperado) {
   const explicacao = String(data?.explicacao ?? data?.Explicacao ?? '').trim();
   if (!explicacao) throw new Error('O mentor não devolveu uma explicação. Tente de novo.');
   return explicacao;
+}
+
+function metaMentorDoDesafio(q) {
+  if (!q || typeof q !== 'object') return {};
+  const feedback = String(q.feedback ?? '');
+  const criterios = feedback
+    .replace(/^precisa:\s*/i, '')
+    .split(/[·,;]/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 1);
+  return {
+    linguagem: String(q.kind ?? '').toLowerCase(),
+    enunciado: String(q.q ?? ''),
+    feedback,
+    criterios,
+  };
 }
 
 function initTrainingTerminal() {
@@ -1044,7 +1068,7 @@ function initTrainingTerminal() {
     screen.scrollTop = screen.scrollHeight;
   }
 
-  function criarBotaoMentor(comandoUsuario, comandoEsperado) {
+  function criarBotaoMentor(comandoUsuario, comandoEsperado, meta) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'term-btn ghost term-mentor-btn';
@@ -1061,12 +1085,12 @@ function initTrainingTerminal() {
 
     btn.append(icon, label);
     btn.addEventListener('click', () => {
-      void pedirAjudaMentor(btn, label, comandoUsuario, comandoEsperado);
+      void pedirAjudaMentor(btn, label, comandoUsuario, comandoEsperado, meta);
     });
     return btn;
   }
 
-  async function pedirAjudaMentor(btn, label, comandoUsuario, comandoEsperado) {
+  async function pedirAjudaMentor(btn, label, comandoUsuario, comandoEsperado, meta) {
     if (btn.disabled) return;
     btn.disabled = true;
     const original = label.textContent;
@@ -1074,7 +1098,7 @@ function initTrainingTerminal() {
     bloquearInputDoTerminal();
 
     try {
-      const explicacao = await consultarAgenteMentor(comandoUsuario, comandoEsperado);
+      const explicacao = await consultarAgenteMentor(comandoUsuario, comandoEsperado, meta);
 
       const tip = document.createElement('div');
       tip.className = 'term-line term-mentor-tip';
@@ -1167,7 +1191,7 @@ function initTrainingTerminal() {
     else void askCurrent();
   }
 
-  function exibirAcoesPosErro(comandoUsuario, comandoEsperado) {
+  function exibirAcoesPosErro(comandoUsuario, comandoEsperado, desafio) {
     state.pausadoNoDesafio = true;
     removerAcoesPosErro();
     const screen = mount.querySelector('#term-screen');
@@ -1176,7 +1200,7 @@ function initTrainingTerminal() {
     const actions = document.createElement('div');
     actions.className = 'term-actions term-retry-actions';
 
-    const mentor = criarBotaoMentor(comandoUsuario, comandoEsperado);
+    const mentor = criarBotaoMentor(comandoUsuario, comandoEsperado, metaMentorDoDesafio(desafio));
 
     const retry = document.createElement('button');
     retry.type = 'button';
@@ -1355,7 +1379,7 @@ function initTrainingTerminal() {
 
       line(q.feedback || 'Confira o enunciado e os elementos obrigatórios.', 'term-dim');
       if (g.result !== 'correct') {
-        exibirAcoesPosErro(full, q.accept?.[0] || '');
+        exibirAcoesPosErro(full, q.accept?.[0] || '', q);
         return;
       }
       line('', '');
@@ -1373,7 +1397,7 @@ function initTrainingTerminal() {
     if (g.result !== 'correct') bloquearInputDoTerminal();
 
     if (g.result !== 'correct') {
-      exibirAcoesPosErro(raw, q.accept?.[0] || '');
+      exibirAcoesPosErro(raw, q.accept?.[0] || '', q);
       return;
     }
 
