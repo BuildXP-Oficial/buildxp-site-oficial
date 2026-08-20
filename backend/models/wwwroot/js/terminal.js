@@ -1264,7 +1264,7 @@ function initTrainingTerminal() {
     actions.append(mentor, retry, next);
     screen.appendChild(actions);
     screen.scrollTop = screen.scrollHeight;
-    limparInputDoTerminal();
+    bloquearInputDoTerminal();
   }
 
   function updateXpInstant() {
@@ -1543,6 +1543,8 @@ function initTrainingTerminal() {
       else if (g.result === 'partial') line('◐ Parcialmente correto.', 'term-warn');
       else line('✖ Incorreto.', 'term-bad');
 
+      if (g.result !== 'correct') bloquearInputDoTerminal();
+
       if (g.xp > 0) animateXpGain(g.xp);
       if (g.result === 'correct') await registrarProgressoAoAcertar(q, g.xp);
 
@@ -1562,6 +1564,8 @@ function initTrainingTerminal() {
     if (g.result === 'correct') line('✔ Correto.', 'term-good');
     else if (g.result === 'partial') line('◐ Parcialmente correto.', 'term-warn');
     else line('✖ Incorreto.', 'term-bad');
+
+    if (g.result !== 'correct') bloquearInputDoTerminal();
 
     if (g.xp > 0) animateXpGain(g.xp);
     if (g.result === 'correct') await registrarProgressoAoAcertar(q, g.xp);
