@@ -264,6 +264,40 @@
 }
 .term-line { white-space: pre-wrap; word-break: break-word; }
 .term-line.term-dim { color: var(--text-dim); }
+.term-mentor-row { margin: 0.1rem 0 0.3rem; }
+.term-mentor-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.76rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+.term-mentor-btn:hover:not(:disabled) {
+  color: var(--term-accent, var(--blue));
+  text-decoration: underline;
+}
+.term-mentor-btn:disabled,
+.term-mentor-btn.is-used {
+  cursor: default;
+  opacity: 0.88;
+  text-decoration: none;
+}
+.term-mentor-tip {
+  margin: 0.2rem 0 0.5rem;
+  padding: 0.5rem 0.7rem;
+  border-left: 2px solid var(--term-accent, var(--blue));
+  background: rgba(77, 181, 255, 0.06);
+  color: var(--text);
+  white-space: pre-wrap;
+}
+.term-mentor-tip-label {
+  color: var(--term-accent, var(--blue));
+  font-weight: 600;
+}
 .term-line .term-bad { color: #ff6b6b; }
 .term-dim { color: var(--text-dim); }
 .term-warn { color: #ffd60a; }

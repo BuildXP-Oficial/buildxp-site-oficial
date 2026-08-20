@@ -697,6 +697,36 @@ async function registrarXpProgressoTerminal(xp, desafioId) {
   }
 }
 
+async function consultarAgenteMentor(comandoUsuario, comandoEsperado) {
+  const res = await fetch(`${terminalApiBase()}/api/terminal/mentor`, {
+    method: 'POST',
+    credentials: 'same-origin',
+    cache: 'no-store',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      comandoUsuario: String(comandoUsuario ?? ''),
+      comandoEsperado: String(comandoEsperado ?? ''),
+    }),
+  });
+  if (!res.ok) {
+    let mensagem = 'Não foi possível consultar o mentor agora. Tente de novo em instantes.';
+    try {
+      const err = await res.json();
+      if (err?.mensagem) mensagem = String(err.mensagem);
+    } catch {
+      /* mantém a mensagem padrão */
+    }
+    throw new Error(mensagem);
+  }
+  const data = await res.json();
+  const explicacao = String(data?.explicacao ?? data?.Explicacao ?? '').trim();
+  if (!explicacao) throw new Error('O mentor não devolveu uma explicação. Tente de novo.');
+  return explicacao;
+}
+
 async function carregarProgressoTerminal() {
   try {
     const res = await fetch(`${terminalApiBase()}/api/progresso`, {
@@ -1084,6 +1114,58 @@ function initTrainingTerminal() {
     screen.scrollTop = screen.scrollHeight;
   }
 
+  function oferecerAjudaMentor(comandoUsuario, comandoEsperado) {
+    const screen = mount.querySelector('#term-screen');
+    if (!screen) return;
+
+    const row = document.createElement('div');
+    row.className = 'term-line term-mentor-row';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'term-mentor-btn';
+    btn.textContent = '💡 Pedir ajuda ao Agente Mentor';
+    btn.addEventListener('click', () => {
+      void pedirAjudaMentor(btn, row, comandoUsuario, comandoEsperado);
+    });
+
+    row.appendChild(btn);
+    screen.appendChild(row);
+    screen.scrollTop = screen.scrollHeight;
+  }
+
+  async function pedirAjudaMentor(btn, row, comandoUsuario, comandoEsperado) {
+    if (btn.disabled) return;
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = 'Consultando o Agente Mentor…';
+
+    try {
+      const explicacao = await consultarAgenteMentor(comandoUsuario, comandoEsperado);
+      btn.textContent = '💡 Ajuda do Agente Mentor';
+      btn.classList.add('is-used');
+
+      const tip = document.createElement('div');
+      tip.className = 'term-line term-mentor-tip';
+      const label = document.createElement('span');
+      label.className = 'term-mentor-tip-label';
+      label.textContent = 'Agente Mentor: ';
+      const body = document.createElement('span');
+      body.textContent = explicacao;
+      tip.appendChild(label);
+      tip.appendChild(body);
+      row.insertAdjacentElement('afterend', tip);
+
+      const screen = mount.querySelector('#term-screen');
+      if (screen) screen.scrollTop = screen.scrollHeight;
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = original;
+      const msg = err instanceof Error ? err.message : 'Não foi possível consultar o mentor agora.';
+      line(msg, 'term-bad');
+    }
+  }
+
   function updateXpInstant() {
     const xpEl = mount.querySelector('#term-xp');
     if (xpEl) xpEl.textContent = String(state.accountXp);
@@ -1360,6 +1442,7 @@ function initTrainingTerminal() {
       if (g.result === 'correct') await registrarProgressoAoAcertar(q, g.xp);
 
       line(q.feedback || 'Confira o enunciado e os elementos obrigatórios.', 'term-dim');
+      if (g.result !== 'correct') oferecerAjudaMentor(full, q.accept?.[0] || '');
       line('', '');
 
       state.questionIdx++;
@@ -1380,6 +1463,7 @@ function initTrainingTerminal() {
     if (g.result === 'correct') await registrarProgressoAoAcertar(q, g.xp);
 
     if (q.accept?.length) line(`Resposta esperada: ${q.accept[0]}`, 'term-dim');
+    if (g.result !== 'correct') oferecerAjudaMentor(raw, q.accept?.[0] || '');
     line('', '');
 
     state.questionIdx++;
