@@ -1462,7 +1462,6 @@ function initTrainingTerminal() {
     if (g.xp > 0) animateXpGain(g.xp);
     if (g.result === 'correct') await registrarProgressoAoAcertar(q, g.xp);
 
-    if (q.accept?.length) line(`Resposta esperada: ${q.accept[0]}`, 'term-dim');
     if (g.result !== 'correct') oferecerAjudaMentor(raw, q.accept?.[0] || '');
     line('', '');
 
