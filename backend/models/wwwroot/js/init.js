@@ -1,6 +1,7 @@
 // BuildXP - init (executado por js/main.js após todos os módulos)
 async function buildxpBoot() {
   ensureDashPasswordToggleDelegation();
+  if (typeof initConhecimentoChat === 'function') initConhecimentoChat();
   initCopy();
   await buildxpHydrateTrainingSlidesFromApi();
   initCopy();

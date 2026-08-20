@@ -9,12 +9,14 @@ function conhecimentoChatApiBase() {
 
 function ehTelaConhecimentoChat() {
   const path = String(window.location.pathname || '').toLowerCase();
-  if (path.endsWith('/card.html') || path.endsWith('card.html')) return true;
+  if (path.includes('card.html')) return true;
+  if (document.getElementById('page-root')) return true;
   try {
-    return Boolean(new URLSearchParams(window.location.search).get('slug') && document.getElementById('page-root'));
+    if (new URLSearchParams(window.location.search).get('slug')) return true;
   } catch {
-    return false;
+    /* ignore */
   }
+  return false;
 }
 
 function tituloCardConhecimento() {
@@ -65,7 +67,7 @@ function initConhecimentoChat() {
   fab.setAttribute('aria-label', 'Abrir assistente do card');
   fab.setAttribute('aria-expanded', 'false');
   fab.innerHTML =
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-8.5 8.5H7l-4 3V12A8.5 8.5 0 1 1 21 12z"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg>';
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-8.5 8.5H7l-4 3V12A8.5 8.5 0 1 1 21 12z"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg><span class="bxp-chat-fab-label">AJUDA</span>';
 
   const panel = document.createElement('section');
   panel.className = 'bxp-chat-panel';
@@ -109,7 +111,7 @@ function initConhecimentoChat() {
   form.append(input, send);
 
   panel.append(head, log, form);
-  root.append(fab, panel);
+  root.append(panel, fab);
   document.body.appendChild(root);
 
   function abrir() {
@@ -215,3 +217,20 @@ async function enviarMensagemConhecimentoChat(input, send, log) {
 }
 
 window.initConhecimentoChat = initConhecimentoChat;
+
+(function agendarInitConhecimentoChat() {
+  const rodar = () => {
+    try {
+      initConhecimentoChat();
+    } catch (err) {
+      console.error('[BuildXP] Falha ao iniciar o assistente de conhecimento', err);
+    }
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', rodar);
+  } else {
+    rodar();
+  }
+  window.setTimeout(rodar, 400);
+  window.setTimeout(rodar, 1200);
+})();
