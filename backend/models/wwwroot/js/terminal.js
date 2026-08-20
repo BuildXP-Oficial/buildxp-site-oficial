@@ -1183,6 +1183,12 @@ function initTrainingTerminal() {
     mount.querySelectorAll('.term-retry-actions').forEach((el) => el.remove());
   }
 
+  function removerBlocoMentor() {
+    const screen = mount.querySelector('#term-screen');
+    if (!screen) return;
+    screen.querySelectorAll('.term-mentor-tip, .term-mentor-row, .term-mentor-btn').forEach((el) => el.remove());
+  }
+
   function bloquearInputDoTerminal() {
     const input = mount.querySelector('#term-input');
     const send = mount.querySelector('#term-send');
@@ -1217,10 +1223,10 @@ function initTrainingTerminal() {
 
   function tentarNovamenteMesmoDesafio() {
     state.pausadoNoDesafio = false;
+    removerBlocoMentor();
     removerAcoesPosErro();
     resetarAcumuloDoDesafioAtual();
     limparInputDoTerminal();
-    line('Mesmo desafio: reescreva o comando e envie de novo.', 'term-dim');
   }
 
   function avancarDesafio() {
