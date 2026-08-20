@@ -579,15 +579,18 @@ function preencherDesafioTerminalNaTela(dto, erro) {
   if (!dto) {
     if (tituloEl) tituloEl.textContent = '';
     if (enunciadoEl) enunciadoEl.textContent = '';
-    if (xpEl) xpEl.textContent = '';
+    if (xpEl) {
+      xpEl.textContent = '';
+      xpEl.hidden = true;
+    }
     if (!erro) root.hidden = true;
     return;
   }
   if (tituloEl) tituloEl.textContent = dto.titulo || '';
   if (enunciadoEl) enunciadoEl.textContent = dto.enunciado || '';
   if (xpEl) {
-    const xp = Number(dto.xpRecompensa) || 0;
-    xpEl.textContent = xp > 0 ? `Recompensa: +${xp} XP` : '';
+    xpEl.textContent = '';
+    xpEl.hidden = true;
   }
 }
 
@@ -662,41 +665,6 @@ async function carregarDesafioTerminal(tema, nivel) {
   }
 }
 
-function normalizarProgressoApi(data) {
-  if (!data || typeof data !== 'object') return null;
-  return {
-    xpTotal: Number(data.xpTotal ?? data.XpTotal),
-    nivelAtual: Number(data.nivelAtual ?? data.NivelAtual),
-    desafiosCompletados: Number(data.desafiosCompletados ?? data.DesafiosCompletados) || 0,
-    subiuDeNivel: Boolean(data.subiuDeNivel ?? data.SubiuDeNivel),
-  };
-}
-
-async function registrarXpProgressoTerminal(xp, desafioId) {
-  const valor = Number(xp) || 0;
-  if (valor <= 0) return null;
-  const body = { xp: valor };
-  const id = Number(desafioId);
-  if (Number.isFinite(id) && id > 0) body.desafioId = id;
-
-  try {
-    const res = await fetch(`${terminalApiBase()}/api/progresso/adicionar-xp`, {
-      method: 'POST',
-      credentials: 'same-origin',
-      cache: 'no-store',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) return null;
-    return normalizarProgressoApi(await res.json());
-  } catch {
-    return null;
-  }
-}
-
 async function consultarAgenteMentor(comandoUsuario, comandoEsperado) {
   const res = await fetch(`${terminalApiBase()}/api/terminal/mentor`, {
     method: 'POST',
@@ -725,20 +693,6 @@ async function consultarAgenteMentor(comandoUsuario, comandoEsperado) {
   const explicacao = String(data?.explicacao ?? data?.Explicacao ?? '').trim();
   if (!explicacao) throw new Error('O mentor não devolveu uma explicação. Tente de novo.');
   return explicacao;
-}
-
-async function carregarProgressoTerminal() {
-  try {
-    const res = await fetch(`${terminalApiBase()}/api/progresso`, {
-      credentials: 'same-origin',
-      cache: 'no-store',
-      headers: { Accept: 'application/json' },
-    });
-    if (!res.ok) return null;
-    return normalizarProgressoApi(await res.json());
-  } catch {
-    return null;
-  }
 }
 
 function initTrainingTerminal() {
@@ -852,10 +806,6 @@ function initTrainingTerminal() {
     codeBlockAccum: null,
     runLevel: 1,
     questionIdx: 0,
-    totalXp: 0,
-    accountXp: 0,
-    accountLevel: 1,
-    goalXp: 80,
     asked: [],
     currentSet: [],
     pausadoNoDesafio: false,
@@ -917,10 +867,7 @@ function initTrainingTerminal() {
         <div class="term-sub term-sub--copy">
           Cada comando executado gera experiência para sua jornada. Não existe &ldquo;falhar&rdquo;, existe aprender, testar novamente e desbloquear novos conhecimentos.<br>
           <span class="term-purple">Como funciona:</span> Eu lanço um desafio e você digita o comando.<br>
-          <span class="term-purple">Pontuação</span><br>
-          <span class="term-good">+50 XP</span> certo · <span class="term-warn">+25 XP</span> parcialmente correto · <span class="term-bad">-1 XP</span> errado<br>
-          <span class="term-purple">Nível atual:</span> Em construção.<br>
-          <span class="term-nowrap"><span class="term-purple">Próximo desbloqueio:</span> você do futuro</span>
+          <span class="term-nowrap"><span class="term-purple">Dica:</span> se travar, peça ajuda ao Agente Mentor.</span>
         </div>`;
   }
 
@@ -1062,17 +1009,9 @@ function initTrainingTerminal() {
               <span class="term-badge">${termBadgeLabel()}</span>
             </span>
             <span class="term-stat">
-              <span class="term-dim">NÍVEL</span>
-              <span class="term-badge" id="term-level">LVL ${state.accountLevel}</span>
-            </span>
-            <span class="term-stat">
               <span class="term-dim">MODO</span>
               <span class="term-badge">${state.levelMode.toUpperCase()}</span>
             </span>
-          </div>
-          <div class="term-meta term-xp">
-            <span class="term-xp-wrap" id="term-xp-wrap">XP: <strong id="term-xp">${state.accountXp}</strong></span>
-            <span class="term-goal">OBJ: <strong id="term-goal">${state.goalXp}</strong></span>
           </div>
         </div>
         <div class="term-desafio" id="term-desafio" hidden>
@@ -1101,16 +1040,6 @@ function initTrainingTerminal() {
     const div = document.createElement('div');
     div.className = 'term-line' + (cls ? ` ${cls}` : '');
     div.textContent = text;
-    screen.appendChild(div);
-    screen.scrollTop = screen.scrollHeight;
-  }
-
-  function lineHtml(html, cls = '') {
-    const screen = mount.querySelector('#term-screen');
-    if (!screen) return;
-    const div = document.createElement('div');
-    div.className = 'term-line' + (cls ? ` ${cls}` : '');
-    div.innerHTML = html;
     screen.appendChild(div);
     screen.scrollTop = screen.scrollHeight;
   }
@@ -1267,138 +1196,17 @@ function initTrainingTerminal() {
     bloquearInputDoTerminal();
   }
 
-  function updateXpInstant() {
-    const xpEl = mount.querySelector('#term-xp');
-    if (xpEl) xpEl.textContent = String(state.accountXp);
-  }
-
-  function aplicarProgressoNaTela(progresso) {
-    if (!progresso) return;
-    if (Number.isFinite(progresso.xpTotal)) {
-      state.accountXp = progresso.xpTotal;
-      const xpEl = mount.querySelector('#term-xp');
-      if (xpEl) xpEl.textContent = String(progresso.xpTotal);
-    }
-    if (Number.isFinite(progresso.nivelAtual) && progresso.nivelAtual > 0) {
-      state.accountLevel = progresso.nivelAtual;
-      const lvlEl = mount.querySelector('#term-level');
-      if (lvlEl) lvlEl.textContent = `LVL ${progresso.nivelAtual}`;
-    }
-  }
-
-  function celebrarSubidaDeNivel(nivel) {
-    lineHtml(
-      `<span class="term-levelup">LEVEL UP</span> Você evoluiu para o nível <strong>${nivel}</strong>. Continua assim.`,
-      'term-good',
-    );
-    const lvlEl = mount.querySelector('#term-level');
-    if (lvlEl) {
-      lvlEl.classList.remove('term-level-bump');
-      // eslint-disable-next-line no-unused-expressions
-      lvlEl.offsetHeight;
-      lvlEl.classList.add('term-level-bump');
-    }
-  }
-
-  async function registrarProgressoAoAcertar(q, xp) {
-    const data = await registrarXpProgressoTerminal(xp, q?.id);
-    if (!data) return;
-    aplicarProgressoNaTela(data);
-    if (data.subiuDeNivel) celebrarSubidaDeNivel(data.nivelAtual);
-  }
-
-  function animateXpGain(delta) {
-    if (!delta) return;
-    const xpEl = mount.querySelector('#term-xp');
-    const wrap = mount.querySelector('#term-xp-wrap');
-    if (!xpEl || !wrap) {
-      state.totalXp += delta;
-      state.accountXp += delta;
-      updateXpInstant();
-      return;
-    }
-
-    state.totalXp += delta;
-    const start = Number.isFinite(state.accountXp) ? state.accountXp : 0;
-    const end = start + delta;
-    state.accountXp = end;
-
-    // fly +XP from terminal area into the counter
-    const screen = mount.querySelector('#term-screen');
-    const wrapRect = wrap.getBoundingClientRect();
-    const startRect = screen?.getBoundingClientRect?.();
-    const fromX = (startRect?.left ?? wrapRect.left) + (startRect?.width ?? 0) * 0.55;
-    const fromY = (startRect?.top ?? wrapRect.top) + (startRect?.height ?? 0) * 0.62;
-    const toX = wrapRect.left + wrapRect.width - 10;
-    const toY = wrapRect.top + 6;
-
-    const fly = document.createElement('span');
-    fly.className = 'xp-fly';
-    fly.textContent = `+${delta}`;
-    fly.style.left = `${fromX}px`;
-    fly.style.top = `${fromY}px`;
-    document.body.appendChild(fly);
-
-    if (fly.animate) {
-      fly.animate(
-        [
-          { transform: 'translate3d(0, 0, 0) scale(1)', opacity: 0.0 },
-          { transform: 'translate3d(0, -6px, 0) scale(1.08)', opacity: 1.0, offset: 0.2 },
-          { transform: `translate3d(${toX - fromX}px, ${toY - fromY}px, 0) scale(0.85)`, opacity: 0.0 }
-        ],
-        { duration: 760, easing: 'cubic-bezier(0.18, 0.8, 0.2, 1)' }
-      ).onfinish = () => fly.remove();
-    } else {
-      // fallback: float near counter
-      fly.remove();
-      const floatEl = document.createElement('span');
-      floatEl.className = 'term-xp-float';
-      floatEl.textContent = `+${delta}`;
-      wrap.appendChild(floatEl);
-      setTimeout(() => floatEl.remove(), 800);
-    }
-
-    // animate the number counting up
-    const t0 = performance.now();
-    const dur = 520;
-    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
-
-    function frame(now) {
-      const p = Math.min(1, (now - t0) / dur);
-      const eased = easeOutCubic(p);
-      const val = Math.round(start + (end - start) * eased);
-      xpEl.textContent = String(val);
-      if (p < 1) requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
-
-    // bump effect
-    xpEl.classList.remove('xp-bump');
-    // eslint-disable-next-line no-unused-expressions
-    xpEl.offsetHeight;
-    xpEl.classList.add('xp-bump');
-  }
-
   async function startRun(resetLevel) {
     if (resetLevel) state.runLevel = 1;
     state.questionIdx = 0;
-    state.totalXp = 0;
-    state.goalXp = 80;
     state.codeBlockAccum = null;
     state.pausadoNoDesafio = false;
     state.currentSet = pickQuestions(getBankTopic(), state.levelMode, state.runLevel);
     renderTerminalShell();
-    const progressoInicial = await carregarProgressoTerminal();
-    aplicarProgressoNaTela(progressoInicial);
 
     replayAdminGate();
 
     line(`BuildXP Terminal Training — ${termBadgeLabel()}`, 'term-dim');
-    lineHtml(
-      '<span class="term-bad">Importante:</span> O XP da conta é registrado no servidor. Observe sua evolução a cada comando certo.',
-      'term-dim',
-    );
-    line(`Objetivo: ${state.goalXp} XP.`, 'term-dim');
     if (isCodeBlockBankTopic()) {
       const bank = getBankTopic();
       const lang = bank === 'Python' ? 'Python' : bank === 'Java' ? 'Java' : 'C#';
@@ -1545,9 +1353,6 @@ function initTrainingTerminal() {
 
       if (g.result !== 'correct') bloquearInputDoTerminal();
 
-      if (g.xp > 0) animateXpGain(g.xp);
-      if (g.result === 'correct') await registrarProgressoAoAcertar(q, g.xp);
-
       line(q.feedback || 'Confira o enunciado e os elementos obrigatórios.', 'term-dim');
       if (g.result !== 'correct') {
         exibirAcoesPosErro(full, q.accept?.[0] || '');
@@ -1567,9 +1372,6 @@ function initTrainingTerminal() {
 
     if (g.result !== 'correct') bloquearInputDoTerminal();
 
-    if (g.xp > 0) animateXpGain(g.xp);
-    if (g.result === 'correct') await registrarProgressoAoAcertar(q, g.xp);
-
     if (g.result !== 'correct') {
       exibirAcoesPosErro(raw, q.accept?.[0] || '');
       return;
@@ -1581,8 +1383,7 @@ function initTrainingTerminal() {
 
   function finishRun() {
     line('—'.repeat(32), 'term-dim');
-    line(`Fim do treino. XP total: ${state.totalXp}`, 'term-good');
-    line(state.totalXp >= state.goalXp ? 'Meta batida. Boa!' : `Meta não batida (obj: ${state.goalXp} XP).`, state.totalXp >= state.goalXp ? 'term-good' : 'term-warn');
+    line('Fim do treino. Boa sessão.', 'term-good');
     line('', '');
 
     const nextMode = getNextTrainLevelMode(state.levelMode);
@@ -1604,7 +1405,6 @@ function initTrainingTerminal() {
       state.levelMode = nextMode;
       state.questionIdx = 0;
       state.currentSet = pickQuestions(getBankTopic(), state.levelMode, state.runLevel);
-      state.totalXp = 0;
       void startRun(false);
     });
     mount.querySelector('#term-again')?.addEventListener('click', () => { void startRun(true); });

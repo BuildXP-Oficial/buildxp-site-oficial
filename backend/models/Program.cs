@@ -26,8 +26,6 @@ builder.Services.AddScoped<PerfilService>();
 builder.Services.AddScoped<MarkdownBuilderService>();
 builder.Services.AddScoped<ITerminalQuestaoRepository, TerminalQuestaoRepository>();
 builder.Services.AddScoped<TerminalQuestaoService>();
-builder.Services.AddSingleton<IUsuarioProgressoRepository, UsuarioProgressoRepository>();
-builder.Services.AddScoped<ProgressoService>();
 builder.Services.AddScoped<TerminalMentorService>();
 
 // ── JWT — autenticação ───────────────────────────────────────
