@@ -27,6 +27,7 @@ builder.Services.AddScoped<MarkdownBuilderService>();
 builder.Services.AddScoped<ITerminalQuestaoRepository, TerminalQuestaoRepository>();
 builder.Services.AddScoped<TerminalQuestaoService>();
 builder.Services.AddScoped<TerminalMentorService>();
+builder.Services.AddScoped<ConhecimentoChatService>();
 
 // ── JWT — autenticação ───────────────────────────────────────
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
