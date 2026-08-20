@@ -858,6 +858,7 @@ function initTrainingTerminal() {
     goalXp: 80,
     asked: [],
     currentSet: [],
+    pausadoNoDesafio: false,
   };
 
   function getBankTopic() {
@@ -1158,12 +1159,83 @@ function initTrainingTerminal() {
 
       const screen = mount.querySelector('#term-screen');
       if (screen) screen.scrollTop = screen.scrollHeight;
+      if (state.pausadoNoDesafio) exibirAcoesPosErro();
     } catch (err) {
       btn.disabled = false;
       btn.textContent = original;
       const msg = err instanceof Error ? err.message : 'Não foi possível consultar o mentor agora.';
       line(msg, 'term-bad');
+      if (state.pausadoNoDesafio) exibirAcoesPosErro();
     }
+  }
+
+  function removerAcoesPosErro() {
+    mount.querySelectorAll('.term-retry-actions').forEach((el) => el.remove());
+  }
+
+  function liberarInputDoTerminal() {
+    const input = mount.querySelector('#term-input');
+    const send = mount.querySelector('#term-send');
+    if (input) {
+      input.disabled = false;
+      input.focus();
+    }
+    if (send) send.disabled = false;
+  }
+
+  function limparInputDoTerminal() {
+    const input = mount.querySelector('#term-input');
+    if (input) input.value = '';
+    liberarInputDoTerminal();
+  }
+
+  function resetarAcumuloDoDesafioAtual() {
+    const q = state.currentSet[state.questionIdx];
+    state.codeBlockAccum = isCodeBlockQuestion(q) ? [] : null;
+  }
+
+  function tentarNovamenteMesmoDesafio() {
+    state.pausadoNoDesafio = false;
+    removerAcoesPosErro();
+    resetarAcumuloDoDesafioAtual();
+    limparInputDoTerminal();
+    line('Mesmo desafio: reescreva o comando e envie de novo.', 'term-dim');
+  }
+
+  function avancarDesafio() {
+    state.pausadoNoDesafio = false;
+    removerAcoesPosErro();
+    limparInputDoTerminal();
+    state.questionIdx++;
+    if (state.questionIdx >= 5) finishRun();
+    else void askCurrent();
+  }
+
+  function exibirAcoesPosErro() {
+    state.pausadoNoDesafio = true;
+    removerAcoesPosErro();
+    const screen = mount.querySelector('#term-screen');
+    if (!screen) return;
+
+    const actions = document.createElement('div');
+    actions.className = 'term-actions term-retry-actions';
+
+    const retry = document.createElement('button');
+    retry.type = 'button';
+    retry.className = 'term-btn ghost';
+    retry.textContent = '🔄 Tentar novamente';
+    retry.addEventListener('click', () => tentarNovamenteMesmoDesafio());
+
+    const next = document.createElement('button');
+    next.type = 'button';
+    next.className = 'term-btn primary';
+    next.textContent = '➡️ Ir para o próximo desafio';
+    next.addEventListener('click', () => avancarDesafio());
+
+    actions.append(retry, next);
+    screen.appendChild(actions);
+    screen.scrollTop = screen.scrollHeight;
+    limparInputDoTerminal();
   }
 
   function updateXpInstant() {
@@ -1284,6 +1356,7 @@ function initTrainingTerminal() {
     state.totalXp = 0;
     state.goalXp = 80;
     state.codeBlockAccum = null;
+    state.pausadoNoDesafio = false;
     state.currentSet = pickQuestions(getBankTopic(), state.levelMode, state.runLevel);
     renderTerminalShell();
     const progressoInicial = await carregarProgressoTerminal();
@@ -1405,6 +1478,9 @@ function initTrainingTerminal() {
     const q = state.currentSet[state.questionIdx];
     if (!q) return;
 
+    removerAcoesPosErro();
+    state.pausadoNoDesafio = false;
+
     /* Modo C# acumula linhas em bloco (###); tem de passar antes pelo portão admin. */
     if (tryConsumeAdminGate(raw, 'run')) {
       input.value = '';
@@ -1442,13 +1518,13 @@ function initTrainingTerminal() {
       if (g.result === 'correct') await registrarProgressoAoAcertar(q, g.xp);
 
       line(q.feedback || 'Confira o enunciado e os elementos obrigatórios.', 'term-dim');
-      if (g.result !== 'correct') oferecerAjudaMentor(full, q.accept?.[0] || '');
+      if (g.result !== 'correct') {
+        oferecerAjudaMentor(full, q.accept?.[0] || '');
+        exibirAcoesPosErro();
+        return;
+      }
       line('', '');
-
-      state.questionIdx++;
-
-      if (state.questionIdx >= 5) finishRun();
-      else void askCurrent();
+      avancarDesafio();
       return;
     }
 
@@ -1462,14 +1538,14 @@ function initTrainingTerminal() {
     if (g.xp > 0) animateXpGain(g.xp);
     if (g.result === 'correct') await registrarProgressoAoAcertar(q, g.xp);
 
-    if (g.result !== 'correct') oferecerAjudaMentor(raw, q.accept?.[0] || '');
+    if (g.result !== 'correct') {
+      oferecerAjudaMentor(raw, q.accept?.[0] || '');
+      exibirAcoesPosErro();
+      return;
+    }
+
     line('', '');
-
-    state.questionIdx++;
-    input.value = '';
-
-    if (state.questionIdx >= 5) finishRun();
-    else void askCurrent();
+    avancarDesafio();
   }
 
   function finishRun() {

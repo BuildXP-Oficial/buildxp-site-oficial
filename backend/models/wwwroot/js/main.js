@@ -1,6 +1,6 @@
 // BuildXP — carrega módulos na ordem correta e só então inicializa a página.
 (function () {
-  const v = 'bxp-mod-67';
+  const v = 'bxp-mod-68';
   const files = [
     'site-ui.js',
     'feedback.js',
