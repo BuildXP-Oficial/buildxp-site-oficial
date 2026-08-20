@@ -1115,57 +1115,61 @@ function initTrainingTerminal() {
     screen.scrollTop = screen.scrollHeight;
   }
 
-  function oferecerAjudaMentor(comandoUsuario, comandoEsperado) {
-    const screen = mount.querySelector('#term-screen');
-    if (!screen) return;
-
-    const row = document.createElement('div');
-    row.className = 'term-line term-mentor-row';
-
+  function criarBotaoMentor(comandoUsuario, comandoEsperado) {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'term-mentor-btn';
-    btn.textContent = '💡 Pedir ajuda ao Agente Mentor';
-    btn.addEventListener('click', () => {
-      void pedirAjudaMentor(btn, row, comandoUsuario, comandoEsperado);
-    });
+    btn.className = 'term-btn ghost term-mentor-btn';
+    btn.setAttribute('aria-label', 'Pedir ajuda ao Agente Mentor');
 
-    row.appendChild(btn);
-    screen.appendChild(row);
-    screen.scrollTop = screen.scrollHeight;
+    const icon = document.createElement('span');
+    icon.className = 'term-mentor-btn-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.8c.6.5 1 1.2 1.1 2 .1.4.4.7.8.7h3.2c.4 0 .7-.3.8-.7.1-.8.5-1.5 1.1-2A6 6 0 0 0 12 3z"/></svg>';
+
+    const label = document.createElement('span');
+    label.className = 'term-mentor-btn-label';
+    label.textContent = 'Pedir ajuda ao Agente Mentor';
+
+    btn.append(icon, label);
+    btn.addEventListener('click', () => {
+      void pedirAjudaMentor(btn, label, comandoUsuario, comandoEsperado);
+    });
+    return btn;
   }
 
-  async function pedirAjudaMentor(btn, row, comandoUsuario, comandoEsperado) {
+  async function pedirAjudaMentor(btn, label, comandoUsuario, comandoEsperado) {
     if (btn.disabled) return;
     btn.disabled = true;
-    const original = btn.textContent;
-    btn.textContent = 'Consultando o Agente Mentor…';
+    const original = label.textContent;
+    label.textContent = 'Consultando o Agente Mentor…';
 
     try {
       const explicacao = await consultarAgenteMentor(comandoUsuario, comandoEsperado);
-      btn.textContent = '💡 Ajuda do Agente Mentor';
+      label.textContent = 'Ajuda do Agente Mentor';
       btn.classList.add('is-used');
+      btn.setAttribute('aria-label', 'Ajuda do Agente Mentor');
 
       const tip = document.createElement('div');
       tip.className = 'term-line term-mentor-tip';
-      const label = document.createElement('span');
-      label.className = 'term-mentor-tip-label';
-      label.textContent = 'Agente Mentor: ';
+      const tipLabel = document.createElement('span');
+      tipLabel.className = 'term-mentor-tip-label';
+      tipLabel.textContent = 'Agente Mentor: ';
       const body = document.createElement('span');
       body.textContent = explicacao;
-      tip.appendChild(label);
+      tip.appendChild(tipLabel);
       tip.appendChild(body);
-      row.insertAdjacentElement('afterend', tip);
+
+      const actions = btn.closest('.term-retry-actions');
+      if (actions) actions.insertAdjacentElement('beforebegin', tip);
+      else btn.parentElement?.insertAdjacentElement('afterend', tip);
 
       const screen = mount.querySelector('#term-screen');
       if (screen) screen.scrollTop = screen.scrollHeight;
-      if (state.pausadoNoDesafio) exibirAcoesPosErro();
     } catch (err) {
       btn.disabled = false;
-      btn.textContent = original;
+      label.textContent = original;
       const msg = err instanceof Error ? err.message : 'Não foi possível consultar o mentor agora.';
       line(msg, 'term-bad');
-      if (state.pausadoNoDesafio) exibirAcoesPosErro();
     }
   }
 
@@ -1211,7 +1215,7 @@ function initTrainingTerminal() {
     else void askCurrent();
   }
 
-  function exibirAcoesPosErro() {
+  function exibirAcoesPosErro(comandoUsuario, comandoEsperado) {
     state.pausadoNoDesafio = true;
     removerAcoesPosErro();
     const screen = mount.querySelector('#term-screen');
@@ -1219,6 +1223,8 @@ function initTrainingTerminal() {
 
     const actions = document.createElement('div');
     actions.className = 'term-actions term-retry-actions';
+
+    const mentor = criarBotaoMentor(comandoUsuario, comandoEsperado);
 
     const retry = document.createElement('button');
     retry.type = 'button';
@@ -1232,7 +1238,7 @@ function initTrainingTerminal() {
     next.textContent = '➡️ Ir para o próximo desafio';
     next.addEventListener('click', () => avancarDesafio());
 
-    actions.append(retry, next);
+    actions.append(mentor, retry, next);
     screen.appendChild(actions);
     screen.scrollTop = screen.scrollHeight;
     limparInputDoTerminal();
@@ -1519,8 +1525,7 @@ function initTrainingTerminal() {
 
       line(q.feedback || 'Confira o enunciado e os elementos obrigatórios.', 'term-dim');
       if (g.result !== 'correct') {
-        oferecerAjudaMentor(full, q.accept?.[0] || '');
-        exibirAcoesPosErro();
+        exibirAcoesPosErro(full, q.accept?.[0] || '');
         return;
       }
       line('', '');
@@ -1539,8 +1544,7 @@ function initTrainingTerminal() {
     if (g.result === 'correct') await registrarProgressoAoAcertar(q, g.xp);
 
     if (g.result !== 'correct') {
-      oferecerAjudaMentor(raw, q.accept?.[0] || '');
-      exibirAcoesPosErro();
+      exibirAcoesPosErro(raw, q.accept?.[0] || '');
       return;
     }
 

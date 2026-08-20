@@ -264,31 +264,9 @@
 }
 .term-line { white-space: pre-wrap; word-break: break-word; }
 .term-line.term-dim { color: var(--text-dim); }
-.term-mentor-row { margin: 0.1rem 0 0.3rem; }
-.term-mentor-btn {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  padding: 0;
-  font-family: inherit;
-  font-size: 0.76rem;
-  color: var(--text-dim);
-  cursor: pointer;
-  letter-spacing: 0.02em;
-}
-.term-mentor-btn:hover:not(:disabled) {
-  color: var(--term-accent, var(--blue));
-  text-decoration: underline;
-}
-.term-mentor-btn:disabled,
-.term-mentor-btn.is-used {
-  cursor: default;
-  opacity: 0.88;
-  text-decoration: none;
-}
 .term-mentor-tip {
-  margin: 0.2rem 0 0.5rem;
-  padding: 0.5rem 0.7rem;
+  margin: 0.35rem 0 0.55rem;
+  padding: 0.55rem 0.75rem;
   border-left: 2px solid var(--term-accent, var(--blue));
   background: rgba(77, 181, 255, 0.06);
   color: var(--text);
@@ -383,14 +361,43 @@
 }
 .term-retry-actions {
   justify-content: flex-start;
-  padding: 0.35rem 0 0.6rem;
-  margin: 0;
+  align-items: center;
+  padding: 0.45rem 0 0.65rem;
+  margin: 0.15rem 0 0.25rem;
   gap: 0.5rem;
 }
 .term-retry-actions .term-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   font-size: 0.68rem;
-  padding: 0.45rem 0.75rem;
+  padding: 0.48rem 0.8rem;
   letter-spacing: 0.4px;
+}
+.term-retry-actions .term-btn:not(.primary) {
+  background: rgba(255, 255, 255, 0.02);
+}
+.term-mentor-btn-icon {
+  display: inline-flex;
+  width: 0.95em;
+  height: 0.95em;
+  flex-shrink: 0;
+  color: #ffd60a;
+}
+.term-mentor-btn-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.term-mentor-btn:hover:not(:disabled) .term-mentor-btn-icon {
+  filter: drop-shadow(0 0 8px rgba(255, 214, 10, 0.45));
+}
+.term-mentor-btn.is-used,
+.term-mentor-btn:disabled {
+  opacity: 0.72;
+  cursor: default;
+  box-shadow: none;
 }
 .term-send:hover { filter: brightness(1.08); box-shadow: var(--term-accent-glow, var(--blue-glow)); }
 
@@ -448,5 +455,15 @@
     font-size: 0.6rem;
     padding: 0.6rem 0.55rem;
     letter-spacing: 1.5px;
+  }
+  .term-retry-actions {
+    gap: 0.4rem;
+  }
+  .term-retry-actions .term-btn {
+    flex: 1 1 calc(50% - 0.4rem);
+    min-width: 0;
+    font-size: 0.62rem;
+    padding: 0.5rem 0.55rem;
+    letter-spacing: 0.2px;
   }
 }
