@@ -13,6 +13,7 @@ async function buildxpBoot() {
   initFeedback();
   initTrainingTerminal();
   initDashboard();
+  if (typeof initConhecimentoChat === 'function') initConhecimentoChat();
   if (typeof buildxpInitMarkdownBuilderPage === 'function') {
     await buildxpInitMarkdownBuilderPage();
   }

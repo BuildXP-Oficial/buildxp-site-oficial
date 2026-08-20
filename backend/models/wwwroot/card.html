@@ -8,7 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
-  <link rel="stylesheet" href="css/site.css?v=bxp-mod-36" />
+  <link rel="stylesheet" href="css/site.css?v=bxp-mod-44" />
+  <script>window.BUILDXP_API_BASE = window.BUILDXP_API_BASE || '';</script>
   <style>
     /* ── LOADING STATE ─────────────────────────────────────── */
     .card-loading {
@@ -214,7 +215,7 @@
 </div>
 
 <footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="js/main.js?v=bxp-mod-36"></script>
+<script src="js/main.js?v=bxp-mod-49"></script>
 <script>
 function escapeHtml(str) {
   return String(str ?? '')
@@ -538,6 +539,8 @@ function renderError(code, msg, root) {
   try {
   // ── 5. ATUALIZA TÍTULO DA PÁGINA ─────────────────────────
   document.title = `${String(card.display_name ?? card.DisplayName ?? slug)} — BuildXP`;
+  document.documentElement.dataset.bxpCardSlug = String(slug || '');
+  document.documentElement.dataset.bxpCardTitle = String(card.display_name ?? card.DisplayName ?? slug);
 
   // ── 6. CALCULA XP ────────────────────────────────────────
   const xpAtual = Number(card.xp_current ?? card.XpCurrent ?? 0) || 0;
@@ -618,6 +621,7 @@ function renderError(code, msg, root) {
   initMenu();
   initScroll();
   if (typeof initStepsSlider === 'function') initStepsSlider();
+  if (typeof initConhecimentoChat === 'function') initConhecimentoChat();
   } catch (err) {
     console.error(err);
     renderError(
