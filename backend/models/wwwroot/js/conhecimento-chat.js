@@ -20,10 +20,10 @@ function ehTelaConhecimentoChat() {
 }
 
 function tituloCardConhecimento() {
+  const el = document.querySelector('#page-root .page-title, .page-hero .page-title, .page-title');
+  if (el && el.textContent.trim()) return el.textContent.trim();
   const data = document.documentElement.dataset.bxpCardTitle;
   if (data && data.trim()) return data.trim();
-  const el = document.querySelector('.page-title');
-  if (el && el.textContent.trim()) return el.textContent.trim();
   const slug = slugCardConhecimento();
   const nomes = {
     git: 'Git',
@@ -40,15 +40,30 @@ function tituloCardConhecimento() {
 }
 
 function slugCardConhecimento() {
-  const data = document.documentElement.dataset.bxpCardSlug;
-  if (data && data.trim()) return data.trim().toLowerCase();
   try {
-    return String(new URLSearchParams(window.location.search).get('slug') || '')
+    const querySlug = String(new URLSearchParams(window.location.search).get('slug') || '')
       .trim()
       .toLowerCase();
+    if (querySlug) return querySlug;
   } catch {
-    return '';
+    /* ignore */
   }
+  const data = document.documentElement.dataset.bxpCardSlug;
+  if (data && data.trim()) return data.trim().toLowerCase();
+  return '';
+}
+
+function sincronizarTemaCardAtual() {
+  const titulo = tituloCardConhecimento();
+  const slug = slugCardConhecimento();
+  if (titulo) document.documentElement.dataset.bxpCardTitle = titulo;
+  if (slug) document.documentElement.dataset.bxpCardSlug = slug;
+  return titulo;
+}
+
+function temaCardAtualParaEnvio() {
+  const titulo = sincronizarTemaCardAtual();
+  return titulo || slugCardConhecimento() || 'este card';
 }
 
 function initConhecimentoChat() {
@@ -151,15 +166,48 @@ function initConhecimentoChat() {
 }
 
 function atualizarCabecalhoConhecimentoChat() {
+  sincronizarTemaCardAtual();
   const title = document.getElementById('bxp-chat-title');
   if (!title) return;
   title.textContent = `Especialista em ${tituloCardConhecimento()}`;
 }
 
+function escapeHtmlConhecimentoChat(texto) {
+  return String(texto ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function renderizarMarkdownConhecimentoChat(texto) {
+  const blocos = [];
+  let html = escapeHtmlConhecimentoChat(texto);
+  html = html.replace(/```[a-zA-Z0-9_-]*\n?([\s\S]*?)```/g, (_, code) => {
+    const i = blocos.length;
+    blocos.push(`<pre class="bxp-chat-code"><code>${code.replace(/^\n+|\n+$/g, '')}</code></pre>`);
+    return `\u0000BXPCODE${i}\u0000`;
+  });
+  html = html.replace(/`([^`\n]+)`/g, '<code class="bxp-chat-inline-code">$1</code>');
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\n/g, '<br>');
+  html = html.replace(/\u0000BXPCODE(\d+)\u0000/g, (_, i) => blocos[Number(i)] || '');
+  return html;
+}
+
+function preencherBolhaConhecimento(bubble, papel, texto) {
+  if (papel === 'agent') {
+    bubble.innerHTML = renderizarMarkdownConhecimentoChat(texto);
+  } else {
+    bubble.textContent = texto;
+  }
+}
+
 function acrescentarBolhaConhecimento(log, papel, texto) {
   const bubble = document.createElement('div');
   bubble.className = `bxp-chat-bubble bxp-chat-bubble--${papel}`;
-  bubble.textContent = texto;
+  preencherBolhaConhecimento(bubble, papel, texto);
   log.appendChild(bubble);
   log.scrollTop = log.scrollHeight;
   return bubble;
@@ -187,7 +235,7 @@ async function enviarMensagemConhecimentoChat(input, send, log) {
       },
       body: JSON.stringify({
         mensagemUsuario: texto,
-        temaOuCardAtual: slugCardConhecimento() || tituloCardConhecimento(),
+        temaOuCardAtual: temaCardAtualParaEnvio(),
       }),
     });
     if (!res.ok) {
@@ -204,7 +252,7 @@ async function enviarMensagemConhecimentoChat(input, send, log) {
     const resposta = String(data?.respostaAgente ?? data?.RespostaAgente ?? '').trim();
     if (!resposta) throw new Error('O assistente não devolveu uma resposta. Tente de novo.');
     pending.classList.remove('bxp-chat-bubble--pending');
-    pending.textContent = resposta;
+    preencherBolhaConhecimento(pending, 'agent', resposta);
   } catch (err) {
     pending.classList.remove('bxp-chat-bubble--pending');
     pending.textContent = err instanceof Error ? err.message : 'Falha ao falar com o assistente.';

@@ -132,7 +132,6 @@
   font-family: var(--f-heading, var(--f-mono));
   font-size: 0.84rem;
   line-height: 1.55;
-  white-space: pre-wrap;
   word-break: break-word;
 }
 .bxp-chat-bubble--agent {
@@ -140,16 +139,45 @@
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border);
   color: var(--text);
+  white-space: normal;
 }
 .bxp-chat-bubble--user {
   align-self: flex-end;
   background: color-mix(in srgb, var(--accent, #4db5ff) 22%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent, #4db5ff) 40%, var(--border));
   color: var(--text);
+  white-space: pre-wrap;
 }
 .bxp-chat-bubble--pending {
   color: var(--text-dim);
   font-style: italic;
+}
+.bxp-chat-bubble strong {
+  font-weight: 700;
+  color: var(--text);
+}
+.bxp-chat-inline-code {
+  font-family: var(--f-mono);
+  font-size: 0.78em;
+  padding: 0.08em 0.35em;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+}
+.bxp-chat-code {
+  margin: 0.45rem 0;
+  padding: 0.65rem 0.7rem;
+  overflow-x: auto;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border);
+  white-space: pre;
+}
+.bxp-chat-code code {
+  font-family: var(--f-mono);
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--text);
 }
 
 .bxp-chat-form {
