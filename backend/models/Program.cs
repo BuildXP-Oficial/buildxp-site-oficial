@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using BuildXP.API.Data;
+using BuildXP.API.Repositories;
 using BuildXP.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +24,10 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ColaboradorService>();
 builder.Services.AddScoped<PerfilService>();
 builder.Services.AddScoped<MarkdownBuilderService>();
+builder.Services.AddScoped<ITerminalQuestaoRepository, TerminalQuestaoRepository>();
+builder.Services.AddScoped<TerminalQuestaoService>();
+builder.Services.AddSingleton<IUsuarioProgressoRepository, UsuarioProgressoRepository>();
+builder.Services.AddScoped<ProgressoService>();
 
 // ── JWT — autenticação ───────────────────────────────────────
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

@@ -537,6 +537,180 @@ function gradeCodeBlock(raw, q) {
   return gradeCSharp(raw, q);
 }
 
+function terminalApiBase() {
+  if (typeof getBuildXpApiBase === 'function') return getBuildXpApiBase();
+  if (typeof window.BUILDXP_API_BASE === 'string' && window.BUILDXP_API_BASE.trim()) {
+    return window.BUILDXP_API_BASE.trim().replace(/\/$/, '');
+  }
+  return '';
+}
+
+function mapearTemaApiTerminal(tema) {
+  const t = String(tema ?? '').trim().toLowerCase();
+  if (t === '.net' || t === 'c#' || t === 'csharp' || t === 'net') return 'dotnet';
+  return t || 'git';
+}
+
+function mapearNivelApiTerminal(nivel) {
+  const n = String(nivel ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  if (n === 'beginner' || n === 'iniciante') return 'iniciante';
+  if (n === 'advanced' || n === 'avancado') return 'avancado';
+  if (n === 'mixed' || n === 'arena') return 'arena';
+  return n || 'iniciante';
+}
+
+function preencherDesafioTerminalNaTela(dto, erro) {
+  const root = document.getElementById('term-desafio');
+  const tituloEl = document.getElementById('term-desafio-titulo');
+  const enunciadoEl = document.getElementById('term-desafio-enunciado');
+  const xpEl = document.getElementById('term-desafio-xp');
+  const erroEl = document.getElementById('term-desafio-erro');
+  if (!root) return;
+
+  root.hidden = false;
+  if (erroEl) {
+    erroEl.hidden = !erro;
+    erroEl.textContent = erro || '';
+  }
+  if (!dto) {
+    if (tituloEl) tituloEl.textContent = '';
+    if (enunciadoEl) enunciadoEl.textContent = '';
+    if (xpEl) xpEl.textContent = '';
+    if (!erro) root.hidden = true;
+    return;
+  }
+  if (tituloEl) tituloEl.textContent = dto.titulo || '';
+  if (enunciadoEl) enunciadoEl.textContent = dto.enunciado || '';
+  if (xpEl) {
+    const xp = Number(dto.xpRecompensa) || 0;
+    xpEl.textContent = xp > 0 ? `Recompensa: +${xp} XP` : '';
+  }
+}
+
+function desafioApiParaQuestao(dto) {
+  const comando = String(dto?.comandoEsperado ?? '').trim();
+  const enunciado = String(dto?.enunciado ?? '').trim();
+  const titulo = String(dto?.titulo ?? '').trim();
+  const tokens = comando.split(/\s+/).filter(Boolean);
+  return {
+    q: enunciado || titulo,
+    titulo,
+    accept: comando ? [comando] : [],
+    must: tokens.slice(0, 4),
+    xpRecompensa: Number(dto?.xpRecompensa) || 20,
+    id: Number(dto?.id) || 0,
+  };
+}
+
+async function carregarDesafioTerminal(tema, nivel) {
+  const params = new URLSearchParams();
+  const temaApi = mapearTemaApiTerminal(tema);
+  const nivelApi = mapearNivelApiTerminal(nivel);
+  if (temaApi) params.set('tema', temaApi);
+  if (nivelApi) params.set('nivel', nivelApi);
+  const qs = params.toString();
+  const url = `${terminalApiBase()}/api/terminal/desafio${qs ? `?${qs}` : ''}`;
+
+  preencherDesafioTerminalNaTela({
+    titulo: 'Carregando desafio…',
+    enunciado: 'Buscando um desafio no servidor.',
+    xpRecompensa: 0,
+  });
+
+  try {
+    const res = await fetch(url, {
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) {
+      preencherDesafioTerminalNaTela(
+        null,
+        'Não foi possível carregar o desafio agora. Tente novamente em instantes.',
+      );
+      return null;
+    }
+    const data = await res.json();
+    if (!data || typeof data !== 'object') {
+      preencherDesafioTerminalNaTela(
+        null,
+        'O servidor devolveu um desafio inválido. Tente novamente.',
+      );
+      return null;
+    }
+    const dto = {
+      id: data.id ?? data.Id ?? 0,
+      tema: String(data.tema ?? data.Tema ?? ''),
+      nivel: String(data.nivel ?? data.Nivel ?? ''),
+      titulo: String(data.titulo ?? data.Titulo ?? ''),
+      enunciado: String(data.enunciado ?? data.Enunciado ?? ''),
+      comandoEsperado: String(data.comandoEsperado ?? data.ComandoEsperado ?? ''),
+      xpRecompensa: Number(data.xpRecompensa ?? data.XpRecompensa) || 0,
+    };
+    preencherDesafioTerminalNaTela(dto);
+    return dto;
+  } catch {
+    preencherDesafioTerminalNaTela(
+      null,
+      'Falha de conexão ao buscar o desafio. Verifique a internet e tente de novo.',
+    );
+    return null;
+  }
+}
+
+function normalizarProgressoApi(data) {
+  if (!data || typeof data !== 'object') return null;
+  return {
+    xpTotal: Number(data.xpTotal ?? data.XpTotal),
+    nivelAtual: Number(data.nivelAtual ?? data.NivelAtual),
+    desafiosCompletados: Number(data.desafiosCompletados ?? data.DesafiosCompletados) || 0,
+    subiuDeNivel: Boolean(data.subiuDeNivel ?? data.SubiuDeNivel),
+  };
+}
+
+async function registrarXpProgressoTerminal(xp, desafioId) {
+  const valor = Number(xp) || 0;
+  if (valor <= 0) return null;
+  const body = { xp: valor };
+  const id = Number(desafioId);
+  if (Number.isFinite(id) && id > 0) body.desafioId = id;
+
+  try {
+    const res = await fetch(`${terminalApiBase()}/api/progresso/adicionar-xp`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) return null;
+    return normalizarProgressoApi(await res.json());
+  } catch {
+    return null;
+  }
+}
+
+async function carregarProgressoTerminal() {
+  try {
+    const res = await fetch(`${terminalApiBase()}/api/progresso`, {
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) return null;
+    return normalizarProgressoApi(await res.json());
+  } catch {
+    return null;
+  }
+}
+
 function initTrainingTerminal() {
   const mount = document.getElementById('terminal');
   if (!mount) return;
@@ -649,6 +823,8 @@ function initTrainingTerminal() {
     runLevel: 1,
     questionIdx: 0,
     totalXp: 0,
+    accountXp: 0,
+    accountLevel: 1,
     goalXp: 80,
     asked: [],
     currentSet: [],
@@ -834,7 +1010,7 @@ function initTrainingTerminal() {
         levelWrap.appendChild(b);
       });
 
-      mount.querySelector('#term-start').addEventListener('click', () => startRun(true));
+      mount.querySelector('#term-start').addEventListener('click', () => { void startRun(true); });
       mount.querySelector('#term-back').addEventListener('click', () => {
         if (state.topic === '.NET') state.introStep = 'dotnetMode';
         else state.introStep = 'topic';
@@ -856,7 +1032,7 @@ function initTrainingTerminal() {
             </span>
             <span class="term-stat">
               <span class="term-dim">NÍVEL</span>
-              <span class="term-badge">LVL ${state.runLevel}</span>
+              <span class="term-badge" id="term-level">LVL ${state.accountLevel}</span>
             </span>
             <span class="term-stat">
               <span class="term-dim">MODO</span>
@@ -864,9 +1040,15 @@ function initTrainingTerminal() {
             </span>
           </div>
           <div class="term-meta term-xp">
-            <span class="term-xp-wrap" id="term-xp-wrap">XP: <strong id="term-xp">${state.totalXp}</strong></span>
+            <span class="term-xp-wrap" id="term-xp-wrap">XP: <strong id="term-xp">${state.accountXp}</strong></span>
             <span class="term-goal">OBJ: <strong id="term-goal">${state.goalXp}</strong></span>
           </div>
+        </div>
+        <div class="term-desafio" id="term-desafio" hidden>
+          <div class="term-desafio-titulo" id="term-desafio-titulo"></div>
+          <div class="term-desafio-enunciado" id="term-desafio-enunciado"></div>
+          <div class="term-desafio-xp" id="term-desafio-xp"></div>
+          <div class="term-desafio-erro" id="term-desafio-erro" hidden></div>
         </div>
         <div class="term-screen" id="term-screen" aria-live="polite"></div>
         <div class="term-inputbar">
@@ -904,7 +1086,42 @@ function initTrainingTerminal() {
 
   function updateXpInstant() {
     const xpEl = mount.querySelector('#term-xp');
-    if (xpEl) xpEl.textContent = String(state.totalXp);
+    if (xpEl) xpEl.textContent = String(state.accountXp);
+  }
+
+  function aplicarProgressoNaTela(progresso) {
+    if (!progresso) return;
+    if (Number.isFinite(progresso.xpTotal)) {
+      state.accountXp = progresso.xpTotal;
+      const xpEl = mount.querySelector('#term-xp');
+      if (xpEl) xpEl.textContent = String(progresso.xpTotal);
+    }
+    if (Number.isFinite(progresso.nivelAtual) && progresso.nivelAtual > 0) {
+      state.accountLevel = progresso.nivelAtual;
+      const lvlEl = mount.querySelector('#term-level');
+      if (lvlEl) lvlEl.textContent = `LVL ${progresso.nivelAtual}`;
+    }
+  }
+
+  function celebrarSubidaDeNivel(nivel) {
+    lineHtml(
+      `<span class="term-levelup">LEVEL UP</span> Você evoluiu para o nível <strong>${nivel}</strong>. Continua assim.`,
+      'term-good',
+    );
+    const lvlEl = mount.querySelector('#term-level');
+    if (lvlEl) {
+      lvlEl.classList.remove('term-level-bump');
+      // eslint-disable-next-line no-unused-expressions
+      lvlEl.offsetHeight;
+      lvlEl.classList.add('term-level-bump');
+    }
+  }
+
+  async function registrarProgressoAoAcertar(q, xp) {
+    const data = await registrarXpProgressoTerminal(xp, q?.id);
+    if (!data) return;
+    aplicarProgressoNaTela(data);
+    if (data.subiuDeNivel) celebrarSubidaDeNivel(data.nivelAtual);
   }
 
   function animateXpGain(delta) {
@@ -913,13 +1130,15 @@ function initTrainingTerminal() {
     const wrap = mount.querySelector('#term-xp-wrap');
     if (!xpEl || !wrap) {
       state.totalXp += delta;
+      state.accountXp += delta;
       updateXpInstant();
       return;
     }
 
-    const start = state.totalXp;
+    state.totalXp += delta;
+    const start = Number.isFinite(state.accountXp) ? state.accountXp : 0;
     const end = start + delta;
-    state.totalXp = end;
+    state.accountXp = end;
 
     // fly +XP from terminal area into the counter
     const screen = mount.querySelector('#term-screen');
@@ -977,7 +1196,7 @@ function initTrainingTerminal() {
     xpEl.classList.add('xp-bump');
   }
 
-  function startRun(resetLevel) {
+  async function startRun(resetLevel) {
     if (resetLevel) state.runLevel = 1;
     state.questionIdx = 0;
     state.totalXp = 0;
@@ -985,12 +1204,14 @@ function initTrainingTerminal() {
     state.codeBlockAccum = null;
     state.currentSet = pickQuestions(getBankTopic(), state.levelMode, state.runLevel);
     renderTerminalShell();
+    const progressoInicial = await carregarProgressoTerminal();
+    aplicarProgressoNaTela(progressoInicial);
 
     replayAdminGate();
 
     line(`BuildXP Terminal Training — ${termBadgeLabel()}`, 'term-dim');
     lineHtml(
-      '<span class="term-bad">Importante:</span> Este terminal não salva progresso. O objetivo é que você observe sua própria evolução durante a jornada.',
+      '<span class="term-bad">Importante:</span> O XP da conta é registrado no servidor. Observe sua evolução a cada comando certo.',
       'term-dim',
     );
     line(`Objetivo: ${state.goalXp} XP.`, 'term-dim');
@@ -1009,35 +1230,74 @@ function initTrainingTerminal() {
       line(`Dica: foque na estrutura do comando.`, 'term-dim');
     }
     line('', '');
-    askCurrent();
 
     const input = mount.querySelector('#term-input');
     const send = mount.querySelector('#term-send');
-    const onSend = () => submitAnswer();
-    send.addEventListener('click', onSend);
-    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') onSend(); });
-    input.focus();
+    if (input) input.disabled = true;
+    if (send) send.disabled = true;
 
-    mount.querySelector('#term-restart').addEventListener('click', () => startRun(true));
+    await askCurrent();
+
+    const onSend = () => { void submitAnswer(); };
+    send?.addEventListener('click', onSend);
+    input?.addEventListener('keydown', (e) => { if (e.key === 'Enter') onSend(); });
+    if (input) {
+      input.disabled = false;
+      input.focus();
+    }
+    if (send) send.disabled = false;
+
+    mount.querySelector('#term-restart').addEventListener('click', () => { void startRun(true); });
     mount.querySelector('#term-exit').addEventListener('click', () => renderIntro());
   }
 
-  function askCurrent() {
-    const q = state.currentSet[state.questionIdx];
-    line(`${q.q}`, '');
-    if (isCodeBlockQuestion(q)) {
-      state.codeBlockAccum = [];
-      line('Bloco: uma linha por Enter; última linha só ### para enviar.', 'term-dim');
-    } else {
-      state.codeBlockAccum = null;
+  async function askCurrent() {
+    if (isCodeBlockBankTopic()) {
+      const q = state.currentSet[state.questionIdx];
+      if (!q) return;
+      preencherDesafioTerminalNaTela({
+        titulo: termBadgeLabel(),
+        enunciado: q.q,
+        xpRecompensa: 20,
+      });
+      line(`${q.q}`, '');
+      if (isCodeBlockQuestion(q)) {
+        state.codeBlockAccum = [];
+        line('Bloco: uma linha por Enter; última linha só ### para enviar.', 'term-dim');
+      } else {
+        state.codeBlockAccum = null;
+      }
+      return;
     }
+
+    const dto = await carregarDesafioTerminal(state.topic, state.levelMode);
+    if (!dto) {
+      const fallback = state.currentSet[state.questionIdx];
+      if (!fallback) return;
+      preencherDesafioTerminalNaTela(
+        { titulo: 'Desafio local', enunciado: fallback.q, xpRecompensa: 20 },
+        'Não foi possível buscar no servidor. Usando um desafio local.',
+      );
+      line('Usando um desafio local enquanto o servidor não responde.', 'term-dim');
+      line(`${fallback.q}`, '');
+      state.codeBlockAccum = null;
+      return;
+    }
+
+    const q = desafioApiParaQuestao(dto);
+    state.currentSet[state.questionIdx] = q;
+    line(q.titulo ? `${q.titulo} — ${q.q}` : `${q.q}`, '');
+    state.codeBlockAccum = null;
   }
 
   function gradeAnswer(raw, q) {
     const user = norm(raw);
     const accepted = (q.accept ?? []).map(norm);
 
-    if (accepted.includes(user)) return { result: 'correct', xp: 20 };
+    const xpFull = Number(q.xpRecompensa) > 0 ? Number(q.xpRecompensa) : 20;
+    const xpPartial = Math.max(1, Math.floor(xpFull / 2));
+
+    if (accepted.includes(user)) return { result: 'correct', xp: xpFull };
 
     // partial: match enough required tokens (ignoring placeholders like <arquivo>)
     const ut = new Set(tokenize(user));
@@ -1049,12 +1309,12 @@ function initTrainingTerminal() {
     const looksLike = accepted.some(a => a.split(' ')[0] && user.startsWith(a.split(' ')[0]));
 
     if ((must.length > 0 && mustHits >= Math.min(needed, must.length)) || (looksLike && user.length >= 3)) {
-      return { result: 'partial', xp: 10 };
+      return { result: 'partial', xp: xpPartial };
     }
     return { result: 'wrong', xp: 0 };
   }
 
-  function submitAnswer() {
+  async function submitAnswer() {
     const input = mount.querySelector('#term-input');
     if (!input) return;
     const raw = input.value;
@@ -1097,6 +1357,7 @@ function initTrainingTerminal() {
       else line('✖ Incorreto.', 'term-bad');
 
       if (g.xp > 0) animateXpGain(g.xp);
+      if (g.result === 'correct') await registrarProgressoAoAcertar(q, g.xp);
 
       line(q.feedback || 'Confira o enunciado e os elementos obrigatórios.', 'term-dim');
       line('', '');
@@ -1104,7 +1365,7 @@ function initTrainingTerminal() {
       state.questionIdx++;
 
       if (state.questionIdx >= 5) finishRun();
-      else askCurrent();
+      else void askCurrent();
       return;
     }
 
@@ -1116,6 +1377,7 @@ function initTrainingTerminal() {
     else line('✖ Incorreto.', 'term-bad');
 
     if (g.xp > 0) animateXpGain(g.xp);
+    if (g.result === 'correct') await registrarProgressoAoAcertar(q, g.xp);
 
     if (q.accept?.length) line(`Resposta esperada: ${q.accept[0]}`, 'term-dim');
     line('', '');
@@ -1124,7 +1386,7 @@ function initTrainingTerminal() {
     input.value = '';
 
     if (state.questionIdx >= 5) finishRun();
-    else askCurrent();
+    else void askCurrent();
   }
 
   function finishRun() {
@@ -1153,9 +1415,9 @@ function initTrainingTerminal() {
       state.questionIdx = 0;
       state.currentSet = pickQuestions(getBankTopic(), state.levelMode, state.runLevel);
       state.totalXp = 0;
-      startRun(false);
+      void startRun(false);
     });
-    mount.querySelector('#term-again')?.addEventListener('click', () => startRun(true));
+    mount.querySelector('#term-again')?.addEventListener('click', () => { void startRun(true); });
     mount.querySelector('#term-exit2')?.addEventListener('click', () => renderIntro());
   }
 

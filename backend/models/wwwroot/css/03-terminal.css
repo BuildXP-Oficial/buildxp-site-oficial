@@ -210,6 +210,49 @@
   100% { transform: translate3d(0,0,0) scale(1); filter: brightness(1); }
 }
 
+.term-levelup {
+  letter-spacing: 2px;
+  font-family: var(--f-display);
+  font-weight: 900;
+  margin-right: 0.4rem;
+}
+.term-badge.term-level-bump {
+  animation: xp-bump 480ms ease-out;
+}
+
+.term-desafio {
+  padding: 0.85rem 1rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+.term-desafio-titulo {
+  font-family: var(--f-display);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--term-accent, var(--blue));
+  margin-bottom: 0.35rem;
+}
+.term-desafio-enunciado {
+  font-family: var(--f-mono);
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--text);
+}
+.term-desafio-xp {
+  margin-top: 0.4rem;
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+}
+.term-desafio-erro {
+  margin-top: 0.45rem;
+  font-family: var(--f-mono);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: #ff6b6b;
+}
 .term-screen {
   padding: 1rem;
   height: 340px;
