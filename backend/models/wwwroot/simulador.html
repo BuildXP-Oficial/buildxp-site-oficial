@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="imagens/xpbrowser.png" />
+  <title>Simulador — BuildXP</title>
+  <meta name="description" content="Treine entrevistas e reuniões difíceis com personas da BuildXP: RH de cultura, tech lead/gerente e stakeholder de negócios." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
+  <link rel="stylesheet" href="css/site.css?v=bxp-mod-52" />
+  <script>window.BUILDXP_API_BASE = window.BUILDXP_API_BASE || '';</script>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="nav-logo" aria-label="BuildXP — Início">
+    <img class="nav-logo-img" src="imagens/logo2buildxpret.png" alt="BuildXP" />
+  </a>
+  <button class="hamburger" id="hamburger" aria-label="Menu">☰</button>
+  <ul class="nav-links" id="nav-links">
+    <li><a href="cards.html">Cards</a></li>
+    <li><a href="index.html#terminal">Terminal</a></li>
+    <li><a href="rotina.html">Rotina</a></li>
+    <li><a href="simulador.html" class="nav-link--active" aria-current="page">Simulador</a></li>
+    <li><a href="feedback.html">Feedback</a></li>
+    <li><a href="index.html#contact">Contato</a></li>
+    <li><a href="readme-lab.html" class="nav-link--cta">README Lab</a></li>
+  </ul>
+</nav>
+
+<main class="page-container">
+  <a href="index.html" class="back-link">← VOLTAR</a>
+
+  <div class="page-hero page-hero--simulador">
+    <div class="page-hero-glow"></div>
+    <div class="page-icon"><span style="font-family:var(--f-display);color:var(--accent);text-shadow:var(--accent-glow)">◈</span></div>
+    <div class="page-hero-body">
+      <div class="page-class">TREINO</div>
+      <div class="page-title">Simulador</div>
+      <div class="page-meta">
+        <span class="lvl-badge">ENTREVISTA · REUNIÃO · FEEDBACK</span>
+      </div>
+      <p class="rotina-intro">
+        Escolha com quem você vai falar e o cenário. A conversa segue como uma entrevista real:
+        fit cultural, arquitetura e gestão, ou valor de negócio.
+        Quando encerrar, você recebe nota, pontos fortes e o que melhorar.
+      </p>
+    </div>
+  </div>
+
+  <section class="simulador-wrap" id="simulador-app">
+    <div class="simulador-card" id="simulador-setup">
+      <div class="ref-section-title">CONFIGURAÇÃO</div>
+      <p class="simulador-hint">Com quem você quer treinar?</p>
+      <div class="simulador-personas" role="radiogroup" aria-label="Persona">
+        <label class="simulador-persona">
+          <input type="radio" name="simulador-persona" value="rh_cultura" checked />
+          <span class="simulador-persona-card">
+            <span class="simulador-persona-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3"/><circle cx="16" cy="9" r="2.4"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><path d="M14.2 14.2c1.8-.4 3.7.5 4.8 2.8"/></svg>
+            </span>
+            <span class="simulador-persona-kicker">RH</span>
+            <span class="simulador-persona-title">Recrutador de RH</span>
+            <span class="simulador-persona-desc">Cultura e fit comportamental. Perguntas STAR, motivações e soft skills.</span>
+          </span>
+        </label>
+        <label class="simulador-persona">
+          <input type="radio" name="simulador-persona" value="tech_lead_gerente" />
+          <span class="simulador-persona-card">
+            <span class="simulador-persona-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 9l-3 3 3 3"/><path d="M16 9l3 3-3 3"/><path d="M13 7l-2 10"/></svg>
+            </span>
+            <span class="simulador-persona-kicker">TECH LEAD</span>
+            <span class="simulador-persona-title">Tech Lead / Gerente</span>
+            <span class="simulador-persona-desc">Foco em arquitetura, código limpo, boas práticas, prazos e impacto de negócio.</span>
+          </span>
+        </label>
+        <label class="simulador-persona">
+          <input type="radio" name="simulador-persona" value="stakeholder_negocios" />
+          <span class="simulador-persona-card">
+            <span class="simulador-persona-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 19V9l8-5 8 5v10"/><path d="M9 19v-6h6v6"/></svg>
+            </span>
+            <span class="simulador-persona-kicker">NEGÓCIOS</span>
+            <span class="simulador-persona-title">Stakeholder de negócios</span>
+            <span class="simulador-persona-desc">Visão de negócio e cliente leigo: valor, custos e prazos, sem jargão.</span>
+          </span>
+        </label>
+      </div>
+      <label class="fb-label simulador-cenario-label">
+        Cenário
+        <input class="fb-input" id="simulador-cenario" type="text" maxlength="240" placeholder="ex: entrevista para vaga Sênior, defesa de projeto, alinhamento de prazo" />
+      </label>
+      <div class="simulador-actions">
+        <button class="term-btn primary" type="button" id="simulador-iniciar">Começar simulação</button>
+      </div>
+      <div id="simulador-setup-status" class="fb-status" aria-live="polite"></div>
+    </div>
+
+    <div class="simulador-card simulador-chat-card" id="simulador-chat" hidden>
+      <div class="simulador-chat-head">
+        <div>
+          <div class="simulador-chat-kicker" id="simulador-chat-kicker">SIMULAÇÃO</div>
+          <div class="simulador-chat-title" id="simulador-chat-title">Persona</div>
+          <div class="simulador-chat-cenario" id="simulador-chat-cenario"></div>
+        </div>
+        <button class="term-btn" type="button" id="simulador-encerrar">Encerrar simulação e ver feedback</button>
+      </div>
+      <div class="simulador-log" id="simulador-log" aria-live="polite"></div>
+      <form class="simulador-form" id="simulador-form">
+        <input class="fb-input simulador-input" id="simulador-input" type="text" maxlength="1500" autocomplete="off" placeholder="Responda à persona…" />
+        <button class="term-btn primary" type="submit" id="simulador-enviar">Enviar</button>
+      </form>
+      <div id="simulador-chat-status" class="fb-status" aria-live="polite"></div>
+    </div>
+
+    <div class="simulador-card simulador-feedback-card" id="simulador-feedback" hidden>
+      <div class="ref-section-title">RELATÓRIO</div>
+      <div class="simulador-nota-wrap">
+        <div class="simulador-nota" id="simulador-nota">—</div>
+        <div class="simulador-nota-label">Nota de 0 a 10</div>
+      </div>
+      <p class="simulador-relatorio" id="simulador-relatorio"></p>
+      <div class="simulador-cols">
+        <div>
+          <div class="ref-section-title">PONTOS FORTES</div>
+          <ul class="simulador-lista simulador-lista--ok" id="simulador-fortes"></ul>
+        </div>
+        <div>
+          <div class="ref-section-title">PONTOS DE MELHORIA</div>
+          <ul class="simulador-lista simulador-lista--melhorar" id="simulador-melhorias"></ul>
+        </div>
+      </div>
+      <div class="simulador-actions">
+        <button class="term-btn primary" type="button" id="simulador-nova">Nova simulação</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><span>BUILD</span>XP — De dev pra dev.</footer>
+<script src="js/main.js?v=bxp-mod-58"></script>
+</body>
+</html>

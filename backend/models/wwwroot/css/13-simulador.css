@@ -1,0 +1,214 @@
+/* Simulador de entrevistas / reuniões */
+.simulador-wrap {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.simulador-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+.simulador-hint {
+  margin: 0.85rem 0 1rem;
+  font-family: var(--f-heading, var(--f-body));
+  color: var(--text-dim);
+}
+.simulador-personas {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.85rem;
+}
+.simulador-persona {
+  display: block;
+  cursor: pointer;
+}
+.simulador-persona input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.simulador-persona-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 100%;
+  padding: 1rem 1.05rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.18);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.simulador-persona-icon {
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: 0.35rem;
+  color: var(--accent);
+}
+.simulador-persona-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.simulador-persona input:focus-visible + .simulador-persona-card,
+.simulador-persona input:checked + .simulador-persona-card {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.simulador-persona-kicker {
+  font-family: var(--f-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+}
+.simulador-persona-title {
+  font-family: var(--f-display);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+.simulador-persona-desc {
+  font-size: 0.88rem;
+  color: var(--text-dim);
+  line-height: 1.45;
+}
+.simulador-cenario-label { margin-top: 1.25rem; }
+.simulador-actions { margin-top: 1.15rem; }
+
+.simulador-card[hidden] {
+  display: none !important;
+}
+.simulador-chat-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 32rem;
+  padding: 0;
+  overflow: hidden;
+}
+.simulador-chat-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 1.35rem;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 12%, transparent), transparent);
+}
+.simulador-chat-kicker {
+  font-family: var(--f-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+}
+.simulador-chat-title {
+  font-family: var(--f-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-top: 0.15rem;
+}
+.simulador-chat-cenario {
+  margin-top: 0.25rem;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+.simulador-log {
+  flex: 1 1 auto;
+  min-height: 18rem;
+  max-height: 28rem;
+  overflow-y: auto;
+  padding: 1.15rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: rgba(0, 0, 0, 0.16);
+}
+.simulador-bubble {
+  max-width: 78%;
+  padding: 0.8rem 0.95rem;
+  border-radius: 14px;
+  font-family: var(--f-heading, var(--f-body));
+  font-size: 0.98rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.simulador-bubble--agent {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+}
+.simulador-bubble--user {
+  align-self: flex-end;
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+.simulador-bubble.is-pending {
+  color: var(--text-dim);
+  font-style: italic;
+}
+.simulador-form {
+  display: flex;
+  gap: 0.55rem;
+  padding: 0.9rem 1.15rem 0.4rem;
+  border-top: 1px solid var(--border);
+}
+.simulador-input { flex: 1 1 auto; }
+.simulador-chat-card .fb-status { margin: 0 1.15rem 1rem; }
+
+.simulador-nota-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin: 0.85rem 0 1rem;
+}
+.simulador-nota {
+  font-family: var(--f-display);
+  font-size: 2.6rem;
+  font-weight: 900;
+  color: var(--accent);
+  text-shadow: var(--accent-glow);
+  line-height: 1;
+}
+.simulador-nota-label {
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.simulador-relatorio {
+  margin: 0 0 1.35rem;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  font-family: var(--f-heading, var(--f-body));
+  line-height: 1.55;
+}
+.simulador-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+.simulador-lista {
+  margin: 0.75rem 0 0;
+  padding-left: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+.simulador-lista--ok { color: var(--text); }
+.simulador-lista--melhorar li { color: var(--text); }
+
+@media (max-width: 960px) {
+  .simulador-personas,
+  .simulador-cols { grid-template-columns: 1fr; }
+  .simulador-chat-head { flex-direction: column; }
+}
+@media (max-width: 640px) {
+  .simulador-bubble { max-width: 92%; }
+  .simulador-form { flex-direction: column; }
+}
