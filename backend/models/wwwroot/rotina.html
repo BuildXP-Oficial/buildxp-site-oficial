@@ -4,12 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/png" href="imagens/xpbrowser.png" />
-  <title>Rotina Inteligente — BuildXP</title>
-  <meta name="description" content="Organize sua rotina com IA: energia, horas disponíveis e tarefas ajustadas." />
+  <title>Plano de estudos — BuildXP</title>
+  <meta name="description" content="Organize o plano de estudos e revisões dos cards BuildXP com base na sua energia e no tempo livre." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
-  <link rel="stylesheet" href="css/site.css?v=bxp-mod-48" />
+  <link rel="stylesheet" href="css/site.css?v=bxp-mod-49" />
   <script>window.BUILDXP_API_BASE = window.BUILDXP_API_BASE || '';</script>
 </head>
 <body>
@@ -36,14 +36,17 @@
     <div class="page-hero-glow"></div>
     <div class="page-icon"><span style="font-family:var(--f-display);color:var(--accent);text-shadow:var(--accent-glow)">◈</span></div>
     <div class="page-hero-body">
-      <div class="page-class">PRODUTIVIDADE</div>
-      <div class="page-title">Rotina inteligente</div>
+      <div class="page-class">ESTUDOS</div>
+      <div class="page-title">Plano de estudos</div>
       <div class="page-meta">
-        <span class="lvl-badge">ENERGIA · HORAS · TAREFAS</span>
+        <span class="lvl-badge">CARDS · ENERGIA · TEMPO LIVRE</span>
       </div>
       <p class="rotina-intro">
-        Informe como você está hoje. A IA reorganiza a lista: energia baixa foca no urgente;
-        energia alta monta um dia mais cheio, ainda dentro das horas disponíveis.
+        Este agente monta o cronograma de estudos e revisões dos temas do BuildXP
+        (Git, Docker, Python, .NET, Java e os demais cards). Diga como está sua energia
+        e quanto tempo você tem hoje; escolha os temas que quer estudar ou revisar.
+        Com energia baixa, o foco fica em um tema e em revisão leve. Com energia alta,
+        dá para encadear conteúdos mais densos, ainda dentro do tempo disponível.
       </p>
     </div>
   </div>
@@ -51,7 +54,7 @@
   <section class="rotina-wrap" id="rotina-app">
     <div class="rotina-grid">
       <div class="rotina-card">
-        <div class="ref-section-title">CONTEXTO DO DIA</div>
+        <div class="ref-section-title">COMO ESTÁ HOJE</div>
         <div class="rotina-context">
           <label class="fb-label">
             Nível de energia
@@ -62,29 +65,30 @@
             </select>
           </label>
           <label class="fb-label">
-            Horas disponíveis
+            Tempo livre (horas)
             <input class="fb-input" id="rotina-horas" type="number" min="1" max="24" value="6" />
           </label>
         </div>
 
         <div class="rotina-tasks-head">
-          <div class="ref-section-title" style="margin:0;">TAREFAS</div>
-          <button class="term-btn" type="button" id="rotina-add">+ ADICIONAR</button>
+          <div class="ref-section-title" style="margin:0;">TEMAS PARA ESTUDAR OU REVISAR</div>
+          <button class="term-btn" type="button" id="rotina-add">+ TEMA</button>
         </div>
         <div id="rotina-tarefas" class="rotina-tarefas"></div>
 
         <div class="rotina-actions">
           <button class="term-btn primary" type="button" id="rotina-organizar">
-            🤖 Organizar Minha Rotina com IA
+            Organizar meu plano de estudos
           </button>
         </div>
         <div id="rotina-status" class="fb-status" aria-live="polite"></div>
       </div>
 
       <div class="rotina-card rotina-card--resultado">
-        <div class="ref-section-title">ROTINA AJUSTADA</div>
+        <div class="ref-section-title">CRONOGRAMA DO DIA</div>
         <div id="rotina-vazio" class="rotina-vazio">
-          Adicione tarefas e clique em organizar. A justificativa da IA e a lista reordenada aparecem aqui.
+          Escolha os cards que você quer estudar ou revisar. O agente devolve a ordem
+          das sessões e explica o porquê, com base na sua energia e no tempo livre.
         </div>
         <div id="rotina-resultado" hidden>
           <p class="rotina-mensagem" id="rotina-mensagem"></p>
@@ -96,6 +100,6 @@
 </main>
 
 <footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="js/main.js?v=bxp-mod-53"></script>
+<script src="js/main.js?v=bxp-mod-54"></script>
 </body>
 </html>

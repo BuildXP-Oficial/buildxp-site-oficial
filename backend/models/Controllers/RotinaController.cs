@@ -21,7 +21,7 @@ public class RotinaController : ControllerBase
     public async Task<IActionResult> AjustarRotina([FromBody] RotinaRequisicaoDto? requisicao)
     {
         if (requisicao is null)
-            return BadRequest(new { mensagem = "Informe as tarefas atuais, o nível de energia e as horas disponíveis." });
+            return BadRequest(new { mensagem = "Informe os temas de estudo, o nível de energia e as horas livres." });
 
         try
         {
@@ -32,12 +32,12 @@ public class RotinaController : ControllerBase
         {
             _logger.LogError(
                 ex,
-                "Falha inesperada ao ajustar a rotina. Energia={Energia} Horas={Horas}",
+                "Falha inesperada ao organizar o plano de estudos. Energia={Energia} Horas={Horas}",
                 requisicao.NivelEnergia,
                 requisicao.HorasDisponiveis);
             return StatusCode(
                 StatusCodes.Status503ServiceUnavailable,
-                new { mensagem = "Não foi possível ajustar a rotina agora. Tente novamente em instantes." });
+                new { mensagem = "Não foi possível organizar o plano de estudos agora. Tente novamente em instantes." });
         }
     }
 }

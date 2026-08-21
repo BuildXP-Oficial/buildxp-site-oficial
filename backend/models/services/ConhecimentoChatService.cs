@@ -28,13 +28,16 @@ public class ConhecimentoChatService
     };
 
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IConfiguration _config;
     private readonly ILogger<ConhecimentoChatService> _logger;
 
     public ConhecimentoChatService(
         IHttpClientFactory httpClientFactory,
+        IConfiguration config,
         ILogger<ConhecimentoChatService> logger)
     {
         _httpClientFactory = httpClientFactory;
+        _config = config;
         _logger = logger;
     }
 
@@ -67,11 +70,11 @@ public class ConhecimentoChatService
         string mensagemUsuario,
         List<ConhecimentoChatMensagemDto>? historico)
     {
-        var apiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
+        var apiKey = ObterChaveApi();
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             throw new InvalidOperationException(
-                "A chave da API Groq não está configurada. Defina a variável de ambiente GROQ_API_KEY.");
+                "A chave da API Groq não está configurada. Defina GROQ_API_KEY ou GroqApiKey.");
         }
 
         var mensagens = MontarMensagensGroq(tema, conteudoCard, mensagemUsuario, historico);
@@ -90,7 +93,7 @@ public class ConhecimentoChatService
         {
             try
             {
-                var texto = await TentarModeloAsync(client, apiKey.Trim(), modelo, mensagens);
+                var texto = await TentarModeloAsync(client, apiKey, modelo, mensagens);
                 if (!string.IsNullOrWhiteSpace(texto))
                 {
                     _logger.LogInformation("Groq respondeu com o modelo {Modelo}", modelo);
@@ -221,6 +224,19 @@ public class ConhecimentoChatService
         }
 
         return ExtrairTextoDaResposta(corpo);
+    }
+
+    private string? ObterChaveApi()
+    {
+        var env = Environment.GetEnvironmentVariable("GROQ_API_KEY");
+        if (!string.IsNullOrWhiteSpace(env))
+            return env.Trim();
+
+        var config = _config["GroqApiKey"];
+        if (!string.IsNullOrWhiteSpace(config))
+            return config.Trim();
+
+        return null;
     }
 
     private static string ExtrairTextoDaResposta(string json)

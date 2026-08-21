@@ -14,7 +14,7 @@ async function buildxpBoot() {
   initFeedback();
   initTrainingTerminal();
   initDashboard();
-  if (typeof initRotinaPage === 'function') initRotinaPage();
+  if (typeof initRotinaPage === 'function') await initRotinaPage();
   if (typeof initConhecimentoChat === 'function') initConhecimentoChat();
   if (typeof buildxpInitMarkdownBuilderPage === 'function') {
     await buildxpInitMarkdownBuilderPage();
