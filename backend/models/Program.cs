@@ -29,6 +29,7 @@ builder.Services.AddScoped<TerminalQuestaoService>();
 builder.Services.AddScoped<TerminalMentorService>();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<ConhecimentoChatService>();
+builder.Services.AddScoped<RotinaService>();
 
 // ── JWT — autenticação ───────────────────────────────────────
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
