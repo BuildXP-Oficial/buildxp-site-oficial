@@ -66,6 +66,41 @@ function temaCardAtualParaEnvio() {
   return titulo || slugCardConhecimento() || 'este card';
 }
 
+function conteudoCardAtualParaEnvio() {
+  const partes = [];
+  const root = document.getElementById('page-root');
+  if (!root) return '';
+
+  const titulo = root.querySelector('.page-title');
+  if (titulo && titulo.textContent.trim()) partes.push(`Título: ${titulo.textContent.trim()}`);
+
+  const steps = document.getElementById('steps-root');
+  if (steps) {
+    const texto = String(steps.innerText || '').replace(/\n{3,}/g, '\n\n').trim();
+    if (texto) partes.push(`Trilha iniciante:\n${texto}`);
+  }
+
+  const refs = document.getElementById('ref');
+  if (refs) {
+    const texto = String(refs.innerText || '').replace(/\n{3,}/g, '\n\n').trim();
+    if (texto) partes.push(`Cheap codes:\n${texto}`);
+  }
+
+  return partes.join('\n\n').slice(0, 6000);
+}
+
+function coletarHistoricoConhecimento(log, excluir) {
+  const itens = [];
+  log.querySelectorAll('.bxp-chat-bubble').forEach((el) => {
+    if (el === excluir || el.classList.contains('bxp-chat-bubble--pending')) return;
+    const texto = String(el.dataset.bxpChatTexto || '').trim();
+    if (!texto) return;
+    const papel = el.classList.contains('bxp-chat-bubble--user') ? 'user' : 'assistant';
+    itens.push({ papel, conteudo: texto });
+  });
+  return itens.slice(-8);
+}
+
 function initConhecimentoChat() {
   if (!ehTelaConhecimentoChat()) return;
   if (document.getElementById('bxp-conhecimento-chat')) {
@@ -197,6 +232,7 @@ function renderizarMarkdownConhecimentoChat(texto) {
 }
 
 function preencherBolhaConhecimento(bubble, papel, texto) {
+  bubble.dataset.bxpChatTexto = String(texto ?? '');
   if (papel === 'agent') {
     bubble.innerHTML = renderizarMarkdownConhecimentoChat(texto);
   } else {
@@ -236,10 +272,14 @@ async function enviarMensagemConhecimentoChat(input, send, log) {
       body: JSON.stringify({
         mensagemUsuario: texto,
         temaOuCardAtual: temaCardAtualParaEnvio(),
+        conteudoCard: conteudoCardAtualParaEnvio(),
+        historico: coletarHistoricoConhecimento(log, pending),
       }),
     });
     if (!res.ok) {
-      let mensagem = 'Não foi possível responder agora. Tente de novo em instantes.';
+      let mensagem = res.status === 429
+        ? 'Muitas perguntas em pouco tempo. Espere um instante e tente de novo.'
+        : 'Não foi possível responder agora. Tente de novo em instantes.';
       try {
         const err = await res.json();
         if (err?.mensagem) mensagem = String(err.mensagem);
@@ -255,7 +295,9 @@ async function enviarMensagemConhecimentoChat(input, send, log) {
     preencherBolhaConhecimento(pending, 'agent', resposta);
   } catch (err) {
     pending.classList.remove('bxp-chat-bubble--pending');
-    pending.textContent = err instanceof Error ? err.message : 'Falha ao falar com o assistente.';
+    const falha = err instanceof Error ? err.message : 'Falha ao falar com o assistente.';
+    pending.dataset.bxpChatTexto = falha;
+    pending.textContent = falha;
   } finally {
     input.disabled = false;
     send.disabled = false;

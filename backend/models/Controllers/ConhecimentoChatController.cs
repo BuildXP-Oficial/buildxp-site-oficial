@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using BuildXP.API.Models.Dtos;
 using BuildXP.API.Services;
 
@@ -18,6 +19,7 @@ public class ConhecimentoChatController : ControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting("conhecimento-chat")]
     public async Task<IActionResult> Conversar([FromBody] ConhecimentoChatRequisicaoDto? requisicao)
     {
         if (requisicao is null)

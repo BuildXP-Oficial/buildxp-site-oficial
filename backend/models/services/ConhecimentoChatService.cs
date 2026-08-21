@@ -9,37 +9,16 @@ namespace BuildXP.API.Services;
 public class ConhecimentoChatService
 {
     private const string GroqChatCompletionsUrl = "https://api.groq.com/openai/v1/chat/completions";
+    private const int MaxHistorico = 8;
+    private const int MaxMensagem = 1500;
+    private const int MaxConteudoCard = 6000;
 
-    /// <summary>
-    /// Modelos de chat da Groq, do mais atual ao legado.
-    /// Se um falhar (depreciado, 429, 5xx), tenta o próximo.
-    /// </summary>
     private static readonly string[] GroqModelos =
     [
         "openai/gpt-oss-20b",
         "openai/gpt-oss-120b",
         "qwen/qwen3.6-27b",
-        "groq/compound-mini",
-        "groq/compound",
         "llama-3.3-70b-versatile",
-        "llama-3.1-8b-instant",
-        "llama-3.1-70b-versatile",
-        "llama3-8b-8192",
-        "llama3-70b-8192",
-        "mixtral-8x7b-32768",
-        "gemma2-9b-it",
-        "gemma-7b-it",
-        "qwen/qwen3-32b",
-        "meta-llama/llama-4-scout-17b-16e-instruct",
-        "meta-llama/llama-4-maverick-17b-128e-instruct",
-        "moonshotai/kimi-k2-instruct",
-        "llama-3.2-3b-preview",
-        "llama-3.2-1b-preview",
-        "llama-3.2-90b-text-preview",
-        "llama-3.2-11b-text-preview",
-        "llama-3.3-70b-specdec",
-        "deepseek-r1-distill-llama-70b",
-        "allam-2-7b",
     ];
 
     private static readonly JsonSerializerOptions JsonOpcoes = new()
@@ -49,22 +28,19 @@ public class ConhecimentoChatService
     };
 
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IConfiguration _config;
     private readonly ILogger<ConhecimentoChatService> _logger;
 
     public ConhecimentoChatService(
         IHttpClientFactory httpClientFactory,
-        IConfiguration config,
         ILogger<ConhecimentoChatService> logger)
     {
         _httpClientFactory = httpClientFactory;
-        _config = config;
         _logger = logger;
     }
 
     public async Task<ConhecimentoChatRespostaDto> ResponderAsync(ConhecimentoChatRequisicaoDto requisicao)
     {
-        var mensagem = (requisicao?.MensagemUsuario ?? string.Empty).Trim();
+        var mensagem = RecortarLimite((requisicao?.MensagemUsuario ?? string.Empty).Trim(), MaxMensagem);
         var tema = (requisicao?.TemaOuCardAtual ?? string.Empty).Trim();
         if (string.IsNullOrWhiteSpace(tema))
             tema = "conhecimento";
@@ -77,43 +53,36 @@ public class ConhecimentoChatService
             };
         }
 
-        var texto = await ConsultarGroqAsync(tema, mensagem);
+        var conteudoCard = RecortarLimite((requisicao?.ConteudoCard ?? string.Empty).Trim(), MaxConteudoCard);
+        var texto = await ConsultarGroqAsync(tema, conteudoCard, mensagem, requisicao?.Historico);
         return new ConhecimentoChatRespostaDto
         {
             RespostaAgente = texto,
         };
     }
 
-    private async Task<string> ConsultarGroqAsync(string tema, string mensagemUsuario)
+    private async Task<string> ConsultarGroqAsync(
+        string tema,
+        string conteudoCard,
+        string mensagemUsuario,
+        List<ConhecimentoChatMensagemDto>? historico)
     {
-        var apiKey = ObterChaveApi();
+        var apiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             throw new InvalidOperationException(
-                "A chave da API Groq não está configurada. Defina GROQ_API_KEY ou GroqApiKey.");
+                "A chave da API Groq não está configurada. Defina a variável de ambiente GROQ_API_KEY.");
         }
 
-        var mensagens = new object[]
-        {
-            new
-            {
-                role = "system",
-                content = $"Você é um tutor focado exclusivamente no tema: {tema}. Responda SEMPRE em português brasileiro, mesmo ao recusar uma pergunta fora do tema. Nunca use inglês. Você só deve responder a dúvidas pertinentes a {tema} e ao conteúdo do card atual. Se o usuário fizer perguntas sobre assuntos não relacionados (ex: perguntar de Python em um card de NPM ou Docker), responda educadamente em português explicando que você é o especialista deste tema específico ({tema}) e oriente o usuário a focar no assunto do card. Seja conciso, direto e amigável. Prefira respostas curtas. Use markdown simples (**negrito**, `código` e blocos ```) só quando ajudar a explicar.",
-            },
-            new
-            {
-                role = "user",
-                content = mensagemUsuario,
-            },
-        };
-
+        var mensagens = MontarMensagensGroq(tema, conteudoCard, mensagemUsuario, historico);
         var client = _httpClientFactory.CreateClient();
         client.Timeout = TimeSpan.FromSeconds(45);
 
         _logger.LogInformation(
-            "Consultando Groq. Tema={Tema} Mensagem={Mensagem}",
+            "Consultando Groq. Tema={Tema} Mensagem={Mensagem} Historico={Historico}",
             tema,
-            Recortar(mensagemUsuario));
+            Recortar(mensagemUsuario),
+            mensagens.Count - 2);
 
         Exception? ultimoErro = null;
 
@@ -121,7 +90,7 @@ public class ConhecimentoChatService
         {
             try
             {
-                var texto = await TentarModeloAsync(client, apiKey, modelo, mensagens);
+                var texto = await TentarModeloAsync(client, apiKey.Trim(), modelo, mensagens);
                 if (!string.IsNullOrWhiteSpace(texto))
                 {
                     _logger.LogInformation("Groq respondeu com o modelo {Modelo}", modelo);
@@ -146,11 +115,76 @@ public class ConhecimentoChatService
             ultimoErro);
     }
 
+    private static List<object> MontarMensagensGroq(
+        string tema,
+        string conteudoCard,
+        string mensagemUsuario,
+        List<ConhecimentoChatMensagemDto>? historico)
+    {
+        var blocoConteudo = string.IsNullOrWhiteSpace(conteudoCard)
+            ? "O conteúdo textual do card não foi enviado nesta requisição. Responda só com o que souber do tema, sem inventar slides."
+            : conteudoCard;
+
+        var system =
+            $"Você é um tutor focado exclusivamente no tema: {tema}. " +
+            "Responda SEMPRE em português brasileiro, mesmo ao recusar uma pergunta fora do tema. Nunca use inglês. " +
+            $"Você só deve responder a dúvidas pertinentes a {tema} e ao conteúdo do card atual. " +
+            "Use o material abaixo como a matéria que o aluno está estudando. Não invente passos que não estejam nele. " +
+            $"Se o usuário fizer perguntas sobre assuntos não relacionados (ex: perguntar de Python em um card de NPM ou Docker), " +
+            $"responda educadamente em português explicando que você é o especialista deste tema específico ({tema}) e oriente o usuário a focar no assunto do card. " +
+            "Seja conciso, direto e amigável. Prefira respostas curtas. " +
+            "Use markdown simples (**negrito**, `código` e blocos ```) só quando ajudar a explicar.\n\n" +
+            $"--- MATERIAL DO CARD ---\n{blocoConteudo}\n--- FIM DO MATERIAL ---";
+
+        var mensagens = new List<object>
+        {
+            new { role = "system", content = system },
+        };
+
+        foreach (var item in NormalizarHistorico(historico, mensagemUsuario))
+            mensagens.Add(new { role = item.Role, content = item.Content });
+
+        mensagens.Add(new { role = "user", content = mensagemUsuario });
+        return mensagens;
+    }
+
+    private static List<(string Role, string Content)> NormalizarHistorico(
+        List<ConhecimentoChatMensagemDto>? historico,
+        string mensagemAtual)
+    {
+        if (historico is null || historico.Count == 0)
+            return [];
+
+        var limpo = new List<(string Role, string Content)>();
+        foreach (var item in historico)
+        {
+            var conteudo = RecortarLimite((item?.Conteudo ?? string.Empty).Trim(), MaxMensagem);
+            if (string.IsNullOrWhiteSpace(conteudo))
+                continue;
+
+            var papel = (item?.Papel ?? string.Empty).Trim().ToLowerInvariant();
+            var role = papel is "assistant" or "agent" or "assistente" ? "assistant" : "user";
+            limpo.Add((role, conteudo));
+        }
+
+        if (limpo.Count > 0
+            && limpo[^1].Role == "user"
+            && string.Equals(limpo[^1].Content, mensagemAtual, StringComparison.Ordinal))
+        {
+            limpo.RemoveAt(limpo.Count - 1);
+        }
+
+        if (limpo.Count > MaxHistorico)
+            limpo = limpo.Skip(limpo.Count - MaxHistorico).ToList();
+
+        return limpo;
+    }
+
     private async Task<string?> TentarModeloAsync(
         HttpClient client,
         string apiKey,
         string modelo,
-        object[] mensagens)
+        List<object> mensagens)
     {
         var payload = new
         {
@@ -187,22 +221,6 @@ public class ConhecimentoChatService
         }
 
         return ExtrairTextoDaResposta(corpo);
-    }
-
-    private string? ObterChaveApi()
-    {
-        foreach (var valor in new[]
-        {
-            Environment.GetEnvironmentVariable("GROQ_API_KEY"),
-            _config["GroqApiKey"],
-            _config["Groq:ApiKey"],
-        })
-        {
-            if (!string.IsNullOrWhiteSpace(valor))
-                return valor.Trim();
-        }
-
-        return null;
     }
 
     private static string ExtrairTextoDaResposta(string json)
@@ -263,6 +281,9 @@ public class ConhecimentoChatService
 
         return string.Empty;
     }
+
+    private static string RecortarLimite(string texto, int max) =>
+        texto.Length <= max ? texto : texto[..max];
 
     private static string Recortar(string texto) =>
         texto.Length <= 120 ? texto : texto[..117] + "…";

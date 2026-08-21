@@ -85,7 +85,24 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.ContentType = "application/json; charset=utf-8";
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            new { mensagem = "Muitas perguntas em pouco tempo. Espere um instante e tente de novo." },
+            token);
+    };
     options.AddPolicy("feedback-publico", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "anon",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 8,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0,
+            }));
+    options.AddPolicy("conhecimento-chat", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "anon",
             factory: _ => new FixedWindowRateLimiterOptions
