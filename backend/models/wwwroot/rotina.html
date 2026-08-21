@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="imagens/xpbrowser.png" />
+  <title>Rotina Inteligente — BuildXP</title>
+  <meta name="description" content="Organize sua rotina com IA: energia, horas disponíveis e tarefas ajustadas." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
+  <link rel="stylesheet" href="css/site.css?v=bxp-mod-48" />
+  <script>window.BUILDXP_API_BASE = window.BUILDXP_API_BASE || '';</script>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="nav-logo" aria-label="BuildXP — Início">
+    <img class="nav-logo-img" src="imagens/logo2buildxpret.png" alt="BuildXP" />
+  </a>
+  <button class="hamburger" id="hamburger" aria-label="Menu">☰</button>
+  <ul class="nav-links" id="nav-links">
+    <li><a href="cards.html">Cards</a></li>
+    <li><a href="index.html#terminal">Terminal</a></li>
+    <li><a href="rotina.html" class="nav-link--active" aria-current="page">Rotina</a></li>
+    <li><a href="feedback.html">Feedback</a></li>
+    <li><a href="index.html#contact">Contato</a></li>
+    <li><a href="readme-lab.html" class="nav-link--cta">README Lab</a></li>
+  </ul>
+</nav>
+
+<main class="page-container">
+  <a href="index.html" class="back-link">← VOLTAR</a>
+
+  <div class="page-hero page-hero--rotina">
+    <div class="page-hero-glow"></div>
+    <div class="page-icon"><span style="font-family:var(--f-display);color:var(--accent);text-shadow:var(--accent-glow)">◈</span></div>
+    <div class="page-hero-body">
+      <div class="page-class">PRODUTIVIDADE</div>
+      <div class="page-title">Rotina inteligente</div>
+      <div class="page-meta">
+        <span class="lvl-badge">ENERGIA · HORAS · TAREFAS</span>
+      </div>
+      <p class="rotina-intro">
+        Informe como você está hoje. A IA reorganiza a lista: energia baixa foca no urgente;
+        energia alta monta um dia mais cheio, ainda dentro das horas disponíveis.
+      </p>
+    </div>
+  </div>
+
+  <section class="rotina-wrap" id="rotina-app">
+    <div class="rotina-grid">
+      <div class="rotina-card">
+        <div class="ref-section-title">CONTEXTO DO DIA</div>
+        <div class="rotina-context">
+          <label class="fb-label">
+            Nível de energia
+            <select class="fb-input" id="rotina-energia" aria-label="Nível de energia">
+              <option value="alta">Alta</option>
+              <option value="media" selected>Média</option>
+              <option value="baixa">Baixa</option>
+            </select>
+          </label>
+          <label class="fb-label">
+            Horas disponíveis
+            <input class="fb-input" id="rotina-horas" type="number" min="1" max="24" value="6" />
+          </label>
+        </div>
+
+        <div class="rotina-tasks-head">
+          <div class="ref-section-title" style="margin:0;">TAREFAS</div>
+          <button class="term-btn" type="button" id="rotina-add">+ ADICIONAR</button>
+        </div>
+        <div id="rotina-tarefas" class="rotina-tarefas"></div>
+
+        <div class="rotina-actions">
+          <button class="term-btn primary" type="button" id="rotina-organizar">
+            🤖 Organizar Minha Rotina com IA
+          </button>
+        </div>
+        <div id="rotina-status" class="fb-status" aria-live="polite"></div>
+      </div>
+
+      <div class="rotina-card rotina-card--resultado">
+        <div class="ref-section-title">ROTINA AJUSTADA</div>
+        <div id="rotina-vazio" class="rotina-vazio">
+          Adicione tarefas e clique em organizar. A justificativa da IA e a lista reordenada aparecem aqui.
+        </div>
+        <div id="rotina-resultado" hidden>
+          <p class="rotina-mensagem" id="rotina-mensagem"></p>
+          <ol class="rotina-lista" id="rotina-lista"></ol>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><span>BUILD</span>XP — De dev pra dev.</footer>
+<script src="js/main.js?v=bxp-mod-53"></script>
+</body>
+</html>
