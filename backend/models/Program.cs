@@ -12,8 +12,17 @@ using BuildXP.API.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // ── BANCO DE DADOS ───────────────────────────────────────────
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "ConnectionStrings:DefaultConnection não está configurada. " +
+        "Para testar, suba o Postgres local com `docker compose up -d` na raiz do repositório. " +
+        "Credenciais de produção não entram no Git: use Azure App Settings ou `dotnet user-secrets`.");
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionString));
 
 // ── SERVICES — injeção de dependência ───────────────────────
 // registra os services para o .NET saber como criá-los

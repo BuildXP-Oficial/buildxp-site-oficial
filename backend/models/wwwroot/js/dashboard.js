@@ -706,7 +706,7 @@ function updateDashCollabSectionVisibility(viewName) {
   }
 }
 
-/** Ex.: gislanesenaa@gmail.com → gis*********@gm*****com */
+/** Ex.: admin@localhost → ad***@lo*****ost */
 function maskRecoveryEmailDisplay(email) {
   const raw = String(email || '').trim();
   const at = raw.indexOf('@');

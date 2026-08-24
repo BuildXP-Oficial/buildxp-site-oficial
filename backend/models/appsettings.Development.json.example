@@ -1,10 +1,10 @@
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Database=buildxp;Username=postgres;Password=SUA_SENHA_BD"
+    "DefaultConnection": "Host=localhost;Port=5432;Database=buildxpdb;Username=buildxp;Password=buildxp123"
   },
   "Admin": {
-    "Usuario": "gislanesenaa",
-    "Senha": "WA9nTvL6CkINlyaqf1E8Bxpm",
-    "Email": "gislanesenaa@gmail.com"
+    "Usuario": "admin",
+    "Senha": "admin123",
+    "Email": "admin@localhost"
   }
 }
