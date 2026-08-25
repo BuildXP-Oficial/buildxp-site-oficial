@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
-  <link rel="stylesheet" href="css/site.css?v=bxp-mod-33" />
+  <link rel="stylesheet" href="css/site.css?v=bxp-mod-79" />
   <style>
     :root {
       --accent: #4db5ff;
@@ -323,6 +323,11 @@
           <span class="dash-app-card-title">CONTRIBUIDORES</span>
           <span class="dash-app-card-desc">Ícone, nome e link na faixa acima do rodapé da home.</span>
         </button>
+        <button type="button" class="fb-card dash-app-card" id="dash-open-readme-links">
+          <span class="dash-app-card-kicker">README LAB</span>
+          <span class="dash-app-card-title">LINKS VISÍVEIS</span>
+          <span class="dash-app-card-desc">GitHubs mostrados no Mostre o seu.</span>
+        </button>
       </div>
     </div>
 
@@ -466,6 +471,20 @@
             <label class="fb-label">Botão secundário
               <input class="fb-input" id="dash-card-btn2" maxlength="80" placeholder="🎮 CHEAP CODES" />
             </label>
+            <div class="dash-fin-type">
+              <span class="fb-label">Slide final</span>
+              <p class="dash-muted dash-fin-type-hint">Botões do último slide da trilha.</p>
+              <div class="dash-fin-type-opts" role="radiogroup" aria-label="Slide final">
+                <label class="dash-fin-type-opt">
+                  <input type="radio" name="dash-card-fin-type" value="terminal" checked />
+                  <span>Terminal + cheap codes</span>
+                </label>
+                <label class="dash-fin-type-opt">
+                  <input type="radio" name="dash-card-fin-type" value="readmelabs" />
+                  <span>README Lab + Mostre o seu</span>
+                </label>
+              </div>
+            </div>
             <label class="fb-label">Descrição (HTML)
               <textarea class="fb-input fb-textarea" id="dash-card-desc" rows="5" placeholder="<p>…</p>"></textarea>
             </label>
@@ -604,18 +623,30 @@
       <div id="dash-create-step-slides" class="dash-create-slides-wrap" hidden>
         <div class="fb-card dash-panel-inner">
           <div class="ref-section-title">2 · SLIDES DO TREINAMENTO</div>
-          <p class="dash-muted">Cada slide de <strong>conteúdo</strong> tem <strong>título</strong> (cabeçalho na página pública), abas Texto, Comandos e Observação — tudo é guardado na API num único bloco HTML visível no site. Pausa: corpo + observação. O slide final (FIM) continua no ficheiro <code>.html</code>. Use <strong>PUBLICAR</strong> para gravar no servidor; <strong>SALVAR NOS RASCUNHOS</strong> guarda neste navegador.</p>
+          <p class="dash-muted">Cada slide de <strong>conteúdo</strong> tem <strong>título</strong> (cabeçalho na página pública), abas Texto, Comandos e Observação — tudo é guardado na API num único bloco HTML visível no site. Pausa: corpo + observação. Use <strong>PUBLICAR</strong> para gravar no servidor; <strong>SALVAR NOS RASCUNHOS</strong> guarda neste navegador.</p>
           <div id="dash-wiz-slides-root"></div>
           <div class="dash-wiz-slide-actions">
             <button type="button" class="term-btn ghost" id="dash-wiz-add-content">+ SLIDE DE CONTEÚDO</button>
             <button type="button" class="term-btn ghost" id="dash-wiz-add-pause">+ PAUSA</button>
           </div>
-          <div class="dash-wiz-final-locked fb-card">
-            <div class="ref-section-title" style="margin-bottom:0.5rem;">SLIDE FINAL (OBRIGATÓRIO)</div>
-            <p class="dash-muted">Sempre presente na trilha publicada.</p>
-            <div class="term-actions" style="margin-top:0.75rem;">
-              <span class="term-btn ghost" style="pointer-events:none;opacity:0.85;">← VOLTAR AO INÍCIO</span>
-              <span class="term-btn primary" style="pointer-events:none;opacity:0.85;">INICIAR TREINAMENTO</span>
+          <div class="dash-wiz-final">
+            <div class="ref-section-title">SLIDE FINAL (OBRIGATÓRIO)</div>
+            <p class="dash-muted">A trilha pública sempre termina neste slide. Escolha o encerramento:</p>
+            <div class="dash-fin-type">
+              <div class="dash-fin-type-opts" role="radiogroup" aria-label="Botões do slide final">
+                <label class="dash-fin-type-opt">
+                  <input type="radio" name="dash-wiz-fin-type" value="terminal" checked />
+                  <span>Terminal + cheap codes</span>
+                </label>
+                <label class="dash-fin-type-opt">
+                  <input type="radio" name="dash-wiz-fin-type" value="readmelabs" />
+                  <span>README Lab + Mostre o seu</span>
+                </label>
+              </div>
+            </div>
+            <div class="term-actions dash-fin-preview" id="dash-wiz-fim-preview">
+              <span class="term-btn primary">INICIAR TREINAMENTO</span>
+              <span class="term-btn ghost">🎮 VERIFICAR CHEAP CODES</span>
             </div>
           </div>
           <div class="dash-form-actions" style="margin-top:1.25rem;">
@@ -662,6 +693,20 @@
       </div>
     </div>
 
+    <div class="dash-view" data-dash-view="readme-links" hidden>
+      <div class="dash-view-head">
+        <button type="button" class="term-btn ghost dash-back-btn" data-dash-back="home">← VOLTAR</button>
+        <button type="button" class="term-btn ghost" id="dash-readme-links-refresh">↻ ATUALIZAR</button>
+      </div>
+      <div class="fb-card dash-panel-inner">
+        <div class="ref-section-title">LINKS VISÍVEIS</div>
+        <p class="dash-muted">Nome e GitHub que aparecem no README Lab e no slide final do card.</p>
+        <div id="dash-readme-links-status" class="fb-status" aria-live="polite"></div>
+        <div id="dash-readme-links-list" class="dash-readme-links-list"></div>
+        <div id="dash-readme-links-empty" class="fb-empty" hidden>Nenhum link visível ainda.</div>
+      </div>
+    </div>
+
     <section class="fb-card dash-collab dash-view-collab" id="dash-collab-section" aria-labelledby="dash-collab-title">
       <div class="ref-section-title" id="dash-collab-title">COLABORADORES</div>
       <div id="dash-collab-invite-block">
@@ -686,6 +731,6 @@
 </div>
 
 <footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="js/main.js?v=bxp-mod-33"></script>
+<script src="js/main.js?v=bxp-mod-79"></script>
 </body>
 </html>

@@ -31,6 +31,7 @@ builder.Services.AddScoped<CardService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ColaboradorService>();
 builder.Services.AddScoped<FaixaColaboradorService>();
+builder.Services.AddScoped<CardReadmeShareService>();
 builder.Services.AddScoped<PerfilService>();
 builder.Services.AddScoped<MarkdownBuilderService>();
 
@@ -90,6 +91,16 @@ builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.AddPolicy("feedback-publico", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "anon",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 8,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0,
+            }));
+    options.AddPolicy("readme-share-publico", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "anon",
             factory: _ => new FixedWindowRateLimiterOptions

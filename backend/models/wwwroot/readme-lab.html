@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
-  <link rel="stylesheet" href="css/site.css?v=bxp-mod-63" />
+  <link rel="stylesheet" href="css/site.css?v=bxp-mod-79" />
   <script>window.BUILDXP_API_BASE = window.BUILDXP_API_BASE || '';</script>
 </head>
 <body>
@@ -56,6 +56,7 @@
         <button type="button" class="term-btn primary md-gate-btn-primary" id="md-btn-show-register">Criar cadastro</button>
         <button type="button" class="term-btn ghost" id="md-btn-show-login">Já tenho cadastro</button>
         <button type="button" class="term-btn ghost" id="md-btn-guest">Construir sem salvar</button>
+        <button type="button" class="term-btn ghost" id="md-btn-mostre-seu">Mostre o seu</button>
       </div>
     </div>
 
@@ -128,6 +129,30 @@
 
   <!-- WORKSPACE (fica por baixo do modal com blur) -->
   <section class="md-workspace" id="md-workspace">
+    <section class="readme-lab-share fb-card" id="readme-lab-share-root">
+      <div class="ref-section-title">MOSTRE O SEU</div>
+      <p class="dash-muted">A lista aparece aqui e no slide final do card.</p>
+      <div class="term-actions card-fim-actions">
+        <button type="button" class="term-btn ghost" data-mostre-seu>Mostre o seu</button>
+      </div>
+      <form class="card-fim-share-form" hidden>
+        <label class="fb-label">Nome
+          <input class="fb-input" name="nome" maxlength="80" placeholder="Como você quer aparecer" required />
+        </label>
+        <label class="fb-label">Link do GitHub
+          <input class="fb-input" name="link" maxlength="500" placeholder="https://github.com/usuario" required />
+        </label>
+        <p class="dash-muted card-fim-share-hint">Se precisar excluir o seu link, <a href="index.html#contact">entre em contato</a>.</p>
+        <button type="submit" class="term-btn primary">Salvar</button>
+        <div class="card-fim-share-status fb-status" aria-live="polite"></div>
+      </form>
+      <div class="card-fim-shares">
+        <div class="card-fim-shares-title">READMES DA COMUNIDADE</div>
+        <div class="card-fim-shares-list"></div>
+        <div class="card-fim-share-empty">A carregar a lista…</div>
+      </div>
+    </section>
+
     <div class="md-toolbar-bar">
       <div class="md-toolbar" id="md-toolbar" role="toolbar" aria-label="Inserir markdown">
         <button type="button" class="md-tool" data-md-snip="h1" aria-label="H1">H1</button>
@@ -290,6 +315,6 @@
 </main>
 
 <footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="js/main.js?v=bxp-mod-63"></script>
+<script src="js/main.js?v=bxp-mod-79"></script>
 </body>
 </html>

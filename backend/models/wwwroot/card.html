@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow:wght@300;400;500;600&display=swap" />
-  <link rel="stylesheet" href="css/site.css?v=bxp-mod-36" />
+  <link rel="stylesheet" href="css/site.css?v=bxp-mod-79" />
   <style>
     /* ── LOADING STATE ─────────────────────────────────────── */
     .card-loading {
@@ -214,7 +214,7 @@
 </div>
 
 <footer><span>BUILD</span>XP — De dev pra dev.</footer>
-<script src="js/main.js?v=bxp-mod-36"></script>
+<script src="js/main.js?v=bxp-mod-79"></script>
 <script>
 function escapeHtml(str) {
   return String(str ?? '')
@@ -507,6 +507,20 @@ function renderError(code, msg, root) {
     return;
   }
 
+  await new Promise((resolve) => {
+    if (typeof buildxpFinSlideHtml === 'function') {
+      resolve();
+      return;
+    }
+    const started = Date.now();
+    const id = setInterval(() => {
+      if (typeof buildxpFinSlideHtml === 'function' || Date.now() - started > 5000) {
+        clearInterval(id);
+        resolve();
+      }
+    }, 30);
+  });
+
   // ── 4. ACCENT: border_color da API ou fallback por tema ───
   function hexToRgbTuple(hex) {
     const n = String(hex || '').replace('#', '').trim();
@@ -561,7 +575,7 @@ function renderError(code, msg, root) {
     return (a.ordem_item ?? a.OrdemItem ?? 0) - (b.ordem_item ?? b.OrdemItem ?? 0);
   });
 
-  const slidesInner = renderSlides(slides, slug);
+  const slidesInner = renderSlides(slides, slug, card.fin_slide_type ?? card.finSlideType);
   const refsInner = renderReferencias(referencias);
 
   // ── 8. RENDERIZA HTML ────────────────────────────────────
@@ -618,6 +632,10 @@ function renderError(code, msg, root) {
   initMenu();
   initScroll();
   if (typeof initStepsSlider === 'function') initStepsSlider();
+  const fimHost = document.querySelector('.step--fim');
+  if (fimHost?.dataset?.finType === 'readmelabs' && typeof buildxpBindReadmeShares === 'function') {
+    buildxpBindReadmeShares(fimHost, slug);
+  }
   } catch (err) {
     console.error(err);
     renderError(
@@ -629,8 +647,8 @@ function renderError(code, msg, root) {
 
 })();
 
-function cardBuildFinSlideHtml(slug, finSlide) {
-  if (typeof buildxpFinSlideHtml === 'function') return buildxpFinSlideHtml(slug, finSlide);
+function cardBuildFinSlideHtml(slug, finSlide, finType) {
+  if (typeof buildxpFinSlideHtml === 'function') return buildxpFinSlideHtml(slug, finSlide, finType);
   const cheatHref = `card.html?slug=${encodeURIComponent(slug)}&tab=ref`;
   return `
     <div class="step step--fim">
@@ -651,12 +669,12 @@ function cardIsFinSlide(slide) {
 }
 
 // ── RENDERIZA SLIDES ──────────────────────────────────────────
-function renderSlides(slides, slug) {
+function renderSlides(slides, slug, finType) {
   const finFromApi = (slides || []).find((s) => cardIsFinSlide(s));
   const contentSlides = (slides || []).filter((s) => !cardIsFinSlide(s));
 
   if (!contentSlides.length && !finFromApi) {
-    return `${cardBuildFinSlideHtml(slug, null)}`;
+    return `${cardBuildFinSlideHtml(slug, null, finType)}`;
   }
 
   const body = contentSlides.map((slide, idx) => {
@@ -752,7 +770,7 @@ function renderSlides(slides, slug) {
       </div>`;
   }).join('');
 
-  return `${body}${cardBuildFinSlideHtml(slug, finFromApi)}`;
+  return `${body}${cardBuildFinSlideHtml(slug, finFromApi, finType)}`;
 }
 
 // ── RENDERIZA REFERÊNCIAS ─────────────────────────────────────

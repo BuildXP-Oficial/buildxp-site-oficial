@@ -228,6 +228,7 @@ function buildWizCardPayloadForApi(slug, meta, themeRaw) {
     icon_secondary_src: null,
     icon_secondary_alt: '',
     is_published: true,
+    fin_slide_type: dashReadFinSlideType('dash-wiz-fin-type'),
   };
 }
 
@@ -310,6 +311,31 @@ function dashNormalizeCard(raw) {
   };
 }
 
+function dashReadFinSlideType(radioName) {
+  const picked = document.querySelector(`input[name="${radioName}"]:checked`);
+  return picked?.value === 'readmelabs' ? 'readmelabs' : 'terminal';
+}
+
+function dashSetFinSlideType(radioName, raw) {
+  const type = String(raw || '').trim().toLowerCase() === 'readmelabs' ? 'readmelabs' : 'terminal';
+  document.querySelectorAll(`input[name="${radioName}"]`).forEach((el) => {
+    el.checked = el.value === type;
+  });
+}
+
+function dashPaintFinPreview(previewEl, type) {
+  if (!previewEl) return;
+  if (type === 'readmelabs') {
+    previewEl.innerHTML =
+      '<span class="term-btn primary">README Lab</span>' +
+      '<span class="term-btn ghost">Mostre o seu</span>';
+    return;
+  }
+  previewEl.innerHTML =
+    '<span class="term-btn primary">INICIAR TREINAMENTO</span>' +
+    '<span class="term-btn ghost">🎮 VERIFICAR CHEAP CODES</span>';
+}
+
 function dashApplyCardToForm(raw) {
   if (!document.getElementById('dash-card-slug')) return;
   const el = (id) => document.getElementById(id);
@@ -339,6 +365,7 @@ function dashApplyCardToForm(raw) {
     lr || (slugForLinks ? buildxpPublicCardHref(slugForLinks, 'ref') : '');
   el('dash-card-btn1').value = raw.btn_primary_label ?? raw.btnPrimaryLabel ?? '';
   el('dash-card-btn2').value = raw.btn_secondary_label ?? raw.btnSecondaryLabel ?? '';
+  dashSetFinSlideType('dash-card-fin-type', raw.fin_slide_type ?? raw.finSlideType);
   el('dash-card-desc').value = raw.description_html ?? raw.descriptionHtml ?? '';
   el('dash-card-icon-layout').value = raw.icon_layout ?? raw.iconLayout ?? 'single';
   syncDashCardIconDualLayout();
@@ -1560,9 +1587,18 @@ function initDashboard() {
       resetCardWizard();
       setDashView('cards-create');
     });
+    const wizFinPreview = document.getElementById('dash-wiz-fim-preview');
+    document.querySelectorAll('input[name="dash-wiz-fin-type"]').forEach((el) => {
+      el.addEventListener('change', () => dashPaintFinPreview(wizFinPreview, dashReadFinSlideType('dash-wiz-fin-type')));
+    });
+    dashPaintFinPreview(wizFinPreview, dashReadFinSlideType('dash-wiz-fin-type'));
     document.getElementById('dash-open-faixa-colab')?.addEventListener('click', () => {
       setDashView('faixa-colab');
       void loadFaixaColaboradores();
+    });
+    document.getElementById('dash-open-readme-links')?.addEventListener('click', () => {
+      setDashView('readme-links');
+      void loadReadmeLinks();
     });
 
     /** Delegação: clique no texto dentro do botão «VOLTAR» também volta ao destino certo. */
@@ -2196,6 +2232,8 @@ function initDashboard() {
       if (slides) slides.hidden = true;
       const st = document.getElementById('dash-wiz-status');
       if (st) st.textContent = '';
+      dashSetFinSlideType('dash-wiz-fin-type', 'terminal');
+      dashPaintFinPreview(document.getElementById('dash-wiz-fim-preview'), 'terminal');
     }
 
     function buildWizMeta() {
@@ -2936,6 +2974,7 @@ function initDashboard() {
       icon_secondary_src: secondary || null,
       icon_secondary_alt: document.getElementById('dash-card-icon-sec-alt').value.trim(),
       is_published: document.getElementById('dash-card-published').checked,
+      fin_slide_type: dashReadFinSlideType('dash-card-fin-type'),
     };
     setCardFormStatus('', '');
     try {
@@ -3146,6 +3185,68 @@ function initDashboard() {
       void loadFaixaColaboradores();
     });
 
+    const readmeLinksStatus = document.getElementById('dash-readme-links-status');
+    const readmeLinksList = document.getElementById('dash-readme-links-list');
+    const readmeLinksEmpty = document.getElementById('dash-readme-links-empty');
+
+    function setReadmeLinksStatus(msg, type) {
+      if (!readmeLinksStatus) return;
+      readmeLinksStatus.textContent = msg || '';
+      readmeLinksStatus.classList.toggle('ok', type === 'ok');
+      readmeLinksStatus.classList.toggle('bad', type === 'bad');
+    }
+
+    async function loadReadmeLinks() {
+      if (!readmeLinksList) return;
+      try {
+        const data = await fetchJson('/api/readme-shares');
+        const list = Array.isArray(data) ? data : [];
+        const canDelete = getDashIsPlataformaAdmin();
+        readmeLinksList.innerHTML = list.map((item) => {
+          const id = item.id ?? item.Id;
+          const nomeRaw = String(item.nome || item.Nome || '').replace(/https?:\/\/\S+/gi, '').replace(/\s+/g, ' ').trim() || 'README';
+          const nome = nomeRaw.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+          const del = canDelete
+            ? `<button type="button" class="dash-readme-link-excluir" data-id="${id}">Excluir</button>`
+            : '';
+          return `<div class="dash-readme-link-row" data-id="${id}">
+            <span class="dash-readme-link-nome">${nome}</span>
+            ${del}
+          </div>`;
+        }).join('');
+        if (readmeLinksEmpty) readmeLinksEmpty.hidden = list.length > 0;
+      } catch (err) {
+        readmeLinksList.innerHTML = '';
+        if (readmeLinksEmpty) readmeLinksEmpty.hidden = true;
+        setReadmeLinksStatus(err?.message || 'Não foi possível carregar os links.', 'bad');
+      }
+    }
+
+    readmeLinksList?.addEventListener('click', async (e) => {
+      const btn = e.target instanceof Element ? e.target.closest('.dash-readme-link-excluir') : null;
+      if (!btn || !readmeLinksList.contains(btn)) return;
+      const id = btn.getAttribute('data-id');
+      if (!id) return;
+      if (!window.confirm('Excluir este link visível?')) return;
+      btn.disabled = true;
+      try {
+        await fetchJson(`/api/readme-shares/${encodeURIComponent(id)}/excluir`, {
+          method: 'POST',
+          body: '{}',
+        });
+        setReadmeLinksStatus('Link removido.', 'ok');
+      } catch (err) {
+        const status = Number(err?.status || 0);
+        if (status === 404) setReadmeLinksStatus('Esse link já não estava no banco.', 'ok');
+        else setReadmeLinksStatus(err?.message || 'Não foi possível excluir.', 'bad');
+      }
+      await loadReadmeLinks();
+    });
+
+    document.getElementById('dash-readme-links-refresh')?.addEventListener('click', () => {
+      void loadReadmeLinks();
+    });
+
     setDashView('home');
     loadFeedback();
     void syncIndexOrderPanelFromApi();
@@ -3154,6 +3255,7 @@ function initDashboard() {
       void syncIndexOrderPanelFromApi();
       void loadDashColaboradoresList();
       void loadFaixaColaboradores();
+      void loadReadmeLinks();
     };
     void loadDashColaboradoresList();
   }

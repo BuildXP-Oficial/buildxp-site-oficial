@@ -15,6 +15,12 @@ public class CardService
         _context = context;
     }
 
+    private static string NormalizeFinSlideType(string? raw)
+    {
+        var t = (raw ?? string.Empty).Trim().ToLowerInvariant();
+        return t == "readmelabs" ? "readmelabs" : "terminal";
+    }
+
     private static string CorParaTema(string? theme)
     {
         if (string.IsNullOrWhiteSpace(theme)) return "#39d353";
@@ -97,6 +103,7 @@ public class CardService
         card.LinkRef = Clamp(card.LinkRef, maxLen);
         card.BtnPrimaryLabel = Clamp(card.BtnPrimaryLabel, 80);
         card.BtnSecondaryLabel = Clamp(card.BtnSecondaryLabel, 80);
+        card.FinSlideType = NormalizeFinSlideType(card.FinSlideType);
         card.IconLayout = string.IsNullOrWhiteSpace(card.IconLayout) ? "single" : Clamp(card.IconLayout, 16);
         card.IconPrimarySrc = IconSrcParaBd(card.IconPrimarySrc);
         card.IconSecondarySrc = IconSrcParaBd(card.IconSecondarySrc);
@@ -137,6 +144,7 @@ public class CardService
         if (p.XpMax is int xpm) card.XpMaximo = xpm;
         if (p.SortOrder is int so) card.Ordem = so;
         if (p.IsPublished is bool pub) card.Ativo = pub;
+        card.FinSlideType = NormalizeFinSlideType(p.FinSlideType ?? card.FinSlideType);
         if (TryNormalizeHexColor(p.BorderColor, out var hex))
             card.CorBorda = hex;
         else
