@@ -32,6 +32,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ColaboradorService>();
 builder.Services.AddScoped<FaixaColaboradorService>();
 builder.Services.AddScoped<PerfilService>();
+builder.Services.AddScoped<MarkdownBuilderService>();
 
 // ── JWT — autenticação ───────────────────────────────────────
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

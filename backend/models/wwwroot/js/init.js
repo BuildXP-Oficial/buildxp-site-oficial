@@ -13,6 +13,9 @@ async function buildxpBoot() {
   initFeedback();
   initTrainingTerminal();
   initDashboard();
+  if (typeof buildxpInitMarkdownBuilderPage === 'function') {
+    await buildxpInitMarkdownBuilderPage();
+  }
   if (document.getElementById('cards-catalog-grid')) {
     if (typeof buildxpInitCardsCatalogPage === 'function') {
       await buildxpInitCardsCatalogPage();

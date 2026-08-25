@@ -6,5 +6,15 @@
     "Usuario": "admin",
     "Senha": "admin123",
     "Email": "admin@localhost"
+  },
+  "Jwt": {
+    "Chave": "buildxp-local-dev-only-nao-usar-em-producao-32+"
+  },
+  "Email": {
+    "Smtp": "smtp.gmail.com",
+    "Porta": 587,
+    "Usuario": "",
+    "Senha": "",
+    "EmailAdmin": ""
   }
 }

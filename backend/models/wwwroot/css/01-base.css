@@ -63,6 +63,41 @@ body {
   line-height: 1.65;
   overflow-x: hidden;
   min-height: 100vh;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(77, 181, 255, 0.55) rgba(77, 181, 255, 0.08);
+}
+
+/* Scrollbars azuis (Firefox + WebKit) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(77, 181, 255, 0.55) rgba(77, 181, 255, 0.08);
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: rgba(77, 181, 255, 0.08);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(77, 181, 255, 0.45);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(77, 181, 255, 0.75);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+*::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /* Grid scanline background */
@@ -111,6 +146,29 @@ body::before {
   letter-spacing: 1px; transition: var(--ease);
 }
 .nav-links a:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+
+.nav-links a.nav-link--cta {
+  margin-left: 0.35rem;
+  color: #061018;
+  background: #5ec8ff;
+  border: 1px solid #7dd4ff;
+  border-radius: 999px;
+  box-shadow: 0 0 18px rgba(94, 200, 255, 0.28);
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  padding: 0.42rem 1.05rem;
+}
+.nav-links a.nav-link--cta:hover {
+  color: #061018;
+  filter: brightness(1.06);
+  background: #7dd4ff;
+  border-color: #9edfff;
+}
+.nav-links a.nav-link--cta.nav-link--active {
+  color: #061018;
+  outline: 2px solid rgba(158, 223, 255, 0.55);
+  outline-offset: 2px;
+}
 
 .hamburger {
   display:none; background:none;
