@@ -30,6 +30,7 @@ builder.Services.AddScoped<FeedbackService>();
 builder.Services.AddScoped<CardService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ColaboradorService>();
+builder.Services.AddScoped<FaixaColaboradorService>();
 builder.Services.AddScoped<PerfilService>();
 
 // ── JWT — autenticação ───────────────────────────────────────

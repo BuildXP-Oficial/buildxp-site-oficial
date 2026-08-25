@@ -21,6 +21,9 @@ async function buildxpBoot() {
     await buildxpHydrateIndexCardsFromApi();
     applyIndexCardOrder();
     initIndexCardsHomeMarquee();
+    if (typeof buildxpInitHomeColaboradoresTicker === 'function') {
+      await buildxpInitHomeColaboradoresTicker();
+    }
   }
   initCopy();
 }

@@ -18,6 +18,7 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
     public DbSet<ReferenciaRapida> ReferenciasRapidas { get; set; }
     public DbSet<RecuperacaoSenha> RecuperacoesSenha { get; set; }
     public DbSet<Colaborador> Colaboradores { get; set; }
+    public DbSet<FaixaColaborador> FaixaColaboradores { get; set; }
     public DbSet<AdminPerfil> AdminPerfis { get; set; }
     public DbSet<CardIconUpload> CardIconUploads { get; set; }
 
@@ -90,6 +91,14 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
             entity.HasIndex(c => c.Usuario)
                 .IsUnique()
                 .HasFilter("\"Usuario\" IS NOT NULL");
+        });
+
+        modelBuilder.Entity<FaixaColaborador>(entity =>
+        {
+            entity.ToTable("FaixaColaboradores");
+            entity.Property(c => c.Nome).HasMaxLength(80);
+            entity.Property(c => c.Icone).HasMaxLength(16);
+            entity.Property(c => c.Link).HasMaxLength(500);
         });
 
         modelBuilder.Entity<AdminPerfil>(entity =>

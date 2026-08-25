@@ -1589,3 +1589,63 @@ body.dash-body--authed {
   gap: 0.5rem;
   flex-shrink: 0;
 }
+
+.dash-faixa-form {
+  display: grid;
+  grid-template-columns: minmax(8rem, 10rem) minmax(10rem, 1fr) minmax(12rem, 1.4fr) auto;
+  gap: 0.85rem 1rem;
+  align-items: end;
+  margin-bottom: 0.75rem;
+}
+
+.dash-faixa-form .dash-login-actions {
+  margin: 0;
+  padding-bottom: 0.15rem;
+}
+
+.dash-faixa-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.dash-faixa-row {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(6rem, 1fr) minmax(8rem, 1.6fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.dash-faixa-row-nome {
+  font-family: var(--f-heading);
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.dash-faixa-row-link {
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dash-faixa-row svg {
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .dash-faixa-form,
+  .dash-faixa-row {
+    grid-template-columns: 1fr;
+  }
+}
