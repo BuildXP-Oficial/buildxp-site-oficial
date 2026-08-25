@@ -1,20 +1,20 @@
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=buildxp;Username=postgres;Password=SUA_SENHA_BD"
+    "DefaultConnection": "Host=localhost;Port=5432;Database=buildxpdb;Username=buildxp;Password=buildxp123"
   },
   "Admin": {
-    "Usuario": "SEU_USUARIO_ADMIN",
-    "Senha": "SUA_SENHA_ADMIN",
-    "Email": "seu-email@exemplo.com"
+    "Usuario": "admin",
+    "Senha": "admin123",
+    "Email": "admin@localhost"
   },
   "Jwt": {
-    "Chave": "SUA_CHAVE_JWT_COM_PELO_MENOS_32_CARACTERES"
+    "Chave": "buildxp-local-dev-only-nao-usar-em-producao-32+"
   },
   "Email": {
     "Smtp": "smtp.gmail.com",
     "Porta": 587,
-    "Usuario": "seu-email@exemplo.com",
-    "Senha": "SUA_SENHA_DE_APP_GMAIL",
-    "EmailAdmin": "seu-email@exemplo.com"
+    "Usuario": "",
+    "Senha": "",
+    "EmailAdmin": ""
   }
 }

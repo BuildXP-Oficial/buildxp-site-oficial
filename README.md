@@ -123,46 +123,65 @@ Documentação interativa: **`/swagger`** (ambiente de desenvolvimento).
 
 ## Como rodar localmente
 
+O banco de **produção** (Neon/Azure) **não vai no Git**. Quem clona ou faz fork testa com o **Postgres do Docker**.
+
 ### Pré-requisitos
 
 - [.NET SDK 10](https://dotnet.microsoft.com/download)
-- [PostgreSQL](https://www.postgresql.org/) em execução
-- Connection string configurada
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (ou Docker Engine + Compose)
 
 ### Passos
 
 1. Clone o repositório:
 
 ```bash
-git clone https://github.com/SEU-USUARIO/buildxp-site-oficial.git
-cd buildxp-site-oficial/backend/models
+git clone https://github.com/BuildXP-Oficial/buildxp-site-oficial.git
+cd buildxp-site-oficial
 ```
 
-2. Configure `appsettings.json` (ou `appsettings.Development.json`):
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=buildxp;Username=postgres;Password=SUA_SENHA"
-  }
-}
-```
-
-3. Aplique as migrations e suba a API:
+2. Suba o Postgres local (credenciais só deste container, definidas em `docker-compose.yml`):
 
 ```bash
+docker compose up -d
+```
+
+3. (Opcional) Para login no dashboard local, copie o exemplo — **não commite** este arquivo:
+
+```bash
+# Windows
+copy backend\models\appsettings.Development.json.example backend\models\appsettings.Development.json
+
+# macOS / Linux
+cp backend/models/appsettings.Development.json.example backend/models/appsettings.Development.json
+```
+
+Usuário/senha locais do exemplo: `admin` / `admin123`. Isso não é a conta de produção.
+
+4. Suba a API (as migrations rodam sozinhas):
+
+```bash
+cd backend/models
 dotnet restore
 dotnet run
 ```
 
-4. Abra no navegador:
+5. Abra no navegador:
 
 | Ambiente | URL |
 |----------|-----|
 | Site + API | http://localhost:5021 |
 | Swagger | http://localhost:5021/swagger |
 
-> As migrations rodam automaticamente na inicialização. Cheap codes vazios na BD são repovoados a partir de `wwwroot/data/cheat-html/` quando aplicável.
+> Cheap codes vazios na BD são repovoados a partir de `wwwroot/data/cheat-html/` quando aplicável.
+
+### Produção e chaves reais
+
+Coloque connection string, JWT, e-mail e senha de admin **só** em:
+
+- Azure App Settings (`ConnectionStrings__DefaultConnection`, `Jwt__Chave`, `Admin__Senha`, …), ou
+- User Secrets na máquina da mantenedora: `dotnet user-secrets set "ConnectionStrings:DefaultConnection" "..."` (pasta `backend/models`)
+
+Nunca grave essas chaves em `appsettings.json`, `appsettings.Development.json` ou no `docker-compose.yml`.
 
 ---
 

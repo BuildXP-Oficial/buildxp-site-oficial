@@ -1,10 +1,12 @@
-version: '3.8'
+# Postgres local para quem clona/faz fork.
+# Estas credenciais NÃO são o banco de produção (Neon/Azure).
+# Produção fica só em Azure App Settings ou `dotnet user-secrets`.
 
 services:
   postgres:
     image: postgres:16
     container_name: buildxp-db
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: buildxp
       POSTGRES_PASSWORD: buildxp123
@@ -13,6 +15,11 @@ services:
       - "5432:5432"
     volumes:
       - buildxp-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U buildxp -d buildxpdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   buildxp-data:

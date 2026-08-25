@@ -3,6 +3,7 @@ using System;
 using BuildXP.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace models.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260825003952_AddFinSlideTypeAndReadmeShares")]
+    partial class AddFinSlideTypeAndReadmeShares
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -93,7 +96,7 @@ namespace models.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CardId")
+                    b.Property<int>("CardId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CriadoEm")
@@ -108,9 +111,6 @@ namespace models.Migrations
                         .IsRequired()
                         .HasMaxLength(80)
                         .HasColumnType("character varying(80)");
-
-                    b.Property<Guid>("OwnerToken")
-                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -277,152 +277,6 @@ namespace models.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Feedbacks");
-                });
-
-            modelBuilder.Entity("BuildXP.API.Models.MarkdownBuilderDoc", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Arquitetura")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("AtualizadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ConteudoMarkdown")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Pitch")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("RegrasEvento")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Titulo")
-                        .IsRequired()
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("XpDocCriada")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("XpProjetoAtualizado")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("XpReadmeCompleto")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("XpTotal")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("MarkdownBuilderDocs", (string)null);
-                });
-
-            modelBuilder.Entity("BuildXP.API.Models.MarkdownBuilderUser", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasMaxLength(80)
-                        .HasColumnType("character varying(80)");
-
-                    b.Property<string>("SecurityAnswerHash")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<int>("SecurityQuestionId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("SenhaHash")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<string>("Usuario")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Usuario")
-                        .IsUnique();
-
-                    b.ToTable("MarkdownBuilderUsers", (string)null);
-                });
-
-            modelBuilder.Entity("BuildXP.API.Models.MarkdownSharedTemplate", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Ativo")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("AtualizadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ConteudoMarkdown")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Descricao")
-                        .IsRequired()
-                        .HasMaxLength(280)
-                        .HasColumnType("character varying(280)");
-
-                    b.Property<int>("OwnerUserId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("TituloModelo")
-                        .IsRequired()
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
-
-                    b.Property<int>("UsosCount")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Ativo");
-
-                    b.HasIndex("OwnerUserId");
-
-                    b.ToTable("MarkdownSharedTemplates", (string)null);
                 });
 
             modelBuilder.Entity("BuildXP.API.Models.RecuperacaoSenha", b =>
@@ -671,7 +525,8 @@ namespace models.Migrations
                     b.HasOne("BuildXP.API.Models.SkillCard", "Card")
                         .WithMany("ReadmeShares")
                         .HasForeignKey("CardId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Card");
                 });
@@ -685,28 +540,6 @@ namespace models.Migrations
                         .IsRequired();
 
                     b.Navigation("Slide");
-                });
-
-            modelBuilder.Entity("BuildXP.API.Models.MarkdownBuilderDoc", b =>
-                {
-                    b.HasOne("BuildXP.API.Models.MarkdownBuilderUser", "User")
-                        .WithOne("Document")
-                        .HasForeignKey("BuildXP.API.Models.MarkdownBuilderDoc", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("BuildXP.API.Models.MarkdownSharedTemplate", b =>
-                {
-                    b.HasOne("BuildXP.API.Models.MarkdownBuilderUser", "Owner")
-                        .WithMany()
-                        .HasForeignKey("OwnerUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Owner");
                 });
 
             modelBuilder.Entity("BuildXP.API.Models.ReferenciaRapida", b =>
@@ -727,11 +560,6 @@ namespace models.Migrations
                         .IsRequired();
 
                     b.Navigation("Card");
-                });
-
-            modelBuilder.Entity("BuildXP.API.Models.MarkdownBuilderUser", b =>
-                {
-                    b.Navigation("Document");
                 });
 
             modelBuilder.Entity("BuildXP.API.Models.SkillCard", b =>

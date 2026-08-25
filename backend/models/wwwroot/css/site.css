@@ -1,11 +1,13 @@
 /* BuildXP — entrada de estilos do site (módulos parciais nesta pasta) */
-@import url('01-base.css');
-@import url('02-home.css');
-@import url('03-terminal.css');
-@import url('04-contact-footer.css');
-@import url('05-feedback.css');
-@import url('06-card-page.css');
-@import url('07-responsive.css');
-@import url('08-dashboard.css');
-@import url('09-cards-catalog.css');
-@import url('10-markdown-builder.css');
+@import url('01-base.css?v=bxp-mod-79');
+@import url('02-home.css?v=bxp-mod-79');
+@import url('03-terminal.css?v=bxp-mod-79');
+@import url('04-contact-footer.css?v=bxp-mod-79');
+@import url('05-feedback.css?v=bxp-mod-79');
+@import url('06-card-page.css?v=bxp-mod-79');
+@import url('07-responsive.css?v=bxp-mod-79');
+@import url('08-dashboard.css?v=bxp-mod-79');
+@import url('09-cards-catalog.css?v=bxp-mod-79');
+@import url('10-markdown-builder.css?v=bxp-mod-79');
+@import url('10-home-colaboradores.css?v=bxp-mod-79');
+@import url('11-readme-shares.css?v=bxp-mod-79');

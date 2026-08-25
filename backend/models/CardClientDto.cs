@@ -70,6 +70,9 @@ public class CardClientDto
     [JsonPropertyName("is_published")]
     public bool IsPublished { get; set; }
 
+    [JsonPropertyName("fin_slide_type")]
+    public string FinSlideType { get; set; } = "terminal";
+
     /// <summary>Slides da aba Iniciante (GET público por slug/id) — mesma ordem que no dashboard.</summary>
     [JsonPropertyName("slides")]
     public List<SlideClientDto> Slides { get; set; } = [];
@@ -161,6 +164,9 @@ public class CardClientDto
                 : CardIconHelper.ResolveSecondaryPublicSrc(c)),
         IconSecondaryAlt = c.IconSecondaryAlt,
         IsPublished = c.Ativo,
+        FinSlideType = string.Equals(c.FinSlideType, "readmelabs", StringComparison.OrdinalIgnoreCase)
+            ? "readmelabs"
+            : "terminal",
         Slides = (c.Slides ?? [])
             .Where(s => s.Ativo)
             .OrderBy(s => s.Ordem)

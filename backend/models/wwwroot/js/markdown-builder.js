@@ -1431,6 +1431,10 @@
       setStatus('Modo sem guardar. Ao sair, o conteúdo é perdido.', 'warn');
     });
 
+    el('md-btn-mostre-seu')?.addEventListener('click', () => {
+      el('md-btn-guest')?.click();
+    });
+
     el('md-btn-show-register')?.addEventListener('click', () => {
       showGatePanel('md-gate-register');
       void loadSecurityQuestions(el('md-reg-question'));

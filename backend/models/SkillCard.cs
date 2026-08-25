@@ -38,6 +38,10 @@ public class SkillCard // Classe do Modelo de SkillCard
 
     public List<Slide> Slides { get; set; } = []; // Um card tem vários slides 
     public List<ReferenciaRapida> Referencias { get; set; } = []; // Um card tem várias referências rápidas
+    public List<CardReadmeShare> ReadmeShares { get; set; } = [];
+
+    /// <summary>terminal = treino + cheap codes; readmelabs = botão README Lab + lista da comunidade.</summary>
+    public string FinSlideType { get; set; } = "terminal";
 }
 
 public class Slide // Representa um passo da aba Iniciante
