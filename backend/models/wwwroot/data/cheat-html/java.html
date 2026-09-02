@@ -1,0 +1,95 @@
+<div class="ref-section">
+      <div class="ref-section-title">INSTALAÇÃO &amp; VERSÃO</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">java -version</span><span class="cmd-desc">Ver versão do JRE/JDK em uso</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">javac -version</span><span class="cmd-desc">Ver versão do compilador</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">echo %JAVA_HOME%</span><span class="cmd-desc">Ver JAVA_HOME (Windows CMD)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">echo $JAVA_HOME</span><span class="cmd-desc">Ver JAVA_HOME (Linux/macOS)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">where java</span><span class="cmd-desc">Caminho do executável (Windows)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">which java</span><span class="cmd-desc">Caminho do executável (Unix)</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">COMPILAR &amp; EXECUTAR</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">javac Main.java</span><span class="cmd-desc">Compilar um ficheiro .java</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">javac -d out src/**/*.java</span><span class="cmd-desc">Compilar vários ficheiros para pasta out</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">java Main</span><span class="cmd-desc">Executar classe com método main</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">java -cp out com.app.Main</span><span class="cmd-desc">Executar com classpath explícito</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">java -jar app.jar</span><span class="cmd-desc">Executar JAR empacotado</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">java -jar app.jar --spring.profiles.active=dev</span><span class="cmd-desc">Passar argumentos ao JAR (ex.: Spring)</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">JAR &amp; MANIFEST</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">jar cf app.jar -C out .</span><span class="cmd-desc">Criar JAR a partir de classes compiladas</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">jar tf app.jar</span><span class="cmd-desc">Listar conteúdo do JAR</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">jar xf app.jar</span><span class="cmd-desc">Extrair ficheiros do JAR</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">jar cfe app.jar com.app.Main -C out .</span><span class="cmd-desc">JAR executável com Main-Class no manifest</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">javadoc -d docs src/**/*.java</span><span class="cmd-desc">Gerar documentação HTML do código</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">MAVEN — PROJETO</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">mvn -version</span><span class="cmd-desc">Ver versão do Maven e Java</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">mvn archetype:generate</span><span class="cmd-desc">Criar projeto a partir de archetype</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">mvn clean compile</span><span class="cmd-desc">Limpar e compilar</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">mvn clean package</span><span class="cmd-desc">Compilar e gerar JAR/WAR</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">mvn clean install</span><span class="cmd-desc">Build + instalar no repositório local</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">mvn clean verify</span><span class="cmd-desc">Build completo com testes de integração</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">mvn dependency:tree</span><span class="cmd-desc">Árvore de dependências</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">mvn versions:display-dependency-updates</span><span class="cmd-desc">Ver dependências desatualizadas</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">MAVEN — EXECUTAR &amp; SPRING</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">mvn exec:java -Dexec.mainClass="com.app.Main"</span><span class="cmd-desc">Executar classe main via Maven</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">mvn spring-boot:run</span><span class="cmd-desc">Subir app Spring Boot em dev</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">mvn spring-boot:build-image</span><span class="cmd-desc">Gerar imagem OCI com Cloud Native Buildpacks</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">mvn -DskipTests package</span><span class="cmd-desc">Empacotar sem correr testes</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">mvn -pl modulo-a -am test</span><span class="cmd-desc">Testar módulo específico num multi-módulo</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">GRADLE</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">gradle -v</span><span class="cmd-desc">Ver versão do Gradle</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">gradle init</span><span class="cmd-desc">Inicializar projeto Gradle</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">./gradlew build</span><span class="cmd-desc">Compilar e testar (wrapper Unix)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">gradlew.bat build</span><span class="cmd-desc">Compilar e testar (wrapper Windows)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">./gradlew bootRun</span><span class="cmd-desc">Executar Spring Boot via Gradle</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">./gradlew clean test</span><span class="cmd-desc">Limpar e correr testes</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">./gradlew dependencies</span><span class="cmd-desc">Listar dependências do projeto</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">TESTES</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">mvn test</span><span class="cmd-desc">Correr testes JUnit com Maven</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">mvn -Dtest=NomeDaClasseTest test</span><span class="cmd-desc">Correr uma classe de teste</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">mvn -Dtest=NomeDaClasseTest#metodo test</span><span class="cmd-desc">Correr um método de teste</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">./gradlew test</span><span class="cmd-desc">Correr testes com Gradle</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">./gradlew test --tests "com.app.*"</span><span class="cmd-desc">Filtrar testes por pacote/classe</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">MÓDULOS (JPMS)</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">javac --module-path lib -d out -m com.app/com.app.Main</span><span class="cmd-desc">Compilar módulo com module-path</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">java --module-path out --module com.app/com.app.Main</span><span class="cmd-desc">Executar módulo nomeado</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">jar --create --file app.jar --main-class com.app.Main -C out .</span><span class="cmd-desc">Criar JAR modular</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
+<div class="ref-section">
+      <div class="ref-section-title">DEBUG &amp; DIAGNÓSTICO</div>
+      <div class="cmd-grid">
+        <div class="cmd-item"><span class="cmd-text">java -XshowSettings:properties -version</span><span class="cmd-desc">Ver propriedades da JVM</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">jps -l</span><span class="cmd-desc">Listar processos Java em execução</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">jcmd &lt;pid&gt; VM.flags</span><span class="cmd-desc">Flags da JVM de um processo</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">jstack &lt;pid&gt;</span><span class="cmd-desc">Dump de threads (deadlock/debug)</span><button class="cmd-copy">copy</button></div>
+        <div class="cmd-item"><span class="cmd-text">java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -jar app.jar</span><span class="cmd-desc">Ativar debug remoto na porta 5005</span><button class="cmd-copy">copy</button></div>
+      </div>
+</div>
