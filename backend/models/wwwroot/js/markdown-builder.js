@@ -23,8 +23,14 @@
     quote: '> citação\n',
     hr: '\n---\n\n',
     link: '[texto do link](https://exemplo.com)\n',
-    image: '![{voce pode mudar esse titulo}](inserir URL aqui)\n',
-    gif: '![{voce pode mudar esse titulo}](inserir URL aqui)\n',
+    image:
+      '<p align="center">\n' +
+      '  <img src="inserir URL aqui">\n' +
+      '</p>\n',
+    gif:
+      '<p align="center">\n' +
+      '  <img src="inserir URL aqui">\n' +
+      '</p>\n',
     table:
       '| Coluna A | Coluna B |\n| --- | --- |\n| valor | valor |\n',
     alertNote: '> [!NOTE]\n> Informação útil para o leitor.\n',
@@ -192,15 +198,17 @@
       snip: 'image',
       badge: 'IMG',
       title: 'Imagem',
-      body: 'Insere o molde de imagem. Troca o título entre {} e cola o URL (opções em baixo na página).',
-      example: '![{voce pode mudar esse titulo}](inserir URL aqui)',
+      body: 'Insere imagem centrada em HTML — cola o URL em src (opções em baixo na página). Funciona no GitHub e no preview.',
+      example:
+        '<p align="center">\n  <img src="inserir URL aqui">\n</p>',
     },
     {
       snip: 'gif',
       badge: 'GIF',
       title: 'GIF',
-      body: 'Igual à imagem, mas pensado para GIFs animados (Giphy, Tenor, etc.).',
-      example: '![{voce pode mudar esse titulo}](inserir URL aqui)',
+      body: 'Igual à imagem, mas para GIFs animados (Giphy, Tenor, etc.) — HTML centrado para animar no GitHub.',
+      example:
+        '<p align="center">\n  <img src="inserir URL aqui">\n</p>',
     },
     {
       snip: 'help-media',
