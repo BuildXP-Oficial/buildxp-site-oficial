@@ -85,6 +85,40 @@ namespace models.Migrations
                     b.ToTable("CardIconUploads", (string)null);
                 });
 
+            modelBuilder.Entity("BuildXP.API.Models.CardReadmeShare", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CardId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GithubLink")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<Guid>("OwnerToken")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CardId");
+
+                    b.ToTable("CardReadmeShares", (string)null);
+                });
+
             modelBuilder.Entity("BuildXP.API.Models.Colaborador", b =>
                 {
                     b.Property<int>("Id")
@@ -168,6 +202,40 @@ namespace models.Migrations
                     b.HasIndex("SlideId");
 
                     b.ToTable("ConteudosSlide");
+                });
+
+            modelBuilder.Entity("BuildXP.API.Models.FaixaColaborador", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Icone")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Link")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<int>("Ordem")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("FaixaColaboradores", (string)null);
                 });
 
             modelBuilder.Entity("BuildXP.API.Models.Feedback", b =>
@@ -467,6 +535,13 @@ namespace models.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("FinSlideType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasDefaultValue("terminal");
+
                     b.Property<string>("IconLayout")
                         .IsRequired()
                         .HasMaxLength(16)
@@ -591,6 +666,16 @@ namespace models.Migrations
                     b.ToTable("Slides");
                 });
 
+            modelBuilder.Entity("BuildXP.API.Models.CardReadmeShare", b =>
+                {
+                    b.HasOne("BuildXP.API.Models.SkillCard", "Card")
+                        .WithMany("ReadmeShares")
+                        .HasForeignKey("CardId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Card");
+                });
+
             modelBuilder.Entity("BuildXP.API.Models.ConteudoSlide", b =>
                 {
                     b.HasOne("BuildXP.API.Models.Slide", "Slide")
@@ -651,6 +736,8 @@ namespace models.Migrations
 
             modelBuilder.Entity("BuildXP.API.Models.SkillCard", b =>
                 {
+                    b.Navigation("ReadmeShares");
+
                     b.Navigation("Referencias");
 
                     b.Navigation("Slides");

@@ -23,6 +23,8 @@ builder.Services.AddScoped<CardService>();
 builder.Services.AddSingleton<CatalogoEstatico>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ColaboradorService>();
+builder.Services.AddScoped<FaixaColaboradorService>();
+builder.Services.AddScoped<CardReadmeShareService>();
 builder.Services.AddScoped<PerfilService>();
 builder.Services.AddScoped<MarkdownBuilderService>();
 builder.Services.AddScoped<ITerminalQuestaoRepository, TerminalQuestaoRepository>();
@@ -107,6 +109,7 @@ builder.Services.AddRateLimiter(options =>
     options.AddPolicy("feedback-publico", ParticaoIaPorIp);
     options.AddPolicy("conhecimento-chat", ParticaoIaPorIp);
     options.AddPolicy("ia-anonima", ParticaoIaPorIp);
+    options.AddPolicy("readme-share-publico", ParticaoIaPorIp);
 });
 
 var app = builder.Build();

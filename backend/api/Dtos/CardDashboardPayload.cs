@@ -65,4 +65,7 @@ public class CardDashboardPayload
 
     [JsonPropertyName("is_published")]
     public bool? IsPublished { get; set; }
+
+    [JsonPropertyName("fin_slide_type")]
+    public string? FinSlideType { get; set; }
 }

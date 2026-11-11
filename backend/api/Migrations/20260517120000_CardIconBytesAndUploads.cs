@@ -1,10 +1,14 @@
+using System;
+using BuildXP.API.Data;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace models.Migrations
 {
-    /// <inheritdoc />
+    [DbContext(typeof(AppDbContext))]
+    [Migration("20260517120000_CardIconBytesAndUploads")]
     public partial class CardIconBytesAndUploads : Migration
     {
         /// <inheritdoc />

@@ -49,6 +49,15 @@
   .tabs { width:100%; }
   .tab-btn { flex:1; text-align:center; padding:0.6rem 0.5rem; font-size:0.78rem; }
   .step { grid-template-columns:32px 1fr; gap:1rem; }
+  .steps-track .step > div:nth-child(2) {
+    overflow-x: hidden;
+  }
+  .steps-track .step img {
+    max-width: 100% !important;
+    width: auto !important;
+    height: auto !important;
+    max-height: min(70vh, 26rem);
+  }
   .steps-slider {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto;

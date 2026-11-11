@@ -232,6 +232,31 @@
   color: var(--text);
 }
 
+/* Imagens/GIFs em HTML no corpo do slide — cabem no card (desktop e mobile) */
+.steps-track .step > div:nth-child(2) {
+  max-width: 100%;
+}
+.steps-track .step img {
+  display: block;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  margin-inline: auto;
+  object-fit: contain;
+  box-sizing: border-box;
+}
+.steps-track .step p[align="center"],
+.steps-track .step p[style*="text-align: center"],
+.steps-track .step p[style*="text-align:center"] {
+  max-width: 100%;
+  margin-inline: auto;
+}
+.steps-track .step p[align="center"] img,
+.steps-track .step p[style*="text-align: center"] img,
+.steps-track .step p[style*="text-align:center"] img {
+  margin-inline: auto;
+}
+
 /* Snippets de comando no texto dos slides â€” distinguem do parÃ¡grafo (cor = tema da pÃ¡gina) */
 .steps-track .step-desc code,
 .steps-track .callout code {

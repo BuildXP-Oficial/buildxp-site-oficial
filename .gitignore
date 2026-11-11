@@ -1,7 +1,10 @@
 .env
+.env.*
+!.env.example
 *.log
 .DS_Store
 **/appsettings.Development.json
+**/appsettings.*.local.json
 **/bin/
 **/obj/
 **/App_Data/

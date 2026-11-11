@@ -297,7 +297,9 @@ function initStepsSlider() {
     if (typeof ResizeObserver !== 'undefined') {
       const ro = new ResizeObserver(() => scheduleSyncTrackHeight());
       ro.observe(track);
+      stepEls().forEach((el) => ro.observe(el));
     }
+    window.addEventListener('buildxp:readme-share-toggle', () => scheduleSyncTrackHeight());
 
     track.addEventListener('scrollend', () => scheduleSyncTrackHeight(), { passive: true });
   });

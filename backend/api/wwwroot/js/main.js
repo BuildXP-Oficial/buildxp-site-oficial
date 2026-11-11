@@ -9,6 +9,8 @@
     'cards-catalog.js',
     'markdown-parser.js',
     'markdown-builder.js',
+    'home-colaboradores.js',
+    'readme-shares.js',
     'dashboard.js',
     'conhecimento-chat.js',
     'rotina.js',

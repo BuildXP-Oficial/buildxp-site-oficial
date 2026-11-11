@@ -17,7 +17,7 @@ function buildxpTrainingSlugFromPath() {
     const m = name.match(/^([a-z0-9][a-z0-9-]{0,47})\.html$/i);
     if (!m) return '';
     const slug = m[1].toLowerCase();
-    const reserved = new Set(['index', 'dashboard', 'feedback']);
+    const reserved = new Set(['index', 'dashboard', 'feedback', 'cards', 'card', 'readme-lab']);
     if (reserved.has(slug)) return '';
     return slug;
   } catch (_) {
@@ -44,12 +44,19 @@ function buildxpEscapeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
-/** HTML do slide FIM fixo (terminal + cheap codes) — sempre o último da trilha. */
-function buildxpFinSlideHtml(slug, finSlide) {
+/** HTML do slide FIM — terminal+cheap codes ou README Lab. */
+function buildxpFinSlideHtml(slug, finSlide, finType) {
   const safeSlug = String(slug || '').trim().toLowerCase();
+  const type = typeof readmeShareNormalizeFinType === 'function'
+    ? readmeShareNormalizeFinType(finType)
+    : String(finType || '').trim().toLowerCase() === 'readmelabs'
+      ? 'readmelabs'
+      : 'terminal';
   let fimTitulo = 'Parabéns! 🏆';
   let fimBody =
-    '<div class="step-desc">Você concluiu a trilha iniciante. Pratique no terminal ou consulte os cheap codes.</div>';
+    type === 'readmelabs'
+      ? '<div class="step-desc">Você concluiu a trilha iniciante. Monte seu README no lab ou mostre o que você fez.</div>'
+      : '<div class="step-desc">Você concluiu a trilha iniciante. Pratique no terminal ou consulte os cheap codes.</div>';
   if (finSlide) {
     const ft = String(finSlide.titulo ?? finSlide.Titulo ?? '').trim();
     const fd = String(finSlide.descricao ?? finSlide.Descricao ?? '').trim();
@@ -63,26 +70,46 @@ function buildxpFinSlideHtml(slug, finSlide) {
   const cheatHref = safeSlug
     ? `card.html?slug=${encodeURIComponent(safeSlug)}&tab=ref`
     : 'card.html?tab=ref';
+  const labHref = safeSlug
+    ? `readme-lab.html?slug=${encodeURIComponent(safeSlug)}`
+    : 'readme-lab.html';
+  const actions = type === 'readmelabs'
+    ? `<a href="${labHref}" class="term-btn primary">README Lab</a>
+          <button type="button" class="term-btn ghost" data-mostre-seu>Mostre o seu</button>`
+    : `<a href="index.html#terminal" class="term-btn primary">INICIAR TREINAMENTO</a>
+          <a href="${cheatHref}" class="term-btn ghost">🎮 VERIFICAR CHEAP CODES</a>`;
+  const shares = type === 'readmelabs'
+    ? `${typeof buildxpReadmeShareFormHtml === 'function' ? buildxpReadmeShareFormHtml() : ''}
+        ${typeof buildxpReadmeShareListShellHtml === 'function' ? buildxpReadmeShareListShellHtml() : ''}`
+    : '';
   return `
-    <div class="step step--fim">
+    <div class="step step--fim" data-fin-type="${type}">
       <div class="step-num">🏆</div>
       <div class="card-fim-body">
         <div class="step-title">${buildxpEscapeHtml(fimTitulo)}</div>
         ${fimBody}
         <div class="term-actions card-fim-actions">
-          <a href="index.html#terminal" class="term-btn primary">INICIAR TREINAMENTO</a>
-          <a href="${cheatHref}" class="term-btn ghost">🎮 VERIFICAR CHEAP CODES</a>
+          ${actions}
         </div>
+        ${shares}
       </div>
     </div>`;
 }
 
-function buildxpAppendFinSlideToTrack(track, slug, finSlideFromApi) {
+function buildxpAppendFinSlideToTrack(track, slug, finSlideFromApi, finType) {
   if (!track) return;
   const holder = document.createElement('div');
-  holder.innerHTML = buildxpFinSlideHtml(slug, finSlideFromApi);
+  holder.innerHTML = buildxpFinSlideHtml(slug, finSlideFromApi, finType);
   const fin = holder.firstElementChild;
-  if (fin) track.appendChild(fin);
+  if (fin) {
+    track.appendChild(fin);
+    const isLabs = typeof readmeShareNormalizeFinType === 'function'
+      ? readmeShareNormalizeFinType(finType) === 'readmelabs'
+      : String(finType || '').trim().toLowerCase() === 'readmelabs';
+    if (isLabs && typeof buildxpBindReadmeShares === 'function') {
+      buildxpBindReadmeShares(fin, slug);
+    }
+  }
 }
 
 function buildxpFindFinStepClone(track) {
@@ -203,7 +230,7 @@ async function buildxpHydrateTrainingSlidesFromApi() {
     }
     track.appendChild(buildxpApiSlideToDom(s));
   });
-  buildxpAppendFinSlideToTrack(track, slug, finFromApi);
+  buildxpAppendFinSlideToTrack(track, slug, finFromApi, data.fin_slide_type ?? data.finSlideType);
   return true;
 }
 

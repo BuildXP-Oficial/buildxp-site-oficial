@@ -18,8 +18,10 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
     public DbSet<ReferenciaRapida> ReferenciasRapidas { get; set; }
     public DbSet<RecuperacaoSenha> RecuperacoesSenha { get; set; }
     public DbSet<Colaborador> Colaboradores { get; set; }
+    public DbSet<FaixaColaborador> FaixaColaboradores { get; set; }
     public DbSet<AdminPerfil> AdminPerfis { get; set; }
     public DbSet<CardIconUpload> CardIconUploads { get; set; }
+    public DbSet<CardReadmeShare> CardReadmeShares { get; set; }
     public DbSet<MarkdownBuilderUser> MarkdownBuilderUsers { get; set; }
     public DbSet<MarkdownBuilderDoc> MarkdownBuilderDocs { get; set; }
     public DbSet<MarkdownSharedTemplate> MarkdownSharedTemplates { get; set; }
@@ -52,6 +54,7 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
             entity.Property(s => s.LinkRef).HasMaxLength(512);
             entity.Property(s => s.BtnPrimaryLabel).HasMaxLength(80);
             entity.Property(s => s.BtnSecondaryLabel).HasMaxLength(80);
+            entity.Property(s => s.FinSlideType).HasMaxLength(16).HasDefaultValue("terminal");
             entity.Property(s => s.IconLayout).HasMaxLength(16);
             entity.Property(s => s.IconPrimarySrc).HasMaxLength(512);
             entity.Property(s => s.IconPrimaryAlt).HasMaxLength(200);
@@ -62,6 +65,19 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
                 .HasFilter("\"Slug\" <> ''");
             entity.Property(s => s.IconPrimaryMimeType).HasMaxLength(64);
             entity.Property(s => s.IconSecondaryMimeType).HasMaxLength(64);
+        });
+
+        modelBuilder.Entity<CardReadmeShare>(entity =>
+        {
+            entity.ToTable("CardReadmeShares");
+            entity.Property(r => r.Nome).HasMaxLength(80);
+            entity.Property(r => r.GithubLink).HasMaxLength(500);
+            entity.HasOne(r => r.Card)
+                .WithMany(c => c.ReadmeShares)
+                .HasForeignKey(r => r.CardId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired(false);
+            entity.HasIndex(r => r.CardId);
         });
 
         modelBuilder.Entity<CardIconUpload>(entity =>
@@ -93,6 +109,14 @@ public class AppDbContext : DbContext  //herda tudo que o DbContext do Entity Fr
             entity.HasIndex(c => c.Usuario)
                 .IsUnique()
                 .HasFilter("\"Usuario\" IS NOT NULL");
+        });
+
+        modelBuilder.Entity<FaixaColaborador>(entity =>
+        {
+            entity.ToTable("FaixaColaboradores");
+            entity.Property(c => c.Nome).HasMaxLength(80);
+            entity.Property(c => c.Icone).HasMaxLength(16);
+            entity.Property(c => c.Link).HasMaxLength(500);
         });
 
         modelBuilder.Entity<AdminPerfil>(entity =>

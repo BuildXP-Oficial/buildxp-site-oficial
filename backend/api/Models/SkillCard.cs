@@ -37,8 +37,12 @@ public class SkillCard
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
     public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow;
 
+    /// <summary>terminal = treino + cheap codes; readmelabs = README Lab e comunidade.</summary>
+    public string FinSlideType { get; set; } = "terminal";
+
     public List<Slide> Slides { get; set; } = [];
     public List<ReferenciaRapida> Referencias { get; set; } = [];
+    public List<CardReadmeShare> ReadmeShares { get; set; } = [];
 }
 
 public class Slide

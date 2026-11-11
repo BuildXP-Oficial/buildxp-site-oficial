@@ -16,6 +16,12 @@ public class CardService
         _context = context;
     }
 
+    private static string NormalizeFinSlideType(string? raw)
+    {
+        var type = (raw ?? string.Empty).Trim().ToLowerInvariant();
+        return type == "readmelabs" ? "readmelabs" : "terminal";
+    }
+
     public void AplicarPayload(SkillCard card, CardDashboardPayload p)
     {
         var theme = string.IsNullOrWhiteSpace(p.Theme) ? "git" : p.Theme!.Trim();
@@ -46,6 +52,7 @@ public class CardService
         if (p.XpMax is int xpm) card.XpMaximo = xpm;
         if (p.SortOrder is int so) card.Ordem = so;
         if (p.IsPublished is bool pub) card.Ativo = pub;
+    card.FinSlideType = NormalizeFinSlideType(p.FinSlideType ?? card.FinSlideType);
         if (CardCampos.TryNormalizeHexColor(p.BorderColor, out var hex))
             card.CorBorda = hex;
         else
