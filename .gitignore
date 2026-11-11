@@ -9,3 +9,5 @@
 **/obj/
 **/App_Data/
 **/publish/
+
+/backend/models/

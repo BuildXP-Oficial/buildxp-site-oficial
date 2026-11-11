@@ -14,8 +14,26 @@
   font-size: clamp(1.6rem, 3.5vw, 2.5rem);
   font-weight:700; letter-spacing:1px; margin-bottom:3rem;
 }
+.crise-promo { margin:0 auto 2rem; padding:0 2rem; text-align:center; }
+.crise-promo p { color:var(--text-dim); margin:0 0 1rem; }
 .simulador-promo { margin-top:2rem; text-align:center; }
 .simulador-promo p { color:var(--text-dim); margin:0 0 1rem; }
+.crise-promo .crise-cta {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+.crise-promo .crise-cta:hover {
+  border-color: #b91c1c;
+  background: #b91c1c;
+  color: #fff;
+  box-shadow: 0 0 20px rgb(220 38 38 / 35%);
+}
+.crise-promo-divider {
+  max-width: 42rem;
+  margin: 0 auto 1.5rem;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
 
 /* ============================================================
    MAIN PAGE CARDS
