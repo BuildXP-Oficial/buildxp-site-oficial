@@ -1,0 +1,16 @@
+/* BuildXP — entrada de estilos do site (módulos parciais nesta pasta) */
+@import url('01-base.css');
+@import url('02-home.css?v=bxp-mod-85');
+@import url('03-terminal.css?v=bxp-mod-87');
+@import url('04-contact-footer.css');
+@import url('05-feedback.css');
+@import url('06-card-page.css');
+@import url('07-responsive.css');
+@import url('08-dashboard.css');
+@import url('09-cards-catalog.css');
+@import url('10-markdown-builder.css');
+@import url('11-conhecimento-chat.css?v=bxp-mod-78');
+@import url('12-rotina.css?v=bxp-mod-80');
+@import url('13-simulador.css?v=bxp-mod-82');
+@import url('10-home-colaboradores.css?v=bxp-mod-79');
+@import url('11-readme-shares.css?v=bxp-mod-79');

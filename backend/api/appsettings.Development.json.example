@@ -1,0 +1,20 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=buildxpdb;Username=buildxp;Password=buildxp123"
+  },
+  "Admin": {
+    "Usuario": "",
+    "Senha": "",
+    "Email": "admin@localhost"
+  },
+  "Jwt": {
+    "Chave": ""
+  },
+  "Email": {
+    "Smtp": "smtp.gmail.com",
+    "Porta": 587,
+    "Usuario": "",
+    "Senha": "",
+    "EmailAdmin": ""
+  }
+}

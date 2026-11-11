@@ -1,0 +1,46 @@
+// BuildXP - init (executado por js/main.js após todos os módulos)
+async function buildxpBoot() {
+  if (typeof buildxpInitReadmeLabPage === 'function') {
+    try { buildxpInitReadmeLabPage(); } catch (_) { /* lista não pode depender do resto */ }
+  }
+  ensureDashPasswordToggleDelegation();
+  if (typeof initConhecimentoChat === 'function') initConhecimentoChat();
+  initCopy();
+  await buildxpHydrateTrainingSlidesFromApi();
+  initCopy();
+  initStepsSlider();
+  initTabs();
+  initSearch();
+  initMenu();
+  initScroll();
+  if (typeof resetGlobalSiteAccent === 'function') resetGlobalSiteAccent();
+  initFeedback();
+  initTrainingTerminal();
+  initDashboard();
+  if (typeof initRotinaPage === 'function') await initRotinaPage();
+  if (typeof initSimuladorPage === 'function') initSimuladorPage();
+  if (typeof initConhecimentoChat === 'function') initConhecimentoChat();
+  if (typeof buildxpInitMarkdownBuilderPage === 'function') {
+    try {
+      await buildxpInitMarkdownBuilderPage();
+    } catch (_) { /* lab de markdown não pode bloquear a lista */ }
+  }
+  if (typeof buildxpInitReadmeLabPage === 'function') {
+    try { buildxpInitReadmeLabPage(); } catch (_) {}
+  }
+  if (document.getElementById('cards-catalog-grid')) {
+    if (typeof buildxpInitCardsCatalogPage === 'function') {
+      await buildxpInitCardsCatalogPage();
+    }
+  } else {
+    await buildxpHydrateIndexCardsFromApi();
+    applyIndexCardOrder();
+    initIndexCardsHomeMarquee();
+    if (typeof buildxpInitHomeColaboradoresTicker === 'function') {
+      await buildxpInitHomeColaboradoresTicker();
+    }
+  }
+  initCopy();
+}
+
+window.buildxpBoot = buildxpBoot;

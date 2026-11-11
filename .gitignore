@@ -7,6 +7,5 @@
 **/appsettings.*.local.json
 **/bin/
 **/obj/
-
-# Pasta publicada — não vai para o GitHub
-backend/models/publish/
+**/App_Data/
+**/publish/
